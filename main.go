@@ -7,7 +7,7 @@ LICENSE file.
 */
 package main
 
-import "swctl/cmd"
+import "github.com/sitewhere/swctl/cmd"
 
 func main() {
 	cmd.Execute()

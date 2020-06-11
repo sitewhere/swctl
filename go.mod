@@ -1,4 +1,4 @@
-module swctl
+module github.com/sitewhere/swctl
 
 go 1.14
 
