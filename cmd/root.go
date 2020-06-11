@@ -5,6 +5,8 @@ The software in this package is published under the terms of the CPAL v1.0
 license, a copy of which has been included with this distribution in the
 LICENSE file.
 */
+
+// Package cmd provides commands fro SiteWhere Control CLI
 package cmd
 
 import (
@@ -23,7 +25,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "swctl",
 	Short: "SiteWhere Control CLI",
-	Long:  `SiteWhere Control allow you to manage SiteWhere CE Instaces.`,
+	Long:  `SiteWhere Control allow you to manage SiteWhere CE Instances.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
