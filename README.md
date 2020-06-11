@@ -1,0 +1,2 @@
+# swctl
+SiteWhere Control CLI
