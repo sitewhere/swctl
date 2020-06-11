@@ -6,7 +6,6 @@ license, a copy of which has been included with this distribution in the
 LICENSE file.
 */
 
-// Package cmd provides the command instances fro SiteWhere Control CLI
 package cmd
 
 import (
