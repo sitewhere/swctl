@@ -7,5 +7,5 @@ SiteWhere Control CLI
 ## Build
 
 ```console
-go build -ldflags "-X cmd.commit=<SOMEHASH> -X cmd.date=<SOMEDATE>"
+go build -ldflags "-X main.commit=<SOMEHASH> -X main.date=<SOMEDATE>"
 ```
