@@ -351,9 +351,9 @@ func printSiteWhereInstanceConfigurationRDBPersistence(config map[string]SiteWhe
 }
 
 func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *SiteWhereInstance {
-	metadata, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "metadata")
 	var result = SiteWhereInstance{}
 
+	metadata, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "metadata")
 	if err != nil {
 		log.Printf("Error reading metadata for %s: %v", crSiteWhereInstace, err)
 		return nil
@@ -363,6 +363,7 @@ func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *SiteWhe
 	} else {
 		extractSiteWhereInstanceMetadata(metadata, &result)
 	}
+
 	spec, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "spec")
 	if err != nil {
 		log.Printf("Error reading spec for %s: %v", crSiteWhereInstace, err)
@@ -378,12 +379,14 @@ func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *SiteWhe
 }
 
 func extractSiteWhereInstanceMetadata(metadata map[string]interface{}, instance *SiteWhereInstance) {
-	name := extractSiteWhereInstanceName(metadata)
-	instance.Name = fmt.Sprintf("%v", name)
-}
-
-func extractSiteWhereInstanceName(metadata map[string]interface{}) interface{} {
-	return metadata["name"]
+	name, exists, err := unstructured.NestedString(metadata, "name")
+	if err != nil {
+		log.Printf("Error Name from Metadata: %v", err)
+	} else if !exists {
+		log.Printf("Name from Metadata")
+	} else {
+		instance.Name = name
+	}
 }
 
 func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *SiteWhereInstance) {
