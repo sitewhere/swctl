@@ -27,12 +27,37 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// SiteWhereInstanceInfrastructureGRPCConfiguration SiteWhere Instance Infrastructure gRPC configurations
+type SiteWhereInstanceInfrastructureGRPCConfiguration struct {
+	BackoffMultiplier     float64
+	InitialBackoffSeconds int64
+	MaxBackoffSeconds     int64
+	MaxRetryCount         int64
+	ResolveFQDN           bool
+}
+
+// SiteWhereInstanceInfrastructureConfiguration SiteWhere Instance Infrastructure configurations
+type SiteWhereInstanceInfrastructureConfiguration struct {
+	GRPC *SiteWhereInstanceInfrastructureGRPCConfiguration `json:"grpc"`
+}
+
+// SiteWhereInstancePersistenceConfiguration SiteWhere Instance Persistence configurations
+type SiteWhereInstancePersistenceConfiguration struct {
+}
+
+// SiteWhereInstanceConfiguration SiteWhere Instance configurations
+type SiteWhereInstanceConfiguration struct {
+	Infrastructure *SiteWhereInstanceInfrastructureConfiguration `json:"infrastructure"`
+	Persistence    *SiteWhereInstancePersistenceConfiguration    `json:"persistenceConfigurations"`
+}
+
 // SiteWhereInstance represents an Instacen in SiteWhere
 type SiteWhereInstance struct {
-	Name                  string
-	Namespace             string
-	ConfigurationTemplate string
-	DatasetTemplate       string
+	Name                  string                          `json:"name"`
+	Namespace             string                          `json:"namespace"`
+	ConfigurationTemplate string                          `json:"configurationTemaplate"`
+	DatasetTemplate       string                          `json:"datasetTemplate"`
+	Configuration         *SiteWhereInstanceConfiguration `json:"configuration"`
 }
 
 var clientset *kubernetes.Clientset
@@ -134,6 +159,34 @@ func printSiteWhereInstance(crSiteWhereInstace *unstructured.Unstructured) {
 	fmt.Printf(frmtAttr, "Instance Namespace", sitewhereInstace.Namespace)
 	fmt.Printf(frmtAttr, "Configuration Template", sitewhereInstace.ConfigurationTemplate)
 	fmt.Printf(frmtAttr, "Dataset Template", sitewhereInstace.DatasetTemplate)
+	printSiteWhereInstanceConfiguration(sitewhereInstace.Configuration)
+}
+
+func printSiteWhereInstanceConfiguration(config *SiteWhereInstanceConfiguration) {
+	fmt.Printf("Configuration:\n")
+	printSiteWhereInstanceConfigurationInfrastructure(config.Infrastructure)
+	printSiteWhereInstanceConfigurationPersistence(config.Persistence)
+}
+
+func printSiteWhereInstanceConfigurationInfrastructure(config *SiteWhereInstanceInfrastructureConfiguration) {
+	fmt.Printf("  Infrastructure:\n")
+	printSiteWhereInstanceConfigurationInfrastructureGRPC(config.GRPC)
+}
+
+func printSiteWhereInstanceConfigurationInfrastructureGRPC(config *SiteWhereInstanceInfrastructureGRPCConfiguration) {
+	templateFloat := "      %-25s: %-6.2f\n"
+	templateInt := "      %-25s: %-d\n"
+	templateBool := "      %-25s: %-t\n"
+	fmt.Printf("    gRPC:\n")
+	fmt.Printf(templateFloat, "Backoff Multiplier", config.BackoffMultiplier)
+	fmt.Printf(templateInt, "Initial Backoff (sec)", config.InitialBackoffSeconds)
+	fmt.Printf(templateInt, "Max Backoff (sec)", config.MaxBackoffSeconds)
+	fmt.Printf(templateInt, "Max Retry", config.MaxRetryCount)
+	fmt.Printf(templateBool, "Resolve FQDN", config.ResolveFQDN)
+}
+
+func printSiteWhereInstanceConfigurationPersistence(config *SiteWhereInstancePersistenceConfiguration) {
+	fmt.Printf("  Persistence:\n")
 }
 
 func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *SiteWhereInstance {
@@ -176,10 +229,113 @@ func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *SiteWhe
 	instanceNamespace := spec["instanceNamespace"]
 	configurationTemplate := spec["configurationTemplate"]
 	datasetTemplate := spec["datasetTemplate"]
+	configuration := spec["configuration"]
+	sitewhereConfiguration := extractSiteWhereInstanceConfiguration(configuration)
 
 	instance.Namespace = fmt.Sprintf("%v", instanceNamespace)
 	instance.ConfigurationTemplate = fmt.Sprintf("%v", configurationTemplate)
 	instance.DatasetTemplate = fmt.Sprintf("%v", datasetTemplate)
+	instance.Configuration = sitewhereConfiguration
+}
+
+func extractSiteWhereInstanceConfiguration(config interface{}) *SiteWhereInstanceConfiguration {
+	var result = SiteWhereInstanceConfiguration{}
+
+	if configMap, ok := config.(map[string]interface{}); ok {
+		infrastructure := configMap["infrastructure"]
+		if infrastructure != nil {
+			result.Infrastructure = extractSiteWhereInstanceConfigurationInfrastructure(infrastructure)
+		}
+		persistenceConfigurations := configMap["persistenceConfigurations"]
+		if persistenceConfigurations != nil {
+			result.Persistence = extractSiteWhereInstanceConfigurationPersistenceConfiguration(persistenceConfigurations)
+		}
+	}
+
+	return &result
+}
+
+func extractSiteWhereInstanceConfigurationInfrastructure(infrastructureConfig interface{}) *SiteWhereInstanceInfrastructureConfiguration {
+	var result = SiteWhereInstanceInfrastructureConfiguration{}
+
+	if configMap, ok := infrastructureConfig.(map[string]interface{}); ok {
+		gRPC := configMap["grpc"]
+		if gRPC != nil {
+			result.GRPC = extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPC)
+		}
+	}
+	return &result
+}
+
+func extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPCConfig interface{}) *SiteWhereInstanceInfrastructureGRPCConfiguration {
+	var result = SiteWhereInstanceInfrastructureGRPCConfiguration{}
+
+	if configMap, ok := gRPCConfig.(map[string]interface{}); ok {
+		backoffMultiplier, exists, err := unstructured.NestedFloat64(configMap, "backoffMultiplier")
+		if err != nil {
+			log.Printf("Error reading backoffMultiplier: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("backoffMultiplier not found")
+		} else {
+			result.BackoffMultiplier = backoffMultiplier
+		}
+
+		initialBackoffSeconds, exists, err := unstructured.NestedInt64(configMap, "initialBackoffSeconds")
+		if err != nil {
+			log.Printf("Error reading initialBackoffSeconds: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("initialBackoffSeconds not found")
+		} else {
+			result.InitialBackoffSeconds = initialBackoffSeconds
+		}
+
+		maxBackoffSeconds, exists, err := unstructured.NestedInt64(configMap, "maxBackoffSeconds")
+		if err != nil {
+			log.Printf("Error reading maxBackoffSeconds: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("maxBackoffSeconds not found")
+		} else {
+			result.MaxBackoffSeconds = maxBackoffSeconds
+		}
+
+		maxRetryCount, exists, err := unstructured.NestedInt64(configMap, "maxRetryCount")
+		if err != nil {
+			log.Printf("Error reading maxRetryCount: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("maxRetryCount not found")
+		} else {
+			result.MaxRetryCount = maxRetryCount
+		}
+
+		resolveFQDN, exists, err := unstructured.NestedBool(configMap, "resolveFQDN")
+		if err != nil {
+			log.Printf("Error reading resolveFQDN: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("resolveFQDN not found")
+		} else {
+			result.ResolveFQDN = resolveFQDN
+		}
+	}
+
+	return &result
+}
+
+func extractSiteWhereInstanceConfigurationPersistenceConfiguration(persistenceConfig interface{}) *SiteWhereInstancePersistenceConfiguration {
+	var result = SiteWhereInstancePersistenceConfiguration{}
+
+	// if configMap, ok := persistenceConfig.(map[string]interface{}); ok {
+	// }
+	return &result
 }
 
 // Buid a Kubernetes Config from a filepath
