@@ -70,8 +70,28 @@ type SiteWhereInstanceInfrastructureConfiguration struct {
 	Redis     *SiteWhereInstanceInfrastructureRedisConfiguration   `json:"redis"`
 }
 
+// SiteWhereInstancePersistenceCassandraConfiguration SiteWhere Instance Persistence Cassandra configurations
+type SiteWhereInstancePersistenceCassandraConfiguration struct {
+	ContactPoints string `json:"contactPoints"`
+	Keyspace      string `json:"keyspace"`
+}
+
+// SiteWhereInstancePersistenceInfluxDBConfiguration SiteWhere Instance Persistence InfuxDB configurations
+type SiteWhereInstancePersistenceInfluxDBConfiguration struct {
+	Hostname     string `json:"hostname"`
+	Port         int64  `json:"port"`
+	DatabaseName string `json:"databaseName"`
+}
+
+// SiteWhereInstancePersistenceRDBConfiguration SiteWhere Instance Persistence Relational Database configurations
+type SiteWhereInstancePersistenceRDBConfiguration struct {
+}
+
 // SiteWhereInstancePersistenceConfiguration SiteWhere Instance Persistence configurations
 type SiteWhereInstancePersistenceConfiguration struct {
+	CassandraConfigurations map[string]SiteWhereInstancePersistenceCassandraConfiguration `json:"cassandraConfigurations"`
+	InfluxDBConfigurations  map[string]SiteWhereInstancePersistenceInfluxDBConfiguration  `json:"influxDbConfigurations"`
+	RDBConfigurations       map[string]SiteWhereInstancePersistenceRDBConfiguration       `json:"rdbConfigurations"`
 }
 
 // SiteWhereInstanceConfiguration SiteWhere Instance configurations
@@ -107,6 +127,9 @@ const secondLevelTemplateFloat = "      %-29s: %-6.2f\n"
 const secondLevelTemplateInt = "      %-29s: %-d\n"
 const secondLevelTemplateBool = "      %-29s: %-t\n"
 const secondLevelTemplateString = "      %-29s: %-32s\n"
+
+const thirdLevelTemplateString = "        %-27s: %-32s\n"
+const thirdLevelTemplateInt = "        %-27s: %-d\n"
 
 // instancesCmd represents the instances command
 var (
@@ -299,6 +322,32 @@ func printSiteWhereInstanceConfigurationInfrastructureRedis(config *SiteWhereIns
 
 func printSiteWhereInstanceConfigurationPersistence(config *SiteWhereInstancePersistenceConfiguration) {
 	fmt.Printf("  Persistence:\n")
+	printSiteWhereInstanceConfigurationCassandraPersistence(config.CassandraConfigurations)
+	printSiteWhereInstanceConfigurationInfluxDBPersistence(config.InfluxDBConfigurations)
+	printSiteWhereInstanceConfigurationRDBPersistence(config.RDBConfigurations)
+}
+
+func printSiteWhereInstanceConfigurationCassandraPersistence(config map[string]SiteWhereInstancePersistenceCassandraConfiguration) {
+	fmt.Printf("    Cassandra:\n")
+	for key, value := range config {
+		fmt.Printf(secondLevelTemplateString, "Entry", key)
+		fmt.Printf(thirdLevelTemplateString, "Contact Points", value.ContactPoints)
+		fmt.Printf(thirdLevelTemplateString, "Keyspace", value.Keyspace)
+	}
+}
+
+func printSiteWhereInstanceConfigurationInfluxDBPersistence(config map[string]SiteWhereInstancePersistenceInfluxDBConfiguration) {
+	fmt.Printf("    InfluxDB:\n")
+	for key, value := range config {
+		fmt.Printf(secondLevelTemplateString, "Entry", key)
+		fmt.Printf(thirdLevelTemplateString, "Hostname", value.Hostname)
+		fmt.Printf(thirdLevelTemplateInt, "Port", value.Port)
+		fmt.Printf(thirdLevelTemplateString, "Database Name", value.DatabaseName)
+	}
+}
+
+func printSiteWhereInstanceConfigurationRDBPersistence(config map[string]SiteWhereInstancePersistenceRDBConfiguration) {
+	fmt.Printf("    RDB:\n")
 }
 
 func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *SiteWhereInstance {
@@ -600,9 +649,119 @@ func extractSiteWhereInstanceConfigurationInfrastructureRedis(redisConfig interf
 func extractSiteWhereInstanceConfigurationPersistenceConfiguration(persistenceConfig interface{}) *SiteWhereInstancePersistenceConfiguration {
 	var result = SiteWhereInstancePersistenceConfiguration{}
 
-	// if configMap, ok := persistenceConfig.(map[string]interface{}); ok {
-	// }
+	if configMap, ok := persistenceConfig.(map[string]interface{}); ok {
+		cassandraConfigurations := configMap["cassandraConfigurations"]
+		if cassandraConfigurations != nil {
+			result.CassandraConfigurations = extractSiteWhereInstanceConfigurationPersistenceCassandraConfigurations(cassandraConfigurations)
+		}
+		influxDbConfigurations := configMap["influxDbConfigurations"]
+		if influxDbConfigurations != nil {
+			result.InfluxDBConfigurations = extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfigurations(influxDbConfigurations)
+		}
+		rdbConfigurations := configMap["rdbConfigurations"]
+		if rdbConfigurations != nil {
+			result.RDBConfigurations = extractSiteWhereInstanceConfigurationPersistenceRDBConfigurations(rdbConfigurations)
+		}
+	}
 	return &result
+}
+
+func extractSiteWhereInstanceConfigurationPersistenceCassandraConfigurations(cassandraConfig interface{}) map[string]SiteWhereInstancePersistenceCassandraConfiguration {
+	if configMap, ok := cassandraConfig.(map[string]interface{}); ok {
+		result := make(map[string]SiteWhereInstancePersistenceCassandraConfiguration)
+		for key, value := range configMap {
+			var configuration = extractSiteWhereInstanceConfigurationPersistenceCassandraConfiguration(value)
+			result[key] = configuration
+		}
+		return result
+	}
+	return nil
+}
+
+func extractSiteWhereInstanceConfigurationPersistenceCassandraConfiguration(cassandraConfig interface{}) SiteWhereInstancePersistenceCassandraConfiguration {
+	var result = SiteWhereInstancePersistenceCassandraConfiguration{}
+	if configMap, ok := cassandraConfig.(map[string]interface{}); ok {
+		contactPoints, exists, err := unstructured.NestedString(configMap, "contactPoints")
+		if err != nil {
+			log.Printf("Error reading Cassandra Contact Points: %v", err)
+		} else if !exists {
+			log.Printf("Cassandra Contact Points not found")
+		} else {
+			result.ContactPoints = contactPoints
+		}
+
+		keyspace, exists, err := unstructured.NestedString(configMap, "keyspace")
+		if err != nil {
+			log.Printf("Error reading Cassandra Keyspace: %v", err)
+		} else if !exists {
+			log.Printf("Cassandra Keyspace not found")
+		} else {
+			result.Keyspace = keyspace
+		}
+	}
+	return result
+}
+
+func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfigurations(influxDBConfig interface{}) map[string]SiteWhereInstancePersistenceInfluxDBConfiguration {
+	if configMap, ok := influxDBConfig.(map[string]interface{}); ok {
+		result := make(map[string]SiteWhereInstancePersistenceInfluxDBConfiguration)
+		for key, value := range configMap {
+			var configuration = extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfiguration(value)
+			result[key] = configuration
+		}
+		return result
+	}
+	return nil
+}
+
+func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfiguration(influxDBConfig interface{}) SiteWhereInstancePersistenceInfluxDBConfiguration {
+	var result = SiteWhereInstancePersistenceInfluxDBConfiguration{}
+	if configMap, ok := influxDBConfig.(map[string]interface{}); ok {
+		port, exists, err := unstructured.NestedInt64(configMap, "port")
+		if err != nil {
+			log.Printf("Error reading InfluxDB Port: %v", err)
+		} else if !exists {
+			log.Printf("InfluxDB Port not found")
+		} else {
+			result.Port = port
+		}
+
+		hostname, exists, err := unstructured.NestedString(configMap, "hostname")
+		if err != nil {
+			log.Printf("Error reading InfluxDB Hostname: %v", err)
+		} else if !exists {
+			log.Printf("InfluxDB Hostname not found")
+		} else {
+			result.Hostname = hostname
+		}
+
+		databaseName, exists, err := unstructured.NestedString(configMap, "databaseName")
+		if err != nil {
+			log.Printf("Error reading InfluxDB DatabaseName: %v", err)
+		} else if !exists {
+			log.Printf("InfluxDB DatabaseName not found")
+		} else {
+			result.DatabaseName = databaseName
+		}
+	}
+	return result
+}
+
+func extractSiteWhereInstanceConfigurationPersistenceRDBConfigurations(rdbConfig interface{}) map[string]SiteWhereInstancePersistenceRDBConfiguration {
+	if configMap, ok := rdbConfig.(map[string]interface{}); ok {
+		result := make(map[string]SiteWhereInstancePersistenceRDBConfiguration)
+		for key, value := range configMap {
+			var configuration = extractSiteWhereInstanceConfigurationPersistenceRDBConfiguration(value)
+			result[key] = configuration
+		}
+		return result
+	}
+	return nil
+}
+
+func extractSiteWhereInstanceConfigurationPersistenceRDBConfiguration(rdbConfig interface{}) SiteWhereInstancePersistenceRDBConfiguration {
+	var result = SiteWhereInstancePersistenceRDBConfiguration{}
+	return result
 }
 
 // Buid a Kubernetes Config from a filepath
