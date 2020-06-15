@@ -115,7 +115,17 @@ func handleListInstances() {
 	)
 
 	config, err := getKubeConfig(kubeconfig)
+	if err != nil {
+		log.Printf("Error getting Kubernetes Config: %v", err)
+		return
+	}
+
 	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		log.Printf("Error getting Kubernetes Client: %v", err)
+		return
+	}
+
 	res := client.Resource(sitewhereInstanceGVR)
 	options := metav1.ListOptions{}
 	sitewhereInstaces, err := res.List(context.TODO(), options)
@@ -147,7 +157,17 @@ func handleInstance(instanceName string) {
 	)
 
 	config, err := getKubeConfig(kubeconfig)
+	if err != nil {
+		log.Printf("Error getting Kubernetes Config: %v", err)
+		return
+	}
+
 	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		log.Printf("Error getting Kubernetes Client: %v", err)
+		return
+	}
+
 	res := client.Resource(sitewhereInstanceGVR)
 	options := metav1.GetOptions{}
 	sitewhereInstace, err := res.Get(context.TODO(), instanceName, options)
