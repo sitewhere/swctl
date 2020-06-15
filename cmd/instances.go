@@ -38,17 +38,33 @@ type SiteWhereInstanceInfrastructureGRPCConfiguration struct {
 
 // SiteWhereInstanceInfrastructureKafkaConfiguration SiteWhere Instance Infrastrucre Kafka configurations
 type SiteWhereInstanceInfrastructureKafkaConfiguration struct {
-	Port                          int64  `json:"port"`
 	Hostname                      string `json:"hostname"`
+	Port                          int64  `json:"port"`
 	DefaultTopicPartitions        int64  `json:"defaultTopicPartitions"`
 	DefaultTopicReplicationFactor int64  `json:"defaultTopicReplicationFactor"`
 }
 
+// SiteWhereInstanceInfrastructureMetricsConfiguration SiteWhere Instance Infrastrucre Metrics configurations
+type SiteWhereInstanceInfrastructureMetricsConfiguration struct {
+	Enabled  bool  `json:"enabled"`
+	HTTPPort int64 `json:"httpPort"`
+}
+
+// SiteWhereInstanceInfrastructureRedisConfiguration SiteWhere Instance Infrastrucre Redis configurations
+type SiteWhereInstanceInfrastructureRedisConfiguration struct {
+	Hostname        string `json:"hostname"`
+	Port            int64  `json:"port"`
+	NodeCount       int64  `json:"nodeCount"`
+	MasterGroupName string `json:"masterGroupName"`
+}
+
 // SiteWhereInstanceInfrastructureConfiguration SiteWhere Instance Infrastructure configurations
 type SiteWhereInstanceInfrastructureConfiguration struct {
-	Namespace string                                             `json:"namespace"`
-	GRPC      *SiteWhereInstanceInfrastructureGRPCConfiguration  `json:"grpc"`
-	Kafka     *SiteWhereInstanceInfrastructureKafkaConfiguration `json:"kafka"`
+	Namespace string                                               `json:"namespace"`
+	GRPC      *SiteWhereInstanceInfrastructureGRPCConfiguration    `json:"grpc"`
+	Kafka     *SiteWhereInstanceInfrastructureKafkaConfiguration   `json:"kafka"`
+	Metrics   *SiteWhereInstanceInfrastructureMetricsConfiguration `json:"metrics"`
+	Redis     *SiteWhereInstanceInfrastructureRedisConfiguration   `json:"redis"`
 }
 
 // SiteWhereInstancePersistenceConfiguration SiteWhere Instance Persistence configurations
@@ -80,7 +96,14 @@ var (
 	}
 )
 
-var frmtAttr = "%-35s: %-32s\n"
+const frmtAttr = "%-35s: %-32s\n"
+
+const firstLevelTemplateString = "    %-31s: %-32s\n"
+
+const secondLevelTemplateFloat = "      %-29s: %-6.2f\n"
+const secondLevelTemplateInt = "      %-29s: %-d\n"
+const secondLevelTemplateBool = "      %-29s: %-t\n"
+const secondLevelTemplateString = "      %-29s: %-32s\n"
 
 // instancesCmd represents the instances command
 var instancesCmd = &cobra.Command{
@@ -200,32 +223,43 @@ func printSiteWhereInstanceConfiguration(config *SiteWhereInstanceConfiguration)
 
 func printSiteWhereInstanceConfigurationInfrastructure(config *SiteWhereInstanceInfrastructureConfiguration) {
 	fmt.Printf("  Infrastructure:\n")
-	templateString := "    %-31s: %-32s\n"
-	fmt.Printf(templateString, "Namespace", config.Namespace)
+
+	fmt.Printf(firstLevelTemplateString, "Namespace", config.Namespace)
 	printSiteWhereInstanceConfigurationInfrastructureGRPC(config.GRPC)
 	printSiteWhereInstanceConfigurationInfrastructureKafka(config.Kafka)
+	printSiteWhereInstanceConfigurationInfrastructureMetrics(config.Metrics)
+	printSiteWhereInstanceConfigurationInfrastructureRedis(config.Redis)
 }
 
 func printSiteWhereInstanceConfigurationInfrastructureGRPC(config *SiteWhereInstanceInfrastructureGRPCConfiguration) {
-	templateFloat := "      %-29s: %-6.2f\n"
-	templateInt := "      %-29s: %-d\n"
-	templateBool := "      %-29s: %-t\n"
 	fmt.Printf("    gRPC:\n")
-	fmt.Printf(templateFloat, "Backoff Multiplier", config.BackoffMultiplier)
-	fmt.Printf(templateInt, "Initial Backoff (sec)", config.InitialBackoffSeconds)
-	fmt.Printf(templateInt, "Max Backoff (sec)", config.MaxBackoffSeconds)
-	fmt.Printf(templateInt, "Max Retry", config.MaxRetryCount)
-	fmt.Printf(templateBool, "Resolve FQDN", config.ResolveFQDN)
+	fmt.Printf(secondLevelTemplateFloat, "Backoff Multiplier", config.BackoffMultiplier)
+	fmt.Printf(secondLevelTemplateInt, "Initial Backoff (sec)", config.InitialBackoffSeconds)
+	fmt.Printf(secondLevelTemplateInt, "Max Backoff (sec)", config.MaxBackoffSeconds)
+	fmt.Printf(secondLevelTemplateInt, "Max Retry", config.MaxRetryCount)
+	fmt.Printf(secondLevelTemplateBool, "Resolve FQDN", config.ResolveFQDN)
 }
 
 func printSiteWhereInstanceConfigurationInfrastructureKafka(config *SiteWhereInstanceInfrastructureKafkaConfiguration) {
-	templateInt := "      %-29s: %-d\n"
-	templateString := "      %-29s: %-32s\n"
 	fmt.Printf("    Kafka:\n")
-	fmt.Printf(templateString, "Hostname", config.Hostname)
-	fmt.Printf(templateInt, "Port", config.Port)
-	fmt.Printf(templateInt, "Def Topic Partitions", config.DefaultTopicPartitions)
-	fmt.Printf(templateInt, "Def Topic Replication Factor", config.DefaultTopicReplicationFactor)
+	fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
+	fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
+	fmt.Printf(secondLevelTemplateInt, "Def Topic Partitions", config.DefaultTopicPartitions)
+	fmt.Printf(secondLevelTemplateInt, "Def Topic Replication Factor", config.DefaultTopicReplicationFactor)
+}
+
+func printSiteWhereInstanceConfigurationInfrastructureMetrics(config *SiteWhereInstanceInfrastructureMetricsConfiguration) {
+	fmt.Printf("    Metrics:\n")
+	fmt.Printf(secondLevelTemplateBool, "Enabled", config.Enabled)
+	fmt.Printf(secondLevelTemplateInt, "HTTP Port", config.HTTPPort)
+}
+
+func printSiteWhereInstanceConfigurationInfrastructureRedis(config *SiteWhereInstanceInfrastructureRedisConfiguration) {
+	fmt.Printf("    Redis:\n")
+	fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
+	fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
+	fmt.Printf(secondLevelTemplateInt, "Node Count", config.NodeCount)
+	fmt.Printf(secondLevelTemplateString, "Master Group Name", config.MasterGroupName)
 }
 
 func printSiteWhereInstanceConfigurationPersistence(config *SiteWhereInstancePersistenceConfiguration) {
@@ -320,9 +354,14 @@ func extractSiteWhereInstanceConfigurationInfrastructure(infrastructureConfig in
 		if kafka != nil {
 			result.Kafka = extractSiteWhereInstanceConfigurationInfrastructureKafka(kafka)
 		}
-		//metrics
-		//namespace
-		//redis
+		metrics := configMap["metrics"]
+		if kafka != nil {
+			result.Metrics = extractSiteWhereInstanceConfigurationInfrastructureMetrics(metrics)
+		}
+		redis := configMap["redis"]
+		if kafka != nil {
+			result.Redis = extractSiteWhereInstanceConfigurationInfrastructureRedis(redis)
+		}
 	}
 	return &result
 }
@@ -439,6 +478,87 @@ func extractSiteWhereInstanceConfigurationInfrastructureKafka(kafkaConfig interf
 		}
 	}
 
+	return &result
+}
+
+func extractSiteWhereInstanceConfigurationInfrastructureMetrics(metricsConfig interface{}) *SiteWhereInstanceInfrastructureMetricsConfiguration {
+	var result = SiteWhereInstanceInfrastructureMetricsConfiguration{}
+
+	if configMap, ok := metricsConfig.(map[string]interface{}); ok {
+		enabled, exists, err := unstructured.NestedBool(configMap, "enabled")
+		if err != nil {
+			log.Printf("Error reading Metrics Enabled: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Metrics Enabled not found")
+		} else {
+			result.Enabled = enabled
+		}
+
+		httpPort, exists, err := unstructured.NestedInt64(configMap, "httpPort")
+		if err != nil {
+			log.Printf("Error reading Metrics HTTP Port: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Metrics HTTP Port not found")
+		} else {
+			result.HTTPPort = httpPort
+		}
+
+	}
+	return &result
+}
+
+func extractSiteWhereInstanceConfigurationInfrastructureRedis(redisConfig interface{}) *SiteWhereInstanceInfrastructureRedisConfiguration {
+	var result = SiteWhereInstanceInfrastructureRedisConfiguration{}
+
+	if configMap, ok := redisConfig.(map[string]interface{}); ok {
+		hostname, exists, err := unstructured.NestedString(configMap, "hostname")
+		if err != nil {
+			log.Printf("Error reading Redis Hostname: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Redis Hostname not found")
+		} else {
+			result.Hostname = hostname
+		}
+
+		port, exists, err := unstructured.NestedInt64(configMap, "port")
+		if err != nil {
+			log.Printf("Error reading Redis Port: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Redis Port not found")
+		} else {
+			result.Port = port
+		}
+
+		nodeCount, exists, err := unstructured.NestedInt64(configMap, "nodeCount")
+		if err != nil {
+			log.Printf("Error reading Redis Node Count: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Redis Node Count not found")
+		} else {
+			result.NodeCount = nodeCount
+		}
+
+		masterGroupName, exists, err := unstructured.NestedString(configMap, "masterGroupName")
+		if err != nil {
+			log.Printf("Error reading Redis Master Group Name: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Redis Master Group Name not found")
+		} else {
+			result.MasterGroupName = masterGroupName
+		}
+	}
 	return &result
 }
 
