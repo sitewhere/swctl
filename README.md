@@ -6,6 +6,14 @@ SiteWhere Control CLI
 
 ## Build
 
+For building it requires go 1.11+.
+
 ```console
-go build -ldflags "-X main.commit=<SOMEHASH> -X main.date=<SOMEDATE>"
+go build"
+```
+
+## Install
+
+```console
+go install
 ```
