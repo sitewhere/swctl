@@ -9,7 +9,7 @@ SiteWhere Control CLI
 For building it requires go 1.11+.
 
 ```console
-go build"
+go build
 ```
 
 ## Install

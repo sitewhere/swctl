@@ -29,16 +29,26 @@ import (
 
 // SiteWhereInstanceInfrastructureGRPCConfiguration SiteWhere Instance Infrastructure gRPC configurations
 type SiteWhereInstanceInfrastructureGRPCConfiguration struct {
-	BackoffMultiplier     float64
-	InitialBackoffSeconds int64
-	MaxBackoffSeconds     int64
-	MaxRetryCount         int64
-	ResolveFQDN           bool
+	BackoffMultiplier     float64 `json:"backoffMultiplier"`
+	InitialBackoffSeconds int64   `json:"initialBackoffSeconds"`
+	MaxBackoffSeconds     int64   `json:"maxBackoffSeconds"`
+	MaxRetryCount         int64   `json:"maxRetryCount"`
+	ResolveFQDN           bool    `json:"resolveFQDN"`
+}
+
+// SiteWhereInstanceInfrastructureKafkaConfiguration SiteWhere Instance Infrastrucre Kafka configurations
+type SiteWhereInstanceInfrastructureKafkaConfiguration struct {
+	Port                          int64  `json:"port"`
+	Hostname                      string `json:"hostname"`
+	DefaultTopicPartitions        int64  `json:"defaultTopicPartitions"`
+	DefaultTopicReplicationFactor int64  `json:"defaultTopicReplicationFactor"`
 }
 
 // SiteWhereInstanceInfrastructureConfiguration SiteWhere Instance Infrastructure configurations
 type SiteWhereInstanceInfrastructureConfiguration struct {
-	GRPC *SiteWhereInstanceInfrastructureGRPCConfiguration `json:"grpc"`
+	Namespace string                                             `json:"namespace"`
+	GRPC      *SiteWhereInstanceInfrastructureGRPCConfiguration  `json:"grpc"`
+	Kafka     *SiteWhereInstanceInfrastructureKafkaConfiguration `json:"kafka"`
 }
 
 // SiteWhereInstancePersistenceConfiguration SiteWhere Instance Persistence configurations
@@ -70,7 +80,7 @@ var (
 	}
 )
 
-var frmtAttr = "%-25s: %-32s\n"
+var frmtAttr = "%-35s: %-32s\n"
 
 // instancesCmd represents the instances command
 var instancesCmd = &cobra.Command{
@@ -170,19 +180,32 @@ func printSiteWhereInstanceConfiguration(config *SiteWhereInstanceConfiguration)
 
 func printSiteWhereInstanceConfigurationInfrastructure(config *SiteWhereInstanceInfrastructureConfiguration) {
 	fmt.Printf("  Infrastructure:\n")
+	templateString := "    %-31s: %-32s\n"
+	fmt.Printf(templateString, "Namespace", config.Namespace)
 	printSiteWhereInstanceConfigurationInfrastructureGRPC(config.GRPC)
+	printSiteWhereInstanceConfigurationInfrastructureKafka(config.Kafka)
 }
 
 func printSiteWhereInstanceConfigurationInfrastructureGRPC(config *SiteWhereInstanceInfrastructureGRPCConfiguration) {
-	templateFloat := "      %-25s: %-6.2f\n"
-	templateInt := "      %-25s: %-d\n"
-	templateBool := "      %-25s: %-t\n"
+	templateFloat := "      %-29s: %-6.2f\n"
+	templateInt := "      %-29s: %-d\n"
+	templateBool := "      %-29s: %-t\n"
 	fmt.Printf("    gRPC:\n")
 	fmt.Printf(templateFloat, "Backoff Multiplier", config.BackoffMultiplier)
 	fmt.Printf(templateInt, "Initial Backoff (sec)", config.InitialBackoffSeconds)
 	fmt.Printf(templateInt, "Max Backoff (sec)", config.MaxBackoffSeconds)
 	fmt.Printf(templateInt, "Max Retry", config.MaxRetryCount)
 	fmt.Printf(templateBool, "Resolve FQDN", config.ResolveFQDN)
+}
+
+func printSiteWhereInstanceConfigurationInfrastructureKafka(config *SiteWhereInstanceInfrastructureKafkaConfiguration) {
+	templateInt := "      %-29s: %-d\n"
+	templateString := "      %-29s: %-32s\n"
+	fmt.Printf("    Kafka:\n")
+	fmt.Printf(templateString, "Hostname", config.Hostname)
+	fmt.Printf(templateInt, "Port", config.Port)
+	fmt.Printf(templateInt, "Def Topic Partitions", config.DefaultTopicPartitions)
+	fmt.Printf(templateInt, "Def Topic Replication Factor", config.DefaultTopicReplicationFactor)
 }
 
 func printSiteWhereInstanceConfigurationPersistence(config *SiteWhereInstancePersistenceConfiguration) {
@@ -259,10 +282,27 @@ func extractSiteWhereInstanceConfigurationInfrastructure(infrastructureConfig in
 	var result = SiteWhereInstanceInfrastructureConfiguration{}
 
 	if configMap, ok := infrastructureConfig.(map[string]interface{}); ok {
+		namespace, exists, err := unstructured.NestedString(configMap, "namespace")
+		if err != nil {
+			log.Printf("Error reading Infrastructure Namespace: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Infrastructure Namespace not found")
+		} else {
+			result.Namespace = namespace
+		}
 		gRPC := configMap["grpc"]
 		if gRPC != nil {
 			result.GRPC = extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPC)
 		}
+		kafka := configMap["kafka"]
+		if kafka != nil {
+			result.Kafka = extractSiteWhereInstanceConfigurationInfrastructureKafka(kafka)
+		}
+		//metrics
+		//namespace
+		//redis
 	}
 	return &result
 }
@@ -324,6 +364,58 @@ func extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPCConfig interfac
 			log.Printf("resolveFQDN not found")
 		} else {
 			result.ResolveFQDN = resolveFQDN
+		}
+	}
+
+	return &result
+}
+
+func extractSiteWhereInstanceConfigurationInfrastructureKafka(kafkaConfig interface{}) *SiteWhereInstanceInfrastructureKafkaConfiguration {
+	var result = SiteWhereInstanceInfrastructureKafkaConfiguration{}
+
+	if configMap, ok := kafkaConfig.(map[string]interface{}); ok {
+		port, exists, err := unstructured.NestedInt64(configMap, "port")
+		if err != nil {
+			log.Printf("Error reading Kafka Port: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Kafka Port not found")
+		} else {
+			result.Port = port
+		}
+
+		hostname, exists, err := unstructured.NestedString(configMap, "hostname")
+		if err != nil {
+			log.Printf("Error reading Kafka Hostname: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Kafka Hostname not found")
+		} else {
+			result.Hostname = hostname
+		}
+
+		defaultTopicPartitions, exists, err := unstructured.NestedInt64(configMap, "defaultTopicPartitions")
+		if err != nil {
+			log.Printf("Error reading Kafka defaultTopicPartitions: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Kafka defaultTopicPartitions not found")
+		} else {
+			result.DefaultTopicPartitions = defaultTopicPartitions
+		}
+
+		defaultTopicReplicationFactor, exists, err := unstructured.NestedInt64(configMap, "defaultTopicReplicationFactor")
+		if err != nil {
+			log.Printf("Error reading Kafka defaultTopicReplicationFactor: %v", err)
+			return nil
+		}
+		if !exists {
+			log.Printf("Kafka defaultTopicReplicationFactor not found")
+		} else {
+			result.DefaultTopicReplicationFactor = defaultTopicReplicationFactor
 		}
 	}
 
