@@ -10,13 +10,16 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -106,27 +109,31 @@ const secondLevelTemplateBool = "      %-29s: %-t\n"
 const secondLevelTemplateString = "      %-29s: %-32s\n"
 
 // instancesCmd represents the instances command
-var instancesCmd = &cobra.Command{
-	Use:   "instances",
-	Short: "Manage SiteWhere Instance",
-	Long:  `Manage SiteWhere Instance.`,
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 2 {
-			return errors.New("requires one or zero arguments")
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			handleListInstances()
-		} else {
-			name := args[0]
-			handleInstance(name)
-		}
-	},
-}
+var (
+	output       = ""
+	instancesCmd = &cobra.Command{
+		Use:   "instances [OPTIONS] [instance]",
+		Short: "Manage SiteWhere Instance",
+		Long:  `Manage SiteWhere Instance.`,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 2 {
+				return errors.New("requires one or zero arguments")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				handleListInstances()
+			} else {
+				name := args[0]
+				handleInstance(name)
+			}
+		},
+	}
+)
 
 func init() {
+	instancesCmd.Flags().StringVarP(&output, "output", "o", "", "Output format. One of 'yaml' or 'json'.")
 	rootCmd.AddCommand(instancesCmd)
 }
 
@@ -208,6 +215,34 @@ func handleInstance(instanceName string) {
 func printSiteWhereInstance(crSiteWhereInstace *unstructured.Unstructured) {
 	sitewhereInstace := extractFromResource(crSiteWhereInstace)
 
+	if strings.TrimSpace(output) == "json" {
+		printJSONSiteWhereInstance(sitewhereInstace)
+	} else if strings.TrimSpace(output) == "yaml" {
+		printYAMLSiteWhereInstance(sitewhereInstace)
+	} else {
+		printStandardSiteWhereInstance(sitewhereInstace)
+	}
+}
+
+func printJSONSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
+	e, err := json.Marshal(sitewhereInstace)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(e))
+}
+
+func printYAMLSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
+	e, err := yaml.Marshal(sitewhereInstace)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(e))
+}
+
+func printStandardSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
 	fmt.Printf(frmtAttr, "Instance Name", sitewhereInstace.Name)
 	fmt.Printf(frmtAttr, "Instance Namespace", sitewhereInstace.Namespace)
 	fmt.Printf(frmtAttr, "Configuration Template", sitewhereInstace.ConfigurationTemplate)

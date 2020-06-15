@@ -17,17 +17,17 @@ import (
 
 // versionCmd represents the version command
 var (
-	shortened  = false
-	version    = "v0.0.1"
-	commit     = "none" // TODO externalize to build variable
-	date       = "2020-06-11"
-	output     = "json"
-	versionCmd = &cobra.Command{
+	shortened     = false
+	version       = "v0.0.1"
+	commit        = "none" // TODO externalize to build variable
+	date          = "2020-06-11"
+	versionOutput = "json"
+	versionCmd    = &cobra.Command{
 		Use:   "version",
 		Short: "Version will output the current build information",
 		Long:  ``,
 		Run: func(_ *cobra.Command, _ []string) {
-			resp := goVersion.FuncWithOutput(shortened, version, commit, date, output)
+			resp := goVersion.FuncWithOutput(shortened, version, commit, date, versionOutput)
 			fmt.Print(resp)
 			return
 		},
@@ -36,6 +36,6 @@ var (
 
 func init() {
 	versionCmd.Flags().BoolVarP(&shortened, "short", "s", false, "Print just the version number.")
-	versionCmd.Flags().StringVarP(&output, "output", "o", "json", "Output format. One of 'yaml' or 'json'.")
+	versionCmd.Flags().StringVarP(&versionOutput, "output", "o", "json", "Output format. One of 'yaml' or 'json'.")
 	rootCmd.AddCommand(versionCmd)
 }
