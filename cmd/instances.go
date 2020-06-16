@@ -18,6 +18,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
+
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
@@ -29,85 +31,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-// SiteWhereInstanceInfrastructureGRPCConfiguration SiteWhere Instance Infrastructure gRPC configurations
-type SiteWhereInstanceInfrastructureGRPCConfiguration struct {
-	BackoffMultiplier     float64 `json:"backoffMultiplier"`
-	InitialBackoffSeconds int64   `json:"initialBackoffSeconds"`
-	MaxBackoffSeconds     int64   `json:"maxBackoffSeconds"`
-	MaxRetryCount         int64   `json:"maxRetryCount"`
-	ResolveFQDN           bool    `json:"resolveFQDN"`
-}
-
-// SiteWhereInstanceInfrastructureKafkaConfiguration SiteWhere Instance Infrastrucre Kafka configurations
-type SiteWhereInstanceInfrastructureKafkaConfiguration struct {
-	Hostname                      string `json:"hostname"`
-	Port                          int64  `json:"port"`
-	DefaultTopicPartitions        int64  `json:"defaultTopicPartitions"`
-	DefaultTopicReplicationFactor int64  `json:"defaultTopicReplicationFactor"`
-}
-
-// SiteWhereInstanceInfrastructureMetricsConfiguration SiteWhere Instance Infrastrucre Metrics configurations
-type SiteWhereInstanceInfrastructureMetricsConfiguration struct {
-	Enabled  bool  `json:"enabled"`
-	HTTPPort int64 `json:"httpPort"`
-}
-
-// SiteWhereInstanceInfrastructureRedisConfiguration SiteWhere Instance Infrastrucre Redis configurations
-type SiteWhereInstanceInfrastructureRedisConfiguration struct {
-	Hostname        string `json:"hostname"`
-	Port            int64  `json:"port"`
-	NodeCount       int64  `json:"nodeCount"`
-	MasterGroupName string `json:"masterGroupName"`
-}
-
-// SiteWhereInstanceInfrastructureConfiguration SiteWhere Instance Infrastructure configurations
-type SiteWhereInstanceInfrastructureConfiguration struct {
-	Namespace string                                               `json:"namespace"`
-	GRPC      *SiteWhereInstanceInfrastructureGRPCConfiguration    `json:"grpc"`
-	Kafka     *SiteWhereInstanceInfrastructureKafkaConfiguration   `json:"kafka"`
-	Metrics   *SiteWhereInstanceInfrastructureMetricsConfiguration `json:"metrics"`
-	Redis     *SiteWhereInstanceInfrastructureRedisConfiguration   `json:"redis"`
-}
-
-// SiteWhereInstancePersistenceCassandraConfiguration SiteWhere Instance Persistence Cassandra configurations
-type SiteWhereInstancePersistenceCassandraConfiguration struct {
-	ContactPoints string `json:"contactPoints"`
-	Keyspace      string `json:"keyspace"`
-}
-
-// SiteWhereInstancePersistenceInfluxDBConfiguration SiteWhere Instance Persistence InfuxDB configurations
-type SiteWhereInstancePersistenceInfluxDBConfiguration struct {
-	Hostname     string `json:"hostname"`
-	Port         int64  `json:"port"`
-	DatabaseName string `json:"databaseName"`
-}
-
-// SiteWhereInstancePersistenceRDBConfiguration SiteWhere Instance Persistence Relational Database configurations
-type SiteWhereInstancePersistenceRDBConfiguration struct {
-}
-
-// SiteWhereInstancePersistenceConfiguration SiteWhere Instance Persistence configurations
-type SiteWhereInstancePersistenceConfiguration struct {
-	CassandraConfigurations map[string]SiteWhereInstancePersistenceCassandraConfiguration `json:"cassandraConfigurations"`
-	InfluxDBConfigurations  map[string]SiteWhereInstancePersistenceInfluxDBConfiguration  `json:"influxDbConfigurations"`
-	RDBConfigurations       map[string]SiteWhereInstancePersistenceRDBConfiguration       `json:"rdbConfigurations"`
-}
-
-// SiteWhereInstanceConfiguration SiteWhere Instance configurations
-type SiteWhereInstanceConfiguration struct {
-	Infrastructure *SiteWhereInstanceInfrastructureConfiguration `json:"infrastructure"`
-	Persistence    *SiteWhereInstancePersistenceConfiguration    `json:"persistenceConfigurations"`
-}
-
-// SiteWhereInstance represents an Instacen in SiteWhere
-type SiteWhereInstance struct {
-	Name                  string                          `json:"name"`
-	Namespace             string                          `json:"namespace"`
-	ConfigurationTemplate string                          `json:"configurationTemaplate"`
-	DatasetTemplate       string                          `json:"datasetTemplate"`
-	Configuration         *SiteWhereInstanceConfiguration `json:"configuration"`
-}
 
 var clientset *kubernetes.Clientset
 var apixClient *apixv1beta1client.ApiextensionsV1beta1Client
@@ -247,7 +170,7 @@ func printSiteWhereInstance(crSiteWhereInstace *unstructured.Unstructured) {
 	}
 }
 
-func printJSONSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
+func printJSONSiteWhereInstance(sitewhereInstace *alpha3.SiteWhereInstance) {
 	e, err := json.Marshal(sitewhereInstace)
 	if err != nil {
 		fmt.Println(err)
@@ -256,7 +179,7 @@ func printJSONSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
 	fmt.Println(string(e))
 }
 
-func printYAMLSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
+func printYAMLSiteWhereInstance(sitewhereInstace *alpha3.SiteWhereInstance) {
 	e, err := yaml.Marshal(sitewhereInstace)
 	if err != nil {
 		fmt.Println(err)
@@ -265,7 +188,7 @@ func printYAMLSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
 	fmt.Println(string(e))
 }
 
-func printStandardSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
+func printStandardSiteWhereInstance(sitewhereInstace *alpha3.SiteWhereInstance) {
 	fmt.Printf(frmtAttr, "Instance Name", sitewhereInstace.Name)
 	fmt.Printf(frmtAttr, "Instance Namespace", sitewhereInstace.Namespace)
 	fmt.Printf(frmtAttr, "Configuration Template", sitewhereInstace.ConfigurationTemplate)
@@ -273,13 +196,13 @@ func printStandardSiteWhereInstance(sitewhereInstace *SiteWhereInstance) {
 	printSiteWhereInstanceConfiguration(sitewhereInstace.Configuration)
 }
 
-func printSiteWhereInstanceConfiguration(config *SiteWhereInstanceConfiguration) {
+func printSiteWhereInstanceConfiguration(config *alpha3.SiteWhereInstanceConfiguration) {
 	fmt.Printf("Configuration:\n")
 	printSiteWhereInstanceConfigurationInfrastructure(config.Infrastructure)
 	printSiteWhereInstanceConfigurationPersistence(config.Persistence)
 }
 
-func printSiteWhereInstanceConfigurationInfrastructure(config *SiteWhereInstanceInfrastructureConfiguration) {
+func printSiteWhereInstanceConfigurationInfrastructure(config *alpha3.SiteWhereInstanceInfrastructureConfiguration) {
 	fmt.Printf("  Infrastructure:\n")
 
 	fmt.Printf(firstLevelTemplateString, "Namespace", config.Namespace)
@@ -289,7 +212,7 @@ func printSiteWhereInstanceConfigurationInfrastructure(config *SiteWhereInstance
 	printSiteWhereInstanceConfigurationInfrastructureRedis(config.Redis)
 }
 
-func printSiteWhereInstanceConfigurationInfrastructureGRPC(config *SiteWhereInstanceInfrastructureGRPCConfiguration) {
+func printSiteWhereInstanceConfigurationInfrastructureGRPC(config *alpha3.SiteWhereInstanceInfrastructureGRPCConfiguration) {
 	fmt.Printf("    gRPC:\n")
 	fmt.Printf(secondLevelTemplateFloat, "Backoff Multiplier", config.BackoffMultiplier)
 	fmt.Printf(secondLevelTemplateInt, "Initial Backoff (sec)", config.InitialBackoffSeconds)
@@ -298,7 +221,7 @@ func printSiteWhereInstanceConfigurationInfrastructureGRPC(config *SiteWhereInst
 	fmt.Printf(secondLevelTemplateBool, "Resolve FQDN", config.ResolveFQDN)
 }
 
-func printSiteWhereInstanceConfigurationInfrastructureKafka(config *SiteWhereInstanceInfrastructureKafkaConfiguration) {
+func printSiteWhereInstanceConfigurationInfrastructureKafka(config *alpha3.SiteWhereInstanceInfrastructureKafkaConfiguration) {
 	fmt.Printf("    Kafka:\n")
 	fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
 	fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
@@ -306,13 +229,13 @@ func printSiteWhereInstanceConfigurationInfrastructureKafka(config *SiteWhereIns
 	fmt.Printf(secondLevelTemplateInt, "Def Topic Replication Factor", config.DefaultTopicReplicationFactor)
 }
 
-func printSiteWhereInstanceConfigurationInfrastructureMetrics(config *SiteWhereInstanceInfrastructureMetricsConfiguration) {
+func printSiteWhereInstanceConfigurationInfrastructureMetrics(config *alpha3.SiteWhereInstanceInfrastructureMetricsConfiguration) {
 	fmt.Printf("    Metrics:\n")
 	fmt.Printf(secondLevelTemplateBool, "Enabled", config.Enabled)
 	fmt.Printf(secondLevelTemplateInt, "HTTP Port", config.HTTPPort)
 }
 
-func printSiteWhereInstanceConfigurationInfrastructureRedis(config *SiteWhereInstanceInfrastructureRedisConfiguration) {
+func printSiteWhereInstanceConfigurationInfrastructureRedis(config *alpha3.SiteWhereInstanceInfrastructureRedisConfiguration) {
 	fmt.Printf("    Redis:\n")
 	fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
 	fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
@@ -320,14 +243,14 @@ func printSiteWhereInstanceConfigurationInfrastructureRedis(config *SiteWhereIns
 	fmt.Printf(secondLevelTemplateString, "Master Group Name", config.MasterGroupName)
 }
 
-func printSiteWhereInstanceConfigurationPersistence(config *SiteWhereInstancePersistenceConfiguration) {
+func printSiteWhereInstanceConfigurationPersistence(config *alpha3.SiteWhereInstancePersistenceConfiguration) {
 	fmt.Printf("  Persistence:\n")
 	printSiteWhereInstanceConfigurationCassandraPersistence(config.CassandraConfigurations)
 	printSiteWhereInstanceConfigurationInfluxDBPersistence(config.InfluxDBConfigurations)
 	printSiteWhereInstanceConfigurationRDBPersistence(config.RDBConfigurations)
 }
 
-func printSiteWhereInstanceConfigurationCassandraPersistence(config map[string]SiteWhereInstancePersistenceCassandraConfiguration) {
+func printSiteWhereInstanceConfigurationCassandraPersistence(config map[string]alpha3.SiteWhereInstancePersistenceCassandraConfiguration) {
 	fmt.Printf("    Cassandra:\n")
 	for key, value := range config {
 		fmt.Printf(secondLevelTemplateString, "Entry", key)
@@ -336,7 +259,7 @@ func printSiteWhereInstanceConfigurationCassandraPersistence(config map[string]S
 	}
 }
 
-func printSiteWhereInstanceConfigurationInfluxDBPersistence(config map[string]SiteWhereInstancePersistenceInfluxDBConfiguration) {
+func printSiteWhereInstanceConfigurationInfluxDBPersistence(config map[string]alpha3.SiteWhereInstancePersistenceInfluxDBConfiguration) {
 	fmt.Printf("    InfluxDB:\n")
 	for key, value := range config {
 		fmt.Printf(secondLevelTemplateString, "Entry", key)
@@ -346,12 +269,12 @@ func printSiteWhereInstanceConfigurationInfluxDBPersistence(config map[string]Si
 	}
 }
 
-func printSiteWhereInstanceConfigurationRDBPersistence(config map[string]SiteWhereInstancePersistenceRDBConfiguration) {
+func printSiteWhereInstanceConfigurationRDBPersistence(config map[string]alpha3.SiteWhereInstancePersistenceRDBConfiguration) {
 	fmt.Printf("    RDB:\n")
 }
 
-func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *SiteWhereInstance {
-	var result = SiteWhereInstance{}
+func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *alpha3.SiteWhereInstance {
+	var result = alpha3.SiteWhereInstance{}
 
 	metadata, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "metadata")
 	if err != nil {
@@ -378,7 +301,7 @@ func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *SiteWhe
 	return &result
 }
 
-func extractSiteWhereInstanceMetadata(metadata map[string]interface{}, instance *SiteWhereInstance) {
+func extractSiteWhereInstanceMetadata(metadata map[string]interface{}, instance *alpha3.SiteWhereInstance) {
 	name, exists, err := unstructured.NestedString(metadata, "name")
 	if err != nil {
 		log.Printf("Error Name from Metadata: %v", err)
@@ -389,7 +312,7 @@ func extractSiteWhereInstanceMetadata(metadata map[string]interface{}, instance 
 	}
 }
 
-func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *SiteWhereInstance) {
+func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *alpha3.SiteWhereInstance) {
 	instanceNamespace := spec["instanceNamespace"]
 	configurationTemplate := spec["configurationTemplate"]
 	datasetTemplate := spec["datasetTemplate"]
@@ -402,8 +325,8 @@ func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *SiteWhe
 	instance.Configuration = sitewhereConfiguration
 }
 
-func extractSiteWhereInstanceConfiguration(config interface{}) *SiteWhereInstanceConfiguration {
-	var result = SiteWhereInstanceConfiguration{}
+func extractSiteWhereInstanceConfiguration(config interface{}) *alpha3.SiteWhereInstanceConfiguration {
+	var result = alpha3.SiteWhereInstanceConfiguration{}
 
 	if configMap, ok := config.(map[string]interface{}); ok {
 		infrastructure := configMap["infrastructure"]
@@ -419,8 +342,8 @@ func extractSiteWhereInstanceConfiguration(config interface{}) *SiteWhereInstanc
 	return &result
 }
 
-func extractSiteWhereInstanceConfigurationInfrastructure(infrastructureConfig interface{}) *SiteWhereInstanceInfrastructureConfiguration {
-	var result = SiteWhereInstanceInfrastructureConfiguration{}
+func extractSiteWhereInstanceConfigurationInfrastructure(infrastructureConfig interface{}) *alpha3.SiteWhereInstanceInfrastructureConfiguration {
+	var result = alpha3.SiteWhereInstanceInfrastructureConfiguration{}
 
 	if configMap, ok := infrastructureConfig.(map[string]interface{}); ok {
 		namespace, exists, err := unstructured.NestedString(configMap, "namespace")
@@ -453,8 +376,8 @@ func extractSiteWhereInstanceConfigurationInfrastructure(infrastructureConfig in
 	return &result
 }
 
-func extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPCConfig interface{}) *SiteWhereInstanceInfrastructureGRPCConfiguration {
-	var result = SiteWhereInstanceInfrastructureGRPCConfiguration{}
+func extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPCConfig interface{}) *alpha3.SiteWhereInstanceInfrastructureGRPCConfiguration {
+	var result = alpha3.SiteWhereInstanceInfrastructureGRPCConfiguration{}
 
 	if configMap, ok := gRPCConfig.(map[string]interface{}); ok {
 		backoffMultiplier, exists, err := unstructured.NestedFloat64(configMap, "backoffMultiplier")
@@ -516,8 +439,8 @@ func extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPCConfig interfac
 	return &result
 }
 
-func extractSiteWhereInstanceConfigurationInfrastructureKafka(kafkaConfig interface{}) *SiteWhereInstanceInfrastructureKafkaConfiguration {
-	var result = SiteWhereInstanceInfrastructureKafkaConfiguration{}
+func extractSiteWhereInstanceConfigurationInfrastructureKafka(kafkaConfig interface{}) *alpha3.SiteWhereInstanceInfrastructureKafkaConfiguration {
+	var result = alpha3.SiteWhereInstanceInfrastructureKafkaConfiguration{}
 
 	if configMap, ok := kafkaConfig.(map[string]interface{}); ok {
 		port, exists, err := unstructured.NestedInt64(configMap, "port")
@@ -568,8 +491,8 @@ func extractSiteWhereInstanceConfigurationInfrastructureKafka(kafkaConfig interf
 	return &result
 }
 
-func extractSiteWhereInstanceConfigurationInfrastructureMetrics(metricsConfig interface{}) *SiteWhereInstanceInfrastructureMetricsConfiguration {
-	var result = SiteWhereInstanceInfrastructureMetricsConfiguration{}
+func extractSiteWhereInstanceConfigurationInfrastructureMetrics(metricsConfig interface{}) *alpha3.SiteWhereInstanceInfrastructureMetricsConfiguration {
+	var result = alpha3.SiteWhereInstanceInfrastructureMetricsConfiguration{}
 
 	if configMap, ok := metricsConfig.(map[string]interface{}); ok {
 		enabled, exists, err := unstructured.NestedBool(configMap, "enabled")
@@ -598,8 +521,8 @@ func extractSiteWhereInstanceConfigurationInfrastructureMetrics(metricsConfig in
 	return &result
 }
 
-func extractSiteWhereInstanceConfigurationInfrastructureRedis(redisConfig interface{}) *SiteWhereInstanceInfrastructureRedisConfiguration {
-	var result = SiteWhereInstanceInfrastructureRedisConfiguration{}
+func extractSiteWhereInstanceConfigurationInfrastructureRedis(redisConfig interface{}) *alpha3.SiteWhereInstanceInfrastructureRedisConfiguration {
+	var result = alpha3.SiteWhereInstanceInfrastructureRedisConfiguration{}
 
 	if configMap, ok := redisConfig.(map[string]interface{}); ok {
 		hostname, exists, err := unstructured.NestedString(configMap, "hostname")
@@ -649,8 +572,8 @@ func extractSiteWhereInstanceConfigurationInfrastructureRedis(redisConfig interf
 	return &result
 }
 
-func extractSiteWhereInstanceConfigurationPersistenceConfiguration(persistenceConfig interface{}) *SiteWhereInstancePersistenceConfiguration {
-	var result = SiteWhereInstancePersistenceConfiguration{}
+func extractSiteWhereInstanceConfigurationPersistenceConfiguration(persistenceConfig interface{}) *alpha3.SiteWhereInstancePersistenceConfiguration {
+	var result = alpha3.SiteWhereInstancePersistenceConfiguration{}
 
 	if configMap, ok := persistenceConfig.(map[string]interface{}); ok {
 		cassandraConfigurations := configMap["cassandraConfigurations"]
@@ -669,9 +592,9 @@ func extractSiteWhereInstanceConfigurationPersistenceConfiguration(persistenceCo
 	return &result
 }
 
-func extractSiteWhereInstanceConfigurationPersistenceCassandraConfigurations(cassandraConfig interface{}) map[string]SiteWhereInstancePersistenceCassandraConfiguration {
+func extractSiteWhereInstanceConfigurationPersistenceCassandraConfigurations(cassandraConfig interface{}) map[string]alpha3.SiteWhereInstancePersistenceCassandraConfiguration {
 	if configMap, ok := cassandraConfig.(map[string]interface{}); ok {
-		result := make(map[string]SiteWhereInstancePersistenceCassandraConfiguration)
+		result := make(map[string]alpha3.SiteWhereInstancePersistenceCassandraConfiguration)
 		for key, value := range configMap {
 			var configuration = extractSiteWhereInstanceConfigurationPersistenceCassandraConfiguration(value)
 			result[key] = configuration
@@ -681,8 +604,8 @@ func extractSiteWhereInstanceConfigurationPersistenceCassandraConfigurations(cas
 	return nil
 }
 
-func extractSiteWhereInstanceConfigurationPersistenceCassandraConfiguration(cassandraConfig interface{}) SiteWhereInstancePersistenceCassandraConfiguration {
-	var result = SiteWhereInstancePersistenceCassandraConfiguration{}
+func extractSiteWhereInstanceConfigurationPersistenceCassandraConfiguration(cassandraConfig interface{}) alpha3.SiteWhereInstancePersistenceCassandraConfiguration {
+	var result = alpha3.SiteWhereInstancePersistenceCassandraConfiguration{}
 	if configMap, ok := cassandraConfig.(map[string]interface{}); ok {
 		contactPoints, exists, err := unstructured.NestedString(configMap, "contactPoints")
 		if err != nil {
@@ -705,9 +628,9 @@ func extractSiteWhereInstanceConfigurationPersistenceCassandraConfiguration(cass
 	return result
 }
 
-func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfigurations(influxDBConfig interface{}) map[string]SiteWhereInstancePersistenceInfluxDBConfiguration {
+func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfigurations(influxDBConfig interface{}) map[string]alpha3.SiteWhereInstancePersistenceInfluxDBConfiguration {
 	if configMap, ok := influxDBConfig.(map[string]interface{}); ok {
-		result := make(map[string]SiteWhereInstancePersistenceInfluxDBConfiguration)
+		result := make(map[string]alpha3.SiteWhereInstancePersistenceInfluxDBConfiguration)
 		for key, value := range configMap {
 			var configuration = extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfiguration(value)
 			result[key] = configuration
@@ -717,8 +640,8 @@ func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfigurations(infl
 	return nil
 }
 
-func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfiguration(influxDBConfig interface{}) SiteWhereInstancePersistenceInfluxDBConfiguration {
-	var result = SiteWhereInstancePersistenceInfluxDBConfiguration{}
+func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfiguration(influxDBConfig interface{}) alpha3.SiteWhereInstancePersistenceInfluxDBConfiguration {
+	var result = alpha3.SiteWhereInstancePersistenceInfluxDBConfiguration{}
 	if configMap, ok := influxDBConfig.(map[string]interface{}); ok {
 		port, exists, err := unstructured.NestedInt64(configMap, "port")
 		if err != nil {
@@ -750,9 +673,9 @@ func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfiguration(influ
 	return result
 }
 
-func extractSiteWhereInstanceConfigurationPersistenceRDBConfigurations(rdbConfig interface{}) map[string]SiteWhereInstancePersistenceRDBConfiguration {
+func extractSiteWhereInstanceConfigurationPersistenceRDBConfigurations(rdbConfig interface{}) map[string]alpha3.SiteWhereInstancePersistenceRDBConfiguration {
 	if configMap, ok := rdbConfig.(map[string]interface{}); ok {
-		result := make(map[string]SiteWhereInstancePersistenceRDBConfiguration)
+		result := make(map[string]alpha3.SiteWhereInstancePersistenceRDBConfiguration)
 		for key, value := range configMap {
 			var configuration = extractSiteWhereInstanceConfigurationPersistenceRDBConfiguration(value)
 			result[key] = configuration
@@ -762,8 +685,8 @@ func extractSiteWhereInstanceConfigurationPersistenceRDBConfigurations(rdbConfig
 	return nil
 }
 
-func extractSiteWhereInstanceConfigurationPersistenceRDBConfiguration(rdbConfig interface{}) SiteWhereInstancePersistenceRDBConfiguration {
-	var result = SiteWhereInstancePersistenceRDBConfiguration{}
+func extractSiteWhereInstanceConfigurationPersistenceRDBConfiguration(rdbConfig interface{}) alpha3.SiteWhereInstancePersistenceRDBConfiguration {
+	var result = alpha3.SiteWhereInstancePersistenceRDBConfiguration{}
 	return result
 }
 
