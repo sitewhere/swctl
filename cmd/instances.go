@@ -35,17 +35,16 @@ var (
 	}
 )
 
-const frmtAttr = "%-35s: %-32s\n"
-
-const firstLevelTemplateString = "    %-31s: %-32s\n"
-
-const secondLevelTemplateFloat = "      %-29s: %-6.2f\n"
-const secondLevelTemplateInt = "      %-29s: %-d\n"
-const secondLevelTemplateBool = "      %-29s: %-t\n"
-const secondLevelTemplateString = "      %-29s: %-32s\n"
-
-const thirdLevelTemplateString = "        %-27s: %-32s\n"
-const thirdLevelTemplateInt = "        %-27s: %-d\n"
+const (
+	frmtAttr                  = "%-35s: %-32s\n"
+	firstLevelTemplateString  = "    %-31s: %-32s\n"
+	secondLevelTemplateFloat  = "      %-29s: %-6.2f\n"
+	secondLevelTemplateInt    = "      %-29s: %-d\n"
+	secondLevelTemplateBool   = "      %-29s: %-t\n"
+	secondLevelTemplateString = "      %-29s: %-32s\n"
+	thirdLevelTemplateString  = "        %-27s: %-32s\n"
+	thirdLevelTemplateInt     = "        %-27s: %-d\n"
+)
 
 // instancesCmd represents the instances command
 var (
@@ -100,8 +99,8 @@ func handleListInstances() {
 		return
 	}
 
-	template := "%-20s%-20s%-20s%-20s\n"
-	fmt.Printf(template, "NAME", "NAMESPACE", "CONFIG TMPL", "DATESET TMPL")
+	template := "%-20s%-20s%-20s%-20s%-20s%-20s\n"
+	fmt.Printf(template, "NAME", "NAMESPACE", "CONFIG TMPL", "DATESET TMPL", "TM STATUS", "UM STATUS")
 
 	for _, instance := range sitewhereInstaces.Items {
 		sitewhereInstace := extractFromResource(&instance)
@@ -110,7 +109,10 @@ func handleListInstances() {
 			sitewhereInstace.Name,
 			sitewhereInstace.Namespace,
 			sitewhereInstace.ConfigurationTemplate,
-			sitewhereInstace.DatasetTemplate)
+			sitewhereInstace.DatasetTemplate,
+			sitewhereInstace.Status.TenantManagementStatus,
+			sitewhereInstace.Status.UserManagementStatus,
+		)
 	}
 }
 
@@ -178,6 +180,8 @@ func printStandardSiteWhereInstance(sitewhereInstace *alpha3.SiteWhereInstance) 
 	fmt.Printf(frmtAttr, "Instance Namespace", sitewhereInstace.Namespace)
 	fmt.Printf(frmtAttr, "Configuration Template", sitewhereInstace.ConfigurationTemplate)
 	fmt.Printf(frmtAttr, "Dataset Template", sitewhereInstace.DatasetTemplate)
+	fmt.Printf(frmtAttr, "Tenant Management Status", sitewhereInstace.Status.TenantManagementStatus)
+	fmt.Printf(frmtAttr, "User Management Status", sitewhereInstace.Status.UserManagementStatus)
 	printSiteWhereInstanceConfiguration(sitewhereInstace.Configuration)
 }
 
@@ -283,6 +287,17 @@ func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *alpha3.
 		extractSiteWhereInstanceSpec(spec, &result)
 	}
 
+	status, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "status")
+	if err != nil {
+		log.Printf("Error reading status for %s: %v", crSiteWhereInstace, err)
+		return nil
+	}
+	if !exists {
+		log.Printf("Status not found for for SiteWhere Instance: %s", crSiteWhereInstace)
+	} else {
+		extractSiteWhereInstanceStatus(status, &result)
+	}
+
 	return &result
 }
 
@@ -308,6 +323,24 @@ func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *alpha3.
 	instance.ConfigurationTemplate = fmt.Sprintf("%v", configurationTemplate)
 	instance.DatasetTemplate = fmt.Sprintf("%v", datasetTemplate)
 	instance.Configuration = sitewhereConfiguration
+}
+
+func extractSiteWhereInstanceStatus(status map[string]interface{}, instance *alpha3.SiteWhereInstance) {
+
+	tenantManagementBootstrapState, exists, err := unstructured.NestedString(status, "tenantManagementBootstrapState")
+	if err != nil || !exists {
+		tenantManagementBootstrapState = "Unknown"
+	}
+
+	userManagementBootstrapState, exists, err := unstructured.NestedString(status, "userManagementBootstrapState")
+	if err != nil || !exists {
+		userManagementBootstrapState = "Unknown"
+	}
+
+	instance.Status = &alpha3.SiteWhereInstanceStatus{
+		TenantManagementStatus: tenantManagementBootstrapState,
+		UserManagementStatus:   userManagementBootstrapState,
+	}
 }
 
 func extractSiteWhereInstanceConfiguration(config interface{}) *alpha3.SiteWhereInstanceConfiguration {

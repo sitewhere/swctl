@@ -79,6 +79,12 @@ type SiteWhereInstanceConfiguration struct {
 	Persistence    *SiteWhereInstancePersistenceConfiguration    `json:"persistenceConfigurations"`
 }
 
+// SiteWhereInstanceStatus SiteWhere Instance Tenant Management and User Management Status
+type SiteWhereInstanceStatus struct {
+	TenantManagementStatus string `json:"tenantManagementStatus"`
+	UserManagementStatus   string `json:"userManagementStatus"`
+}
+
 // SiteWhereInstance represents an Instacen in SiteWhere
 type SiteWhereInstance struct {
 	Name                  string                          `json:"name"`
@@ -86,4 +92,5 @@ type SiteWhereInstance struct {
 	ConfigurationTemplate string                          `json:"configurationTemaplate"`
 	DatasetTemplate       string                          `json:"datasetTemplate"`
 	Configuration         *SiteWhereInstanceConfiguration `json:"configuration"`
+	Status                *SiteWhereInstanceStatus        `json:"status"`
 }
