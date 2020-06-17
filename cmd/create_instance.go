@@ -12,7 +12,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/sitewhere/swctl/internal"
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
@@ -22,6 +21,8 @@ import (
 
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -51,8 +52,10 @@ to quickly create a Cobra application.`,
 			}
 
 			instance := alpha3.SiteWhereInstance{
-				Name:      name,
-				Namespace: namespace}
+				Name:                  name,
+				Namespace:             namespace,
+				ConfigurationTemplate: "default",
+				DatasetTemplate:       "default"}
 
 			createSiteWhereInstance(&instance)
 		},
@@ -69,20 +72,20 @@ func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
 
 	config, err := internal.GetKubeConfigFromKubeconfig()
 	if err != nil {
-		log.Printf("Error getting Kubernetes Config: %v", err)
+		fmt.Printf("Error getting Kubernetes Config: %v", err)
 		return
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Printf("Error getting Kubernetes Client: %v", err)
+		fmt.Printf("Error getting Kubernetes Client: %v", err)
 		return
 	}
 
 	var ns *v1.Namespace
 	ns, err = createNamespaceIfNotExists(instance.Namespace, clientset)
 	if err != nil {
-		log.Printf("Error Creating Namespace: %s, %v", instance.Namespace, err)
+		fmt.Printf("Error Creating Namespace: %s, %v", instance.Namespace, err)
 		return
 	}
 
@@ -91,20 +94,32 @@ func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
 	var sa *v1.ServiceAccount
 	sa, err = createServiceAccountIfNotExists(instance, namespace, clientset)
 	if err != nil {
-		log.Printf("Error Creating Service Account: %s, %v", instance.Namespace, err)
+		fmt.Printf("Error Creating Service Account: %s, %v", instance.Namespace, err)
 		return
 	}
 
 	var role *rbacV1.Role
 	role, err = createRoleIfNotExists(instance, namespace, clientset)
 	if err != nil {
-		log.Printf("Error Creating Role: %s, %v", instance.Namespace, err)
+		fmt.Printf("Error Creating Role: %s, %v", instance.Namespace, err)
 		return
 	}
 
 	_, err = createRoleBindingIfNotExists(instance, namespace, sa, role, clientset)
 	if err != nil {
-		log.Printf("Error Creating Role Binding: %s, %v", instance.Namespace, err)
+		fmt.Printf("Error Creating Role Binding: %s, %v", instance.Namespace, err)
+		return
+	}
+
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		fmt.Printf("Error getting Kubernetes Client: %v", err)
+		return
+	}
+
+	_, err = createCRSiteWhereInstaceIfNotExists(instance, namespace, client)
+	if err != nil {
+		fmt.Printf("Error Creating CR SiteWhere Instace: %v", err)
 		return
 	}
 }
@@ -316,4 +331,37 @@ func createRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, namespace 
 	}
 
 	return roleBinding, nil
+}
+
+func createCRSiteWhereInstaceIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
+
+	res := client.Resource(sitewhereInstanceGVR)
+
+	sitewhereInstaces, err := res.Get(context.TODO(), instance.Name, metav1.GetOptions{})
+
+	if err != nil && k8serror.IsNotFound(err) {
+		sitewhereInstaces = &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"kind":       "SiteWhereInstance",
+				"apiVersion": sitewhereInstanceGVR.Group + "/" + sitewhereInstanceGVR.Version,
+				"metadata": map[string]interface{}{
+					"name": instance.Name,
+				},
+				"spec": map[string]interface{}{
+					"instanceNamespace":     instance.Namespace,
+					"configurationTemplate": instance.ConfigurationTemplate,
+					"datasetTemplate":       instance.DatasetTemplate,
+				},
+			},
+		}
+
+		result, err := res.Create(context.TODO(), sitewhereInstaces, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	return nil, nil
 }

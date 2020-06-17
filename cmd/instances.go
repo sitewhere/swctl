@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/sitewhere/swctl/internal"
@@ -80,13 +79,13 @@ func handleListInstances() {
 
 	config, err := internal.GetKubeConfigFromKubeconfig()
 	if err != nil {
-		log.Printf("Error getting Kubernetes Config: %v", err)
+		fmt.Printf("Error getting Kubernetes Config: %v", err)
 		return
 	}
 
 	client, err := dynamic.NewForConfig(config)
 	if err != nil {
-		log.Printf("Error getting Kubernetes Client: %v", err)
+		fmt.Printf("Error getting Kubernetes Client: %v", err)
 		return
 	}
 
@@ -95,7 +94,7 @@ func handleListInstances() {
 	sitewhereInstaces, err := res.List(context.TODO(), options)
 
 	if err != nil {
-		log.Printf("Error reading SiteWhere Instances: %v", err)
+		fmt.Printf("Error reading SiteWhere Instances: %v", err)
 		return
 	}
 
@@ -121,13 +120,13 @@ func handleInstance(instanceName string) {
 
 	config, err := internal.GetKubeConfigFromKubeconfig()
 	if err != nil {
-		log.Printf("Error getting Kubernetes Config: %v", err)
+		fmt.Printf("Error getting Kubernetes Config: %v", err)
 		return
 	}
 
 	client, err := dynamic.NewForConfig(config)
 	if err != nil {
-		log.Printf("Error getting Kubernetes Client: %v", err)
+		fmt.Printf("Error getting Kubernetes Client: %v", err)
 		return
 	}
 
@@ -267,33 +266,36 @@ func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *alpha3.
 
 	metadata, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "metadata")
 	if err != nil {
-		log.Printf("Error reading metadata for %s: %v", crSiteWhereInstace, err)
+		fmt.Printf("Error reading metadata for %s: %v", crSiteWhereInstace, err)
 		return nil
 	}
 	if !exists {
-		log.Printf("Metadata not found for for SiteWhere Instance: %s", crSiteWhereInstace)
+		fmt.Printf("Metadata not found for for SiteWhere Instance: %s", crSiteWhereInstace)
 	} else {
 		extractSiteWhereInstanceMetadata(metadata, &result)
 	}
 
 	spec, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "spec")
 	if err != nil {
-		log.Printf("Error reading spec for %s: %v", crSiteWhereInstace, err)
+		fmt.Printf("Error reading spec for %s: %v", result.Name, err)
 		return nil
 	}
 	if !exists {
-		log.Printf("Spec not found for for SiteWhere Instance: %s", crSiteWhereInstace)
+		fmt.Printf("Spec not found for for SiteWhere Instance: %s", result.Name)
 	} else {
 		extractSiteWhereInstanceSpec(spec, &result)
 	}
 
 	status, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "status")
 	if err != nil {
-		log.Printf("Error reading status for %s: %v", crSiteWhereInstace, err)
+		fmt.Printf("Error reading status for %s: %v", result.Name, err)
 		return nil
 	}
 	if !exists {
-		log.Printf("Status not found for for SiteWhere Instance: %s", crSiteWhereInstace)
+		result.Status = &alpha3.SiteWhereInstanceStatus{
+			TenantManagementStatus: "Unknown",
+			UserManagementStatus:   "Unknown",
+		}
 	} else {
 		extractSiteWhereInstanceStatus(status, &result)
 	}
@@ -304,9 +306,9 @@ func extractFromResource(crSiteWhereInstace *unstructured.Unstructured) *alpha3.
 func extractSiteWhereInstanceMetadata(metadata map[string]interface{}, instance *alpha3.SiteWhereInstance) {
 	name, exists, err := unstructured.NestedString(metadata, "name")
 	if err != nil {
-		log.Printf("Error Name from Metadata: %v", err)
+		fmt.Printf("Error Name from Metadata: %v", err)
 	} else if !exists {
-		log.Printf("Name from Metadata")
+		fmt.Printf("Name from Metadata")
 	} else {
 		instance.Name = name
 	}
@@ -366,11 +368,11 @@ func extractSiteWhereInstanceConfigurationInfrastructure(infrastructureConfig in
 	if configMap, ok := infrastructureConfig.(map[string]interface{}); ok {
 		namespace, exists, err := unstructured.NestedString(configMap, "namespace")
 		if err != nil {
-			log.Printf("Error reading Infrastructure Namespace: %v", err)
+			fmt.Printf("Error reading Infrastructure Namespace: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Infrastructure Namespace not found")
+			fmt.Printf("Infrastructure Namespace not found")
 		} else {
 			result.Namespace = namespace
 		}
@@ -400,55 +402,55 @@ func extractSiteWhereInstanceConfigurationInfrastructureGRPC(gRPCConfig interfac
 	if configMap, ok := gRPCConfig.(map[string]interface{}); ok {
 		backoffMultiplier, exists, err := unstructured.NestedFloat64(configMap, "backoffMultiplier")
 		if err != nil {
-			log.Printf("Error reading backoffMultiplier: %v", err)
+			fmt.Printf("Error reading backoffMultiplier: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("backoffMultiplier not found")
+			fmt.Printf("backoffMultiplier not found")
 		} else {
 			result.BackoffMultiplier = backoffMultiplier
 		}
 
 		initialBackoffSeconds, exists, err := unstructured.NestedInt64(configMap, "initialBackoffSeconds")
 		if err != nil {
-			log.Printf("Error reading initialBackoffSeconds: %v", err)
+			fmt.Printf("Error reading initialBackoffSeconds: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("initialBackoffSeconds not found")
+			fmt.Printf("initialBackoffSeconds not found")
 		} else {
 			result.InitialBackoffSeconds = initialBackoffSeconds
 		}
 
 		maxBackoffSeconds, exists, err := unstructured.NestedInt64(configMap, "maxBackoffSeconds")
 		if err != nil {
-			log.Printf("Error reading maxBackoffSeconds: %v", err)
+			fmt.Printf("Error reading maxBackoffSeconds: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("maxBackoffSeconds not found")
+			fmt.Printf("maxBackoffSeconds not found")
 		} else {
 			result.MaxBackoffSeconds = maxBackoffSeconds
 		}
 
 		maxRetryCount, exists, err := unstructured.NestedInt64(configMap, "maxRetryCount")
 		if err != nil {
-			log.Printf("Error reading maxRetryCount: %v", err)
+			fmt.Printf("Error reading maxRetryCount: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("maxRetryCount not found")
+			fmt.Printf("maxRetryCount not found")
 		} else {
 			result.MaxRetryCount = maxRetryCount
 		}
 
 		resolveFQDN, exists, err := unstructured.NestedBool(configMap, "resolveFQDN")
 		if err != nil {
-			log.Printf("Error reading resolveFQDN: %v", err)
+			fmt.Printf("Error reading resolveFQDN: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("resolveFQDN not found")
+			fmt.Printf("resolveFQDN not found")
 		} else {
 			result.ResolveFQDN = resolveFQDN
 		}
@@ -463,44 +465,44 @@ func extractSiteWhereInstanceConfigurationInfrastructureKafka(kafkaConfig interf
 	if configMap, ok := kafkaConfig.(map[string]interface{}); ok {
 		port, exists, err := unstructured.NestedInt64(configMap, "port")
 		if err != nil {
-			log.Printf("Error reading Kafka Port: %v", err)
+			fmt.Printf("Error reading Kafka Port: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Kafka Port not found")
+			fmt.Printf("Kafka Port not found")
 		} else {
 			result.Port = port
 		}
 
 		hostname, exists, err := unstructured.NestedString(configMap, "hostname")
 		if err != nil {
-			log.Printf("Error reading Kafka Hostname: %v", err)
+			fmt.Printf("Error reading Kafka Hostname: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Kafka Hostname not found")
+			fmt.Printf("Kafka Hostname not found")
 		} else {
 			result.Hostname = hostname
 		}
 
 		defaultTopicPartitions, exists, err := unstructured.NestedInt64(configMap, "defaultTopicPartitions")
 		if err != nil {
-			log.Printf("Error reading Kafka defaultTopicPartitions: %v", err)
+			fmt.Printf("Error reading Kafka defaultTopicPartitions: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Kafka defaultTopicPartitions not found")
+			fmt.Printf("Kafka defaultTopicPartitions not found")
 		} else {
 			result.DefaultTopicPartitions = defaultTopicPartitions
 		}
 
 		defaultTopicReplicationFactor, exists, err := unstructured.NestedInt64(configMap, "defaultTopicReplicationFactor")
 		if err != nil {
-			log.Printf("Error reading Kafka defaultTopicReplicationFactor: %v", err)
+			fmt.Printf("Error reading Kafka defaultTopicReplicationFactor: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Kafka defaultTopicReplicationFactor not found")
+			fmt.Printf("Kafka defaultTopicReplicationFactor not found")
 		} else {
 			result.DefaultTopicReplicationFactor = defaultTopicReplicationFactor
 		}
@@ -515,22 +517,22 @@ func extractSiteWhereInstanceConfigurationInfrastructureMetrics(metricsConfig in
 	if configMap, ok := metricsConfig.(map[string]interface{}); ok {
 		enabled, exists, err := unstructured.NestedBool(configMap, "enabled")
 		if err != nil {
-			log.Printf("Error reading Metrics Enabled: %v", err)
+			fmt.Printf("Error reading Metrics Enabled: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Metrics Enabled not found")
+			fmt.Printf("Metrics Enabled not found")
 		} else {
 			result.Enabled = enabled
 		}
 
 		httpPort, exists, err := unstructured.NestedInt64(configMap, "httpPort")
 		if err != nil {
-			log.Printf("Error reading Metrics HTTP Port: %v", err)
+			fmt.Printf("Error reading Metrics HTTP Port: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Metrics HTTP Port not found")
+			fmt.Printf("Metrics HTTP Port not found")
 		} else {
 			result.HTTPPort = httpPort
 		}
@@ -545,44 +547,44 @@ func extractSiteWhereInstanceConfigurationInfrastructureRedis(redisConfig interf
 	if configMap, ok := redisConfig.(map[string]interface{}); ok {
 		hostname, exists, err := unstructured.NestedString(configMap, "hostname")
 		if err != nil {
-			log.Printf("Error reading Redis Hostname: %v", err)
+			fmt.Printf("Error reading Redis Hostname: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Redis Hostname not found")
+			fmt.Printf("Redis Hostname not found")
 		} else {
 			result.Hostname = hostname
 		}
 
 		port, exists, err := unstructured.NestedInt64(configMap, "port")
 		if err != nil {
-			log.Printf("Error reading Redis Port: %v", err)
+			fmt.Printf("Error reading Redis Port: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Redis Port not found")
+			fmt.Printf("Redis Port not found")
 		} else {
 			result.Port = port
 		}
 
 		nodeCount, exists, err := unstructured.NestedInt64(configMap, "nodeCount")
 		if err != nil {
-			log.Printf("Error reading Redis Node Count: %v", err)
+			fmt.Printf("Error reading Redis Node Count: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Redis Node Count not found")
+			fmt.Printf("Redis Node Count not found")
 		} else {
 			result.NodeCount = nodeCount
 		}
 
 		masterGroupName, exists, err := unstructured.NestedString(configMap, "masterGroupName")
 		if err != nil {
-			log.Printf("Error reading Redis Master Group Name: %v", err)
+			fmt.Printf("Error reading Redis Master Group Name: %v", err)
 			return nil
 		}
 		if !exists {
-			log.Printf("Redis Master Group Name not found")
+			fmt.Printf("Redis Master Group Name not found")
 		} else {
 			result.MasterGroupName = masterGroupName
 		}
@@ -627,18 +629,18 @@ func extractSiteWhereInstanceConfigurationPersistenceCassandraConfiguration(cass
 	if configMap, ok := cassandraConfig.(map[string]interface{}); ok {
 		contactPoints, exists, err := unstructured.NestedString(configMap, "contactPoints")
 		if err != nil {
-			log.Printf("Error reading Cassandra Contact Points: %v", err)
+			fmt.Printf("Error reading Cassandra Contact Points: %v", err)
 		} else if !exists {
-			log.Printf("Cassandra Contact Points not found")
+			fmt.Printf("Cassandra Contact Points not found")
 		} else {
 			result.ContactPoints = contactPoints
 		}
 
 		keyspace, exists, err := unstructured.NestedString(configMap, "keyspace")
 		if err != nil {
-			log.Printf("Error reading Cassandra Keyspace: %v", err)
+			fmt.Printf("Error reading Cassandra Keyspace: %v", err)
 		} else if !exists {
-			log.Printf("Cassandra Keyspace not found")
+			fmt.Printf("Cassandra Keyspace not found")
 		} else {
 			result.Keyspace = keyspace
 		}
@@ -663,27 +665,27 @@ func extractSiteWhereInstanceConfigurationPersistenceInfluxDBConfiguration(influ
 	if configMap, ok := influxDBConfig.(map[string]interface{}); ok {
 		port, exists, err := unstructured.NestedInt64(configMap, "port")
 		if err != nil {
-			log.Printf("Error reading InfluxDB Port: %v", err)
+			fmt.Printf("Error reading InfluxDB Port: %v", err)
 		} else if !exists {
-			log.Printf("InfluxDB Port not found")
+			fmt.Printf("InfluxDB Port not found")
 		} else {
 			result.Port = port
 		}
 
 		hostname, exists, err := unstructured.NestedString(configMap, "hostname")
 		if err != nil {
-			log.Printf("Error reading InfluxDB Hostname: %v", err)
+			fmt.Printf("Error reading InfluxDB Hostname: %v", err)
 		} else if !exists {
-			log.Printf("InfluxDB Hostname not found")
+			fmt.Printf("InfluxDB Hostname not found")
 		} else {
 			result.Hostname = hostname
 		}
 
 		databaseName, exists, err := unstructured.NestedString(configMap, "databaseName")
 		if err != nil {
-			log.Printf("Error reading InfluxDB DatabaseName: %v", err)
+			fmt.Printf("Error reading InfluxDB DatabaseName: %v", err)
 		} else if !exists {
-			log.Printf("InfluxDB DatabaseName not found")
+			fmt.Printf("InfluxDB DatabaseName not found")
 		} else {
 			result.DatabaseName = databaseName
 		}
