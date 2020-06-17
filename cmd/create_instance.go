@@ -88,20 +88,25 @@ func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
 
 	var namespace = ns.ObjectMeta.Name
 
-	//var sa *v1.ServiceAccount
-	_, err = createServiceAccountIfNotExists(instance, namespace, clientset)
+	var sa *v1.ServiceAccount
+	sa, err = createServiceAccountIfNotExists(instance, namespace, clientset)
 	if err != nil {
 		log.Printf("Error Creating Service Account: %s, %v", instance.Namespace, err)
 		return
 	}
 
-	//var role *rbacV1.Role
-	_, err = createRoleIfNotExists(instance, namespace, clientset)
+	var role *rbacV1.Role
+	role, err = createRoleIfNotExists(instance, namespace, clientset)
 	if err != nil {
 		log.Printf("Error Creating Role: %s, %v", instance.Namespace, err)
 		return
 	}
 
+	_, err = createRoleBindingIfNotExists(instance, namespace, sa, role, clientset)
+	if err != nil {
+		log.Printf("Error Creating Role Binding: %s, %v", instance.Namespace, err)
+		return
+	}
 }
 
 func createNamespaceIfNotExists(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
@@ -263,4 +268,52 @@ func createRoleIfNotExists(instance *alpha3.SiteWhereInstance, namespace string,
 	}
 
 	return role, nil
+}
+
+func createRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, serviceAccount *v1.ServiceAccount,
+	role *rbacV1.Role, clientset *kubernetes.Clientset) (*rbacV1.RoleBinding, error) {
+	var err error
+	var roleBinding *rbacV1.RoleBinding
+
+	roleBindingName := fmt.Sprintf("sitewhere-instance-role-binding-%s", namespace)
+
+	roleBinding, err = clientset.RbacV1().RoleBindings(namespace).Get(context.TODO(), roleBindingName, metav1.GetOptions{})
+	if err != nil && k8serror.IsNotFound(err) {
+		roleBinding = &rbacV1.RoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: roleBindingName,
+				Labels: map[string]string{
+					"app": instance.Name,
+				},
+			},
+			Subjects: []rbacV1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Namespace: namespace,
+					Name:      serviceAccount.ObjectMeta.Name,
+				},
+			},
+			RoleRef: rbacV1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     "Role",
+				Name:     role.ObjectMeta.Name,
+			},
+		}
+
+		result, err := clientset.RbacV1().RoleBindings(namespace).Create(context.TODO(),
+			roleBinding,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return roleBinding, nil
 }
