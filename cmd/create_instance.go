@@ -18,6 +18,8 @@ import (
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
+	rbacV1 "k8s.io/api/rbac/v1"
+
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -78,16 +80,25 @@ func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
 	}
 
 	var ns *v1.Namespace
-
 	ns, err = createNamespaceIfNotExists(instance.Namespace, clientset)
 	if err != nil {
 		log.Printf("Error Creating Namespace: %s, %v", instance.Namespace, err)
 		return
 	}
+
+	var namespace = ns.ObjectMeta.Name
+
 	//var sa *v1.ServiceAccount
-	_, err = createServiceAccountIfNotExists(instance, ns, clientset)
+	_, err = createServiceAccountIfNotExists(instance, namespace, clientset)
 	if err != nil {
 		log.Printf("Error Creating Service Account: %s, %v", instance.Namespace, err)
+		return
+	}
+
+	//var role *rbacV1.Role
+	_, err = createRoleIfNotExists(instance, namespace, clientset)
+	if err != nil {
+		log.Printf("Error Creating Role: %s, %v", instance.Namespace, err)
 		return
 	}
 
@@ -99,39 +110,37 @@ func createNamespaceIfNotExists(namespace string, clientset *kubernetes.Clientse
 
 	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 
-	if err != nil {
-		return nil, err
-	}
-
-	if ns != nil {
-		return ns, nil
-	}
-
-	ns = &v1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
-			Labels: map[string]string{
-				"name": namespace,
+	if err != nil && k8serror.IsNotFound(err) {
+		ns = &v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+				Labels: map[string]string{
+					"app": namespace,
+				},
 			},
-		},
-	}
+		}
 
-	result, err := clientset.CoreV1().Namespaces().Create(context.TODO(),
-		ns,
-		metav1.CreateOptions{})
+		result, err := clientset.CoreV1().Namespaces().Create(context.TODO(),
+			ns,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result, err
+	return ns, nil
 }
 
-func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, ns *v1.Namespace, clientset *kubernetes.Clientset) (*v1.ServiceAccount, error) {
+func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*v1.ServiceAccount, error) {
 	var err error
 	var sa *v1.ServiceAccount
-
-	var namespace = ns.ObjectMeta.Name
 
 	saName := fmt.Sprintf("sitewhere-instance-service-%s", namespace)
 
@@ -142,7 +151,7 @@ func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, ns *v1.
 			ObjectMeta: metav1.ObjectMeta{
 				Name: saName,
 				Labels: map[string]string{
-					"app": saName,
+					"app": instance.Name,
 				},
 			},
 		}
@@ -163,4 +172,95 @@ func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, ns *v1.
 	}
 
 	return sa, nil
+}
+
+func createRoleIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*rbacV1.Role, error) {
+	var err error
+	var role *rbacV1.Role
+
+	roleName := fmt.Sprintf("sitewhere-instance-role-%s", namespace)
+
+	role, err = clientset.RbacV1().Roles(namespace).Get(context.TODO(), roleName, metav1.GetOptions{})
+	if err != nil && k8serror.IsNotFound(err) {
+		role = &rbacV1.Role{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: roleName,
+				Labels: map[string]string{
+					"app": instance.Name,
+				},
+			},
+			Rules: []rbacV1.PolicyRule{
+				{
+					APIGroups: []string{
+						"sitewhere.io",
+					},
+					Resources: []string{
+						"instances",
+						"instances/status",
+						"microservices",
+						"tenants",
+						"tenantengines",
+						"tenantengines/status",
+					},
+					Verbs: []string{
+						"*",
+					},
+				}, {
+					APIGroups: []string{
+						"templates.sitewhere.io",
+					},
+					Resources: []string{
+						"instanceconfigurations",
+						"instancedatasets",
+						"tenantconfigurations",
+						"tenantengineconfigurations",
+						"tenantdatasets",
+						"tenantenginedatasets",
+					},
+					Verbs: []string{
+						"*",
+					},
+				}, {
+					APIGroups: []string{
+						"scripting.sitewhere.io",
+					},
+					Resources: []string{
+						"scriptcategories",
+						"scripttemplates",
+						"scripts",
+						"scriptversions",
+					},
+					Verbs: []string{
+						"*",
+					},
+				}, {
+					APIGroups: []string{
+						"apiextensions.k8s.io",
+					},
+					Resources: []string{
+						"customresourcedefinitions",
+					},
+					Verbs: []string{
+						"*",
+					},
+				},
+			},
+		}
+
+		result, err := clientset.RbacV1().Roles(namespace).Create(context.TODO(),
+			role,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return role, nil
 }
