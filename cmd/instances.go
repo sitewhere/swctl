@@ -14,26 +14,19 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 
+	"github.com/sitewhere/swctl/internal"
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
-	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
-var clientset *kubernetes.Clientset
-var apixClient *apixv1beta1client.ApiextensionsV1beta1Client
 var (
 	sitewhereInstanceGVR = schema.GroupVersionResource{
 		Group:    "sitewhere.io",
@@ -86,11 +79,7 @@ func init() {
 func handleListInstances() {
 	var err error
 
-	kubeconfig := filepath.Join(
-		os.Getenv("HOME"), ".kube", "config",
-	)
-
-	config, err := getKubeConfig(kubeconfig)
+	config, err := internal.GetKubeConfigFromKubeconfig()
 	if err != nil {
 		log.Printf("Error getting Kubernetes Config: %v", err)
 		return
@@ -128,11 +117,7 @@ func handleListInstances() {
 func handleInstance(instanceName string) {
 	var err error
 
-	kubeconfig := filepath.Join(
-		os.Getenv("HOME"), ".kube", "config",
-	)
-
-	config, err := getKubeConfig(kubeconfig)
+	config, err := internal.GetKubeConfigFromKubeconfig()
 	if err != nil {
 		log.Printf("Error getting Kubernetes Config: %v", err)
 		return
@@ -688,32 +673,4 @@ func extractSiteWhereInstanceConfigurationPersistenceRDBConfigurations(rdbConfig
 func extractSiteWhereInstanceConfigurationPersistenceRDBConfiguration(rdbConfig interface{}) alpha3.SiteWhereInstancePersistenceRDBConfiguration {
 	var result = alpha3.SiteWhereInstancePersistenceRDBConfiguration{}
 	return result
-}
-
-// Buid a Kubernetes Config from a filepath
-func getKubeConfig(pathToCfg string) (*rest.Config, error) {
-	if pathToCfg == "" {
-		// in cluster access
-		return rest.InClusterConfig()
-	}
-	return clientcmd.BuildConfigFromFlags("", pathToCfg)
-}
-
-func getClient(pathToCfg string) (*kubernetes.Clientset, error) {
-	config, err := getKubeConfig(pathToCfg)
-
-	if err != nil {
-		return nil, err
-	}
-	return kubernetes.NewForConfig(config)
-}
-
-func getClientV1Beta1(pathToCfg string) (*apixv1beta1client.ApiextensionsV1beta1Client, error) {
-	config, err := getKubeConfig(pathToCfg)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return apixv1beta1client.NewForConfig(config)
 }
