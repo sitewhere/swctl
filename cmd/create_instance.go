@@ -11,12 +11,14 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/sitewhere/swctl/internal"
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -75,10 +77,23 @@ func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
 		return
 	}
 
-	createNamespaceIfNotExist(instance.Namespace, clientset)
+	var ns *v1.Namespace
+
+	ns, err = createNamespaceIfNotExists(instance.Namespace, clientset)
+	if err != nil {
+		log.Printf("Error Creating Namespace: %s, %v", instance.Namespace, err)
+		return
+	}
+	//var sa *v1.ServiceAccount
+	_, err = createServiceAccountIfNotExists(instance, ns, clientset)
+	if err != nil {
+		log.Printf("Error Creating Service Account: %s, %v", instance.Namespace, err)
+		return
+	}
+
 }
 
-func createNamespaceIfNotExist(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
+func createNamespaceIfNotExists(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
 	var err error
 	var ns *v1.Namespace
 
@@ -110,4 +125,42 @@ func createNamespaceIfNotExist(namespace string, clientset *kubernetes.Clientset
 	}
 
 	return result, err
+}
+
+func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, ns *v1.Namespace, clientset *kubernetes.Clientset) (*v1.ServiceAccount, error) {
+	var err error
+	var sa *v1.ServiceAccount
+
+	var namespace = ns.ObjectMeta.Name
+
+	saName := fmt.Sprintf("sitewhere-instance-service-%s", namespace)
+
+	sa, err = clientset.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), saName, metav1.GetOptions{})
+
+	if err != nil && k8serror.IsNotFound(err) {
+		sa = &v1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: saName,
+				Labels: map[string]string{
+					"app": saName,
+				},
+			},
+		}
+
+		result, err := clientset.CoreV1().ServiceAccounts(namespace).Create(context.TODO(),
+			sa,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return sa, nil
 }

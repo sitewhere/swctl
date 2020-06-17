@@ -9,6 +9,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/urfave/cli v1.22.4 // indirect
 	go.hein.dev/go-version v0.1.0
+	gopkg.in/kubernetes/kubernetes.v0 v0.21.4
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.18.3
 	k8s.io/apiextensions-apiserver v0.18.3
