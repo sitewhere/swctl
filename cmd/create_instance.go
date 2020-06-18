@@ -443,7 +443,7 @@ func createCRSiteWhereInstaceIfNotExists(instance *alpha3.SiteWhereInstance, nam
 		return result, err
 	}
 
-	return nil, nil
+	return sitewhereInstaces, nil
 }
 
 func createCRSiteWhereAssetManagementIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
