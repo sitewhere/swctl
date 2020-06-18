@@ -122,6 +122,13 @@ func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
 		fmt.Printf("Error Creating CR SiteWhere Instace: %v", err)
 		return
 	}
+
+	_, err = createCRSiteWhereAssetManagementIfNotExists(instance, namespace, client)
+	if err != nil {
+		fmt.Printf("Error Creating SiteWhere Asset Management Microservice: %v", err)
+		return
+	}
+
 }
 
 func createNamespaceIfNotExists(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
@@ -162,7 +169,7 @@ func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, namespa
 	var err error
 	var sa *v1.ServiceAccount
 
-	saName := fmt.Sprintf("sitewhere-instance-service-%s", namespace)
+	saName := fmt.Sprintf("sitewhere-instance-service-account-%s", namespace)
 
 	sa, err = clientset.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), saName, metav1.GetOptions{})
 
@@ -364,4 +371,110 @@ func createCRSiteWhereInstaceIfNotExists(instance *alpha3.SiteWhereInstance, nam
 	}
 
 	return nil, nil
+}
+
+func createCRSiteWhereAssetManagementIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
+
+	res := client.Resource(sitewhereMicroserviceGVR).Namespace(namespace)
+
+	assetManagementMS, err := res.Get(context.TODO(), "asset-management-microservice", metav1.GetOptions{})
+
+	if err != nil && k8serror.IsNotFound(err) {
+		assetManagementMS = &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"kind":       "SiteWhereMicroservice",
+				"apiVersion": sitewhereMicroserviceGVR.Group + "/" + sitewhereMicroserviceGVR.Version,
+				"metadata": map[string]interface{}{
+					"name":      "asset-management-microservice",
+					"namespace": namespace,
+					"labels": map[string]interface{}{
+						"sitewhere.io/instance":        instance.Name,
+						"sitewhere.io/functional-area": "asset-management",
+					},
+				},
+				"spec": map[string]interface{}{
+					"replicas":    1, // TODO from parameter
+					"multitenant": true,
+					"name":        "Asset Management",
+					"description": "Provides APIs for managing assets associated with device assignments",
+					"icon":        "devices_other",
+					"helm": map[string]interface{}{ // TODO Remove when operatior udpates to not using helm
+						"chartName":      "sitewhere-0.3.0",
+						"releaseName":    instance.Name,
+						"releaseService": "Tiller",
+					},
+					"podSpec": map[string]interface{}{
+						"imageRegistry":   "docker.io",
+						"imageRepository": "sitewhere",
+						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imagePullPolicy": "IfNotPresent",
+						"ports": []map[string]interface{}{
+							map[string]interface{}{
+								"containerPort": 9000,
+							},
+							map[string]interface{}{
+								"containerPort": 9090,
+							},
+						},
+						"env": []map[string]interface{}{
+							map[string]interface{}{
+								"name": "sitewhere.config.k8s.name",
+								"valueFrom": map[string]interface{}{
+									"fieldRef": map[string]interface{}{
+										"fieldPath": "metadata.name",
+									},
+								},
+							},
+							map[string]interface{}{
+								"name": "sitewhere.config.k8s.namespace",
+								"valueFrom": map[string]interface{}{
+									"fieldRef": map[string]interface{}{
+										"fieldPath": "metadata.namespace",
+									},
+								},
+							},
+							map[string]interface{}{
+								"name": "sitewhere.config.k8s.pod.ip",
+								"valueFrom": map[string]interface{}{
+									"fieldRef": map[string]interface{}{
+										"fieldPath": "status.podIP",
+									},
+								},
+							},
+						},
+					},
+					"serviceSpec": map[string]interface{}{
+						"type": "ClusterIP",
+						"ports": []map[string]interface{}{
+							map[string]interface{}{
+								"port":       9000,
+								"targetPort": 9000,
+								"name":       "grpc-api",
+							},
+							map[string]interface{}{
+								"port":       9090,
+								"targetPort": 9090,
+								"name":       "http-metrics",
+							},
+						},
+					},
+					"debug": map[string]interface{}{
+						"enabled":  false,
+						"jdwpPort": 8006,
+						"jmxPort":  1106,
+					},
+				},
+			},
+		}
+
+		result, err := res.Create(context.TODO(), assetManagementMS, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	return nil, nil
+
 }

@@ -34,6 +34,14 @@ var (
 	}
 )
 
+var (
+	sitewhereMicroserviceGVR = schema.GroupVersionResource{
+		Group:    "sitewhere.io",
+		Version:  "v1alpha3",
+		Resource: "microservices",
+	}
+)
+
 const (
 	frmtAttr                  = "%-35s: %-32s\n"
 	firstLevelTemplateString  = "    %-31s: %-32s\n"
