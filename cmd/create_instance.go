@@ -1492,7 +1492,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 	return nil, nil
 }
 
-func createCRSiteWhereLableGenerationIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
+func createCRSiteWhereLabelGenerationIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
 
 	res := client.Resource(sitewhereMicroserviceGVR).Namespace(namespace)
 
