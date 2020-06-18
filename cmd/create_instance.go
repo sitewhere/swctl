@@ -479,7 +479,7 @@ func createCRSiteWhereAssetManagementIfNotExists(instance *alpha3.SiteWhereInsta
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -583,7 +583,7 @@ func createCRSiteWhereBatchOperationsIfNotExists(instance *alpha3.SiteWhereInsta
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -686,7 +686,7 @@ func createCRSiteWhereCommandDeliveryIfNotExists(instance *alpha3.SiteWhereInsta
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -789,7 +789,7 @@ func createCRSiteWhereDeviceManagementIfNotExists(instance *alpha3.SiteWhereInst
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -892,7 +892,7 @@ func createCRSiteWhereDeviceRegistrationIfNotExists(instance *alpha3.SiteWhereIn
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -995,7 +995,7 @@ func createCRSiteWhereDeviceStateIfNotExists(instance *alpha3.SiteWhereInstance,
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -1098,7 +1098,7 @@ func createCRSiteWhereEventManagementIfNotExists(instance *alpha3.SiteWhereInsta
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -1201,7 +1201,7 @@ func createCRSiteWhereEventSourcesIfNotExists(instance *alpha3.SiteWhereInstance
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -1304,7 +1304,7 @@ func createCRSiteWhereInboundProcessingIfNotExists(instance *alpha3.SiteWhereIns
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -1413,7 +1413,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -1525,7 +1525,7 @@ func createCRSiteWhereLabelGenerationIfNotExists(instance *alpha3.SiteWhereInsta
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -1629,7 +1629,7 @@ func createCRSiteWhereOutboundConnectorsIfNotExists(instance *alpha3.SiteWhereIn
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
@@ -1733,7 +1733,7 @@ func createCRSiteWhereScheduleManagementIfNotExists(instance *alpha3.SiteWhereIn
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from paramter
+						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							map[string]interface{}{
