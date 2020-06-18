@@ -547,7 +547,7 @@ func createCRSiteWhereAssetManagementIfNotExists(instance *alpha3.SiteWhereInsta
 
 		return result, err
 	}
-	return nil, nil
+	return assetManagementMS, nil
 }
 
 func createCRSiteWhereBatchOperationsIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -651,7 +651,7 @@ func createCRSiteWhereBatchOperationsIfNotExists(instance *alpha3.SiteWhereInsta
 
 		return result, err
 	}
-	return nil, nil
+	return batchOperationsMS, nil
 }
 
 func createCRSiteWhereCommandDeliveryIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -754,7 +754,7 @@ func createCRSiteWhereCommandDeliveryIfNotExists(instance *alpha3.SiteWhereInsta
 
 		return result, err
 	}
-	return nil, nil
+	return commandDeliveryMS, nil
 }
 
 func createCRSiteWhereDeviceManagementIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -857,7 +857,7 @@ func createCRSiteWhereDeviceManagementIfNotExists(instance *alpha3.SiteWhereInst
 
 		return result, err
 	}
-	return nil, nil
+	return deviceManagementMS, nil
 }
 
 func createCRSiteWhereDeviceRegistrationIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -960,7 +960,7 @@ func createCRSiteWhereDeviceRegistrationIfNotExists(instance *alpha3.SiteWhereIn
 
 		return result, err
 	}
-	return nil, nil
+	return deviceRegistrationMS, nil
 }
 
 func createCRSiteWhereDeviceStateIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1063,7 +1063,7 @@ func createCRSiteWhereDeviceStateIfNotExists(instance *alpha3.SiteWhereInstance,
 
 		return result, err
 	}
-	return nil, nil
+	return deviceStateMS, nil
 }
 
 func createCRSiteWhereEventManagementIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1166,7 +1166,7 @@ func createCRSiteWhereEventManagementIfNotExists(instance *alpha3.SiteWhereInsta
 
 		return result, err
 	}
-	return nil, nil
+	return eventManagementMS, nil
 }
 
 func createCRSiteWhereEventSourcesIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1269,7 +1269,7 @@ func createCRSiteWhereEventSourcesIfNotExists(instance *alpha3.SiteWhereInstance
 
 		return result, err
 	}
-	return nil, nil
+	return eventSourcesMS, nil
 }
 
 func createCRSiteWhereInboundProcessingIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1372,7 +1372,7 @@ func createCRSiteWhereInboundProcessingIfNotExists(instance *alpha3.SiteWhereIns
 
 		return result, err
 	}
-	return nil, nil
+	return inboundProcessingMS, nil
 }
 
 func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1489,7 +1489,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 
 		return result, err
 	}
-	return nil, nil
+	return instanceManagementMS, nil
 }
 
 func createCRSiteWhereLabelGenerationIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1593,7 +1593,7 @@ func createCRSiteWhereLabelGenerationIfNotExists(instance *alpha3.SiteWhereInsta
 
 		return result, err
 	}
-	return nil, nil
+	return labelGenerationMS, nil
 }
 
 func createCRSiteWhereOutboundConnectorsIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1697,7 +1697,7 @@ func createCRSiteWhereOutboundConnectorsIfNotExists(instance *alpha3.SiteWhereIn
 
 		return result, err
 	}
-	return nil, nil
+	return outboundConnectorsMS, nil
 }
 
 func createCRSiteWhereScheduleManagementIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
@@ -1801,5 +1801,5 @@ func createCRSiteWhereScheduleManagementIfNotExists(instance *alpha3.SiteWhereIn
 
 		return result, err
 	}
-	return nil, nil
+	return outboundConnectorsMS, nil
 }
