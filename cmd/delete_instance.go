@@ -1,30 +1,25 @@
 /*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
+Copyright (c) SiteWhere, LLC. All rights reserved. http://www.sitewhere.com
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+The software in this package is published under the terms of the CPAL v1.0
+license, a copy of which has been included with this distribution in the
+LICENSE file.
 */
+
 package cmd
 
 import (
 	"context"
 	"errors"
 	"fmt"
+
 	"k8s.io/client-go/rest"
 
 	"github.com/sitewhere/swctl/internal"
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -32,7 +27,7 @@ import (
 
 // deleteInstanceCmd represents the instance command
 var deleteInstanceCmd = &cobra.Command{
-	Use:   "delete instance",
+	Use:   "instance",
 	Short: "Delete SiteWhere Instance",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -102,14 +97,17 @@ func deleteSiteWhereResources(instance *alpha3.SiteWhereInstance, client dynamic
 
 	res := client.Resource(sitewhereInstanceGVR)
 
-	sitewhereInstances, err := res.Get(context.TODO(), instance.Name, metav1.GetOptions{})
+	_, err := res.Get(context.TODO(), instance.Name, metav1.GetOptions{})
 
 	// delete instance
-	if sitewhereInstances != nil {
-		err = res.Delete(context.TODO(), instance.Name, metav1.DeleteOptions{})
+	if k8serror.IsNotFound(err) {
+		errorMessage := fmt.Sprintf("SiteWhere Instance '%s' not found", instance.Name)
+		return errors.New(errorMessage)
 	}
-
-	return err
+	if err != nil {
+		return err
+	}
+	return res.Delete(context.TODO(), instance.Name, metav1.DeleteOptions{})
 }
 
 func deleteSiteWhereNamespace(instance *alpha3.SiteWhereInstance, config *rest.Config) error {
