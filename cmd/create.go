@@ -28,8 +28,3 @@ to quickly create a Cobra application.`}
 func init() {
 	rootCmd.AddCommand(createCmd)
 }
-
-// ,
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		fmt.Println("create called")
-// 	},

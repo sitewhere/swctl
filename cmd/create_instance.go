@@ -72,7 +72,7 @@ func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
 	config, err := createNamespaceAndResources(instance)
 
 	if err != nil {
-		fmt.Printf("Error Cetting Namespace and Resources: %v\n", err)
+		fmt.Printf("Error Setting Namespace and Resources: %v\n", err)
 		return
 	}
 
