@@ -21,6 +21,7 @@ import (
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -122,6 +123,12 @@ func createNamespaceAndResources(instance *alpha3.SiteWhereInstance) (*rest.Conf
 	_, err = createRoleBindingIfNotExists(instance, namespace, sa, role, clientset)
 	if err != nil {
 		fmt.Printf("Error Creating Role Binding: %s, %v", instance.Namespace, err)
+		return nil, err
+	}
+
+	_, err = createLoadBalancerServiceIfNotExists(instance, namespace, clientset)
+	if err != nil {
+		fmt.Printf("Error Creating Loadbalancer Service: %s, %v", instance.Namespace, err)
 		return nil, err
 	}
 
@@ -427,6 +434,50 @@ func createRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, namespace 
 	}
 
 	return roleBinding, nil
+}
+
+func createLoadBalancerServiceIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*v1.Service, error) {
+	var err error
+	var service *v1.Service
+
+	service, err = clientset.CoreV1().Services(namespace).Get(context.TODO(), "sitewhere-rest-http", metav1.GetOptions{})
+	if err != nil && k8serror.IsNotFound(err) {
+
+		service = &v1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "sitewhere-rest-http",
+				Labels: map[string]string{
+					"app": instance.Name,
+				},
+			},
+			Spec: v1.ServiceSpec{
+				Type: "LoadBalancer",
+				Ports: []v1.ServicePort{
+					{
+						Port:       8080,
+						TargetPort: intstr.FromInt(8080),
+						Protocol:   v1.ProtocolTCP,
+						Name:       "http-rest",
+					},
+				},
+				Selector: map[string]string{
+					"app.kubernetes.io/instance": instance.Name,
+					"sitewhere.io/name":          "instance-management",
+				},
+			},
+		}
+
+		result, err := clientset.CoreV1().Services(namespace).Create(context.TODO(),
+			service,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+	return service, nil
 }
 
 func createCRSiteWhereInstaceIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, client dynamic.Interface) (*unstructured.Unstructured, error) {
