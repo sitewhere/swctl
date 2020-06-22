@@ -85,6 +85,12 @@ type SiteWhereInstanceStatus struct {
 	UserManagementStatus   string `json:"userManagementStatus"`
 }
 
+// SiteWhereMicroserviceStatus SiteWhere Instance Microservice Status
+type SiteWhereMicroserviceStatus struct {
+	Name   string `json:"name"`
+	Status string `json:"status"`
+}
+
 // SiteWhereInstance represents an Instacen in SiteWhere
 type SiteWhereInstance struct {
 	Name                  string                          `json:"name"`
@@ -93,4 +99,26 @@ type SiteWhereInstance struct {
 	DatasetTemplate       string                          `json:"datasetTemplate"`
 	Configuration         *SiteWhereInstanceConfiguration `json:"configuration"`
 	Status                *SiteWhereInstanceStatus        `json:"status"`
+	Microservices         []SiteWhereMicroserviceStatus   `json:"microservices"`
+}
+
+var microservices = []string{
+	"asset-management",
+	"batch-operations",
+	"command-delivery",
+	"device-management",
+	"device-registration",
+	"device-state",
+	"event-management",
+	"event-sources",
+	"inbound-processing",
+	"instance-management",
+	"label-generation",
+	"outbound-connectors",
+	"schedule-management",
+}
+
+// GetSiteWhereMicroservicesList Returns the list of SiteWhere Microservices Names
+func GetSiteWhereMicroservicesList() []string {
+	return microservices
 }
