@@ -1,3 +1,48 @@
 language: go
-go:
-  - "1.14.x"
+sudo: false
+matrix:
+  include:
+    # "1.x" always refers to the latest Go version, inc. the patch release.
+    # e.g. "1.x" is 1.11 until 1.11.1 is available.
+    - go: 1.x
+      env: LATEST=true
+    - go: 1.7.x
+    - go: 1.8.x
+    - go: 1.9.x
+    - go: 1.10.x
+    - go: 1.11.x
+    - go: tip
+  allow_failures:
+    - go: tip
+
+before_install:
+  # gox simplifies building for multiple architectures
+  - go get github.com/mitchellh/gox
+
+install:
+  - # skip
+
+script:
+  - go get -t -v ./...
+  - diff -u <(echo -n) <(gofmt -d .)
+  - go vet $(go list ./... | grep -v /vendor/)
+  - go test -v -race ./...
+  # Only build binaries from the latest Go release.
+  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="swctl.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: AHupKcXqXgblqVLVYZ/C1Z5H9po4vpP6aAmWIxlWcHqE+b4TPmHzQSqjA5BsZehBi/8/WSmWnS7kJ0xNYtdjUe9W3y7CM6s42OCxEGSDM1w/TbTsioz4AeN34zkUhpMSGlHElyKoUFZalr2dvWBROkzZhB1eDyO2XsyWUZnaC0HeFI7f2MyC9ULmN/bss9xXVr+h6ag6IezCgwYZ6aigj+f9Acjk4sjQZKUmGU0fO1FljmebpbgrrVA0uRam9bhY8iONqGEuwKZvOaBeNGV9GCoocfF1blnZjU1nuvdVmas938ADIc1B+HKroKOMvIk/HEM6XccTghipur/hGVSH2knd7U17WbqqDWAELp22zv9gStUk4KYjyrEqzxGum8RDCLvRcMgvZ+BWxqoIrHpm5tjmT1hcwKYF3hgESkG9siOyIdTz/lIlChrrSMTRWtdwtZofrE5DUR/dKhPLmSsglWc6ru6lJWdtl0AzmTHmgrfSfatm5/7DdUyRST80sr5151WhgWsq7EMAMmBM8ft/9x4+HjP2ZErwiOht3DywiPONs7ysE4EZ04dnEjuV0t0+58ptXKZFCkfvRFMxddzSQE9+o/mjZv9RaOPBXp7lDCmP3RPlP4g7vfMtduORfZXsJIU+hfOsAzK1YgWZoSLaMw9tiS1bxb2JMqt1jvqSxUM=
+  file: 
+  # The names of the binaries to output, based on the -output template passed to gox.
+  - swctl.windows.amd64.exe
+  - swctl.darwin.amd64
+  - swctl.linux.amd64
+  
+  on:
+    # What to repository to build
+    repo: sitewhere/swctl
+    tags: true
+    condition: $LATEST = true
