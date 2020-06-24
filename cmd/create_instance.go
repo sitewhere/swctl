@@ -500,18 +500,18 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
-							map[string]interface{}{
+							{
 								"containerPort": 8080,
 							},
-							map[string]interface{}{
+							{
 								"containerPort": 9000,
 							},
-							map[string]interface{}{
+							{
 								"containerPort": 9090,
 							},
 						},
 						"env": []map[string]interface{}{
-							map[string]interface{}{
+							{
 								"name": "sitewhere.config.k8s.name",
 								"valueFrom": map[string]interface{}{
 									"fieldRef": map[string]interface{}{
@@ -519,7 +519,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 									},
 								},
 							},
-							map[string]interface{}{
+							{
 								"name": "sitewhere.config.k8s.namespace",
 								"valueFrom": map[string]interface{}{
 									"fieldRef": map[string]interface{}{
@@ -527,7 +527,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 									},
 								},
 							},
-							map[string]interface{}{
+							{
 								"name": "sitewhere.config.k8s.pod.ip",
 								"valueFrom": map[string]interface{}{
 									"fieldRef": map[string]interface{}{
@@ -540,17 +540,17 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 					"serviceSpec": map[string]interface{}{
 						"type": "ClusterIP",
 						"ports": []map[string]interface{}{
-							map[string]interface{}{
+							{
 								"port":       8080,
 								"targetPort": 8080,
 								"name":       "http-rest",
 							},
-							map[string]interface{}{
+							{
 								"port":       9000,
 								"targetPort": 9000,
 								"name":       "grpc-api",
 							},
-							map[string]interface{}{
+							{
 								"port":       9090,
 								"targetPort": 9090,
 								"name":       "http-metrics",
@@ -614,15 +614,15 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 						"imageTag":        "3.0.0.beta1", // TODO from parameter
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
-							map[string]interface{}{
+							{
 								"containerPort": 9000,
 							},
-							map[string]interface{}{
+							{
 								"containerPort": 9090,
 							},
 						},
 						"env": []map[string]interface{}{
-							map[string]interface{}{
+							{
 								"name": "sitewhere.config.k8s.name",
 								"valueFrom": map[string]interface{}{
 									"fieldRef": map[string]interface{}{
@@ -630,7 +630,7 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 									},
 								},
 							},
-							map[string]interface{}{
+							{
 								"name": "sitewhere.config.k8s.namespace",
 								"valueFrom": map[string]interface{}{
 									"fieldRef": map[string]interface{}{
@@ -638,7 +638,7 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 									},
 								},
 							},
-							map[string]interface{}{
+							{
 								"name": "sitewhere.config.k8s.pod.ip",
 								"valueFrom": map[string]interface{}{
 									"fieldRef": map[string]interface{}{
@@ -651,12 +651,12 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 					"serviceSpec": map[string]interface{}{
 						"type": "ClusterIP",
 						"ports": []map[string]interface{}{
-							map[string]interface{}{
+							{
 								"port":       9000,
 								"targetPort": 9000,
 								"name":       "grpc-api",
 							},
-							map[string]interface{}{
+							{
 								"port":       9090,
 								"targetPort": 9090,
 								"name":       "http-metrics",
