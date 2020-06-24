@@ -25,19 +25,19 @@ go install
 ### Install binary with curl on Linux
 
 ```bash
-curl -L https://github.com/sitewhere/swctl/releases/download/v0.0.2/swctl.linux.amd64 -o swctl && \
+curl -L https://github.com/sitewhere/swctl/releases/latest/download/swctl.linux.amd64 -o swctl && \
 chmod +x ./swctl && sudo mv ./swctl /usr/local/bin/swctl
 ```
 
 ### Install binary with curl on macOS
 
 ```bash
-curl -L https://github.com/sitewhere/swctl/releases/download/v0.0.2/swctl.darwin.amd64 -o swctl && \
+curl -L https://github.com/sitewhere/swctl/releases/latest/download/swctl.darwin.amd64 -o swctl && \
 chmod +x ./swctl && sudo mv ./swctl /usr/local/bin/swctl
 ```
 
 ### Install binary with curl on Windows
 
 ```bash
-curl -L https://github.com/sitewhere/swctl/releases/download/v0.0.2/swctl.windows.amd64.exe -o swctl.exe
+curl -L https://github.com/sitewhere/swctl/releases/latest/download/swctl.windows.amd64.exe -o swctl.exe
 ```
