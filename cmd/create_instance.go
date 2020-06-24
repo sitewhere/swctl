@@ -29,17 +29,21 @@ import (
 
 // createInstanceCmd represents the instance command
 var (
-	namespace         = ""    // Namespace to use
-	minimal           = false // Use minimal profile. Initialize only essential microservices.
+	namespace         = ""            // Namespace to use
+	minimal           = false         // Use minimal profile. Initialize only essential microservices.
+	tag               = "3.0.0.beta1" // Docker image tag
 	createInstanceCmd = &cobra.Command{
-		Use:   "instance",
+		Use:   "instance <name>",
 		Short: "Create SiteWhere Instance",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+		Long: `Use this command to create an Instance of SiteWhere.
+For example, to create an instance with name "sitewhere" use:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+  swctl create instance sitewhere
+
+To create an instance with the minimal profile use:
+
+  swctl create instance sitewhere -m
+`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return errors.New("requires one argument")
@@ -60,6 +64,7 @@ to quickly create a Cobra application.`,
 			instance := alpha3.SiteWhereInstance{
 				Name:                  name,
 				Namespace:             namespace,
+				Tag:                   tag,
 				ConfigurationTemplate: "default",
 				DatasetTemplate:       "default",
 				Profile:               profile}
@@ -71,7 +76,8 @@ to quickly create a Cobra application.`,
 
 func init() {
 	createInstanceCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace of the instance.")
-	createInstanceCmd.Flags().BoolVarP(&minimal, "minimal", "m", false, "Minimal installation")
+	createInstanceCmd.Flags().BoolVarP(&minimal, "minimal", "m", false, "Minimal installation.")
+	createInstanceCmd.Flags().StringVarP(&tag, "tag", "t", "", "Docker image tag.")
 	createCmd.AddCommand(createInstanceCmd)
 }
 
@@ -497,7 +503,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from parameter
+						"imageTag":        instance.Tag,
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							{
@@ -611,7 +617,7 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 					"podSpec": map[string]interface{}{
 						"imageRegistry":   "docker.io",
 						"imageRepository": "sitewhere",
-						"imageTag":        "3.0.0.beta1", // TODO from parameter
+						"imageTag":        instance.Tag,
 						"imagePullPolicy": "IfNotPresent",
 						"ports": []map[string]interface{}{
 							{
