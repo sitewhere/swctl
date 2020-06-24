@@ -755,7 +755,7 @@ func queryMicroservices(instanceName string) ([]alpha3.SiteWhereMicroserviceStat
 
 	for _, micrservice := range microservices {
 
-		microserviceStatus, err := queryMicroserviceStatus(instanceName, micrservice, clientset)
+		microserviceStatus, err := queryMicroserviceStatus(instanceName, &micrservice, clientset)
 
 		if err != nil {
 			return nil, err
@@ -767,21 +767,21 @@ func queryMicroservices(instanceName string) ([]alpha3.SiteWhereMicroserviceStat
 	return result, nil
 }
 
-func queryMicroserviceStatus(instanceName string, microservice string, clientset *kubernetes.Clientset) (alpha3.SiteWhereMicroserviceStatus, error) {
+func queryMicroserviceStatus(instanceName string, microservice *alpha3.SiteWhereMicroservice, clientset *kubernetes.Clientset) (alpha3.SiteWhereMicroserviceStatus, error) {
 	var status = "Unknown"
-	deploymentName := fmt.Sprintf("%s-%s", instanceName, microservice)
+	deploymentName := fmt.Sprintf("%s-%s", instanceName, microservice.ID)
 
 	deployment, err := clientset.AppsV1().Deployments(instanceName).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 
 	if err != nil && k8serror.IsNotFound(err) {
 		return alpha3.SiteWhereMicroserviceStatus{
-			Name:   microservice,
+			Name:   microservice.ID,
 			Status: "NotFound",
 		}, nil
 	}
 	if err != nil {
 		return alpha3.SiteWhereMicroserviceStatus{
-			Name:   microservice,
+			Name:   microservice.ID,
 			Status: "Error",
 		}, err
 	}
@@ -791,7 +791,7 @@ func queryMicroserviceStatus(instanceName string, microservice string, clientset
 	}
 
 	return alpha3.SiteWhereMicroserviceStatus{
-		Name:   microservice,
+		Name:   microservice.ID,
 		Status: status,
 	}, nil
 }
