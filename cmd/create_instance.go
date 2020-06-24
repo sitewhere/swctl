@@ -30,7 +30,7 @@ import (
 // createInstanceCmd represents the instance command
 var (
 	namespace         = ""    // Namespace to use
-	minimal           = false // Use minimal profile. Initialize only esential microservices.
+	minimal           = false // Use minimal profile. Initialize only essential microservices.
 	createInstanceCmd = &cobra.Command{
 		Use:   "instance",
 		Short: "Create SiteWhere Instance",
