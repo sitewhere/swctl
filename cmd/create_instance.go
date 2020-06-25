@@ -27,11 +27,14 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// SiteWhere Docker Image default tag name
+const dockerImageDefaultTag = "3.0.0.beta1"
+
 // createInstanceCmd represents the instance command
 var (
-	namespace         = ""            // Namespace to use
-	minimal           = false         // Use minimal profile. Initialize only essential microservices.
-	tag               = "3.0.0.beta1" // Docker image tag
+	namespace         = ""    // Namespace to use
+	minimal           = false // Use minimal profile. Initialize only essential microservices.
+	tag               = ""    // Docker image tag
 	createInstanceCmd = &cobra.Command{
 		Use:   "instance <name>",
 		Short: "Create SiteWhere Instance",
@@ -56,6 +59,9 @@ To create an instance with the minimal profile use:
 
 			if namespace == "" {
 				namespace = name
+			}
+			if tag == "" {
+				tag = dockerImageDefaultTag
 			}
 			if minimal {
 				profile = alpha3.Minimal
