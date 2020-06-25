@@ -18,7 +18,7 @@ import (
 // versionCmd represents the version command
 var (
 	shortened     = false
-	version       = "v0.0.1"
+	version       = "v0.0.4"
 	commit        = "none" // TODO externalize to build variable
 	date          = "2020-06-11"
 	versionOutput = "json"
