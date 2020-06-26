@@ -35,6 +35,7 @@ var (
 	namespace         = ""    // Namespace to use
 	minimal           = false // Use minimal profile. Initialize only essential microservices.
 	tag               = ""    // Docker image tag
+	debug             = false // Use debug mode
 	createInstanceCmd = &cobra.Command{
 		Use:   "instance <name>",
 		Short: "Create SiteWhere Instance",
@@ -71,6 +72,7 @@ To create an instance with the minimal profile use:
 				Name:                  name,
 				Namespace:             namespace,
 				Tag:                   tag,
+				Debug:                 debug,
 				ConfigurationTemplate: "default",
 				DatasetTemplate:       "default",
 				Profile:               profile}
@@ -84,6 +86,7 @@ func init() {
 	createInstanceCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace of the instance.")
 	createInstanceCmd.Flags().BoolVarP(&minimal, "minimal", "m", false, "Minimal installation.")
 	createInstanceCmd.Flags().StringVarP(&tag, "tag", "t", "", "Docker image tag.")
+	createInstanceCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Debug mode.")
 	createCmd.AddCommand(createInstanceCmd)
 }
 
@@ -570,7 +573,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 						},
 					},
 					"debug": map[string]interface{}{
-						"enabled":  false,
+						"enabled":  instance.Debug,
 						"jdwpPort": 8001,
 						"jmxPort":  1101,
 					},
@@ -676,7 +679,7 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 						},
 					},
 					"debug": map[string]interface{}{
-						"enabled":  false, // TODO from parameter
+						"enabled":  instance.Debug,
 						"jdwpPort": 8000 + microservice.PortOffset,
 						"jmxPort":  1100 + microservice.PortOffset,
 					},

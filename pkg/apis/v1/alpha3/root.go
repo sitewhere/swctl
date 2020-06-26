@@ -106,6 +106,7 @@ type SiteWhereInstance struct {
 	Name                  string                          `json:"name"`
 	Namespace             string                          `json:"namespace"`
 	Tag                   string                          `json:"tag"`
+	Debug                 bool                            `json:"debug"`
 	ConfigurationTemplate string                          `json:"configurationTemaplate"`
 	DatasetTemplate       string                          `json:"datasetTemplate"`
 	Configuration         *SiteWhereInstanceConfiguration `json:"configuration"`
