@@ -64,8 +64,12 @@ To create an instance with the minimal profile use:
 			if tag == "" {
 				tag = dockerImageDefaultTag
 			}
+
+			var configurationTemplate = "default"
+
 			if minimal {
 				profile = alpha3.Minimal
+				configurationTemplate = "minimal"
 			}
 
 			instance := alpha3.SiteWhereInstance{
@@ -73,7 +77,7 @@ To create an instance with the minimal profile use:
 				Namespace:             namespace,
 				Tag:                   tag,
 				Debug:                 debug,
-				ConfigurationTemplate: "default",
+				ConfigurationTemplate: configurationTemplate,
 				DatasetTemplate:       "default",
 				Profile:               profile}
 
