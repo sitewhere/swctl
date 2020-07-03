@@ -204,67 +204,83 @@ func printSiteWhereInstanceConfiguration(config *alpha3.SiteWhereInstanceConfigu
 func printSiteWhereInstanceConfigurationInfrastructure(config *alpha3.SiteWhereInstanceInfrastructureConfiguration) {
 	fmt.Printf("  Infrastructure:\n")
 
-	fmt.Printf(firstLevelTemplateString, "Namespace", config.Namespace)
-	printSiteWhereInstanceConfigurationInfrastructureGRPC(config.GRPC)
-	printSiteWhereInstanceConfigurationInfrastructureKafka(config.Kafka)
-	printSiteWhereInstanceConfigurationInfrastructureMetrics(config.Metrics)
-	printSiteWhereInstanceConfigurationInfrastructureRedis(config.Redis)
+	if config != nil {
+		fmt.Printf(firstLevelTemplateString, "Namespace", config.Namespace)
+		printSiteWhereInstanceConfigurationInfrastructureGRPC(config.GRPC)
+		printSiteWhereInstanceConfigurationInfrastructureKafka(config.Kafka)
+		printSiteWhereInstanceConfigurationInfrastructureMetrics(config.Metrics)
+		printSiteWhereInstanceConfigurationInfrastructureRedis(config.Redis)
+	}
 }
 
 func printSiteWhereInstanceConfigurationInfrastructureGRPC(config *alpha3.SiteWhereInstanceInfrastructureGRPCConfiguration) {
 	fmt.Printf("    gRPC:\n")
-	fmt.Printf(secondLevelTemplateFloat, "Backoff Multiplier", config.BackoffMultiplier)
-	fmt.Printf(secondLevelTemplateInt, "Initial Backoff (sec)", config.InitialBackoffSeconds)
-	fmt.Printf(secondLevelTemplateInt, "Max Backoff (sec)", config.MaxBackoffSeconds)
-	fmt.Printf(secondLevelTemplateInt, "Max Retry", config.MaxRetryCount)
-	fmt.Printf(secondLevelTemplateBool, "Resolve FQDN", config.ResolveFQDN)
+	if config != nil {
+		fmt.Printf(secondLevelTemplateFloat, "Backoff Multiplier", config.BackoffMultiplier)
+		fmt.Printf(secondLevelTemplateInt, "Initial Backoff (sec)", config.InitialBackoffSeconds)
+		fmt.Printf(secondLevelTemplateInt, "Max Backoff (sec)", config.MaxBackoffSeconds)
+		fmt.Printf(secondLevelTemplateInt, "Max Retry", config.MaxRetryCount)
+		fmt.Printf(secondLevelTemplateBool, "Resolve FQDN", config.ResolveFQDN)
+	}
 }
 
 func printSiteWhereInstanceConfigurationInfrastructureKafka(config *alpha3.SiteWhereInstanceInfrastructureKafkaConfiguration) {
 	fmt.Printf("    Kafka:\n")
-	fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
-	fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
-	fmt.Printf(secondLevelTemplateInt, "Def Topic Partitions", config.DefaultTopicPartitions)
-	fmt.Printf(secondLevelTemplateInt, "Def Topic Replication Factor", config.DefaultTopicReplicationFactor)
+	if config != nil {
+		fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
+		fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
+		fmt.Printf(secondLevelTemplateInt, "Def Topic Partitions", config.DefaultTopicPartitions)
+		fmt.Printf(secondLevelTemplateInt, "Def Topic Replication Factor", config.DefaultTopicReplicationFactor)
+	}
 }
 
 func printSiteWhereInstanceConfigurationInfrastructureMetrics(config *alpha3.SiteWhereInstanceInfrastructureMetricsConfiguration) {
 	fmt.Printf("    Metrics:\n")
-	fmt.Printf(secondLevelTemplateBool, "Enabled", config.Enabled)
-	fmt.Printf(secondLevelTemplateInt, "HTTP Port", config.HTTPPort)
+	if config != nil {
+		fmt.Printf(secondLevelTemplateBool, "Enabled", config.Enabled)
+		fmt.Printf(secondLevelTemplateInt, "HTTP Port", config.HTTPPort)
+	}
 }
 
 func printSiteWhereInstanceConfigurationInfrastructureRedis(config *alpha3.SiteWhereInstanceInfrastructureRedisConfiguration) {
 	fmt.Printf("    Redis:\n")
-	fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
-	fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
-	fmt.Printf(secondLevelTemplateInt, "Node Count", config.NodeCount)
-	fmt.Printf(secondLevelTemplateString, "Master Group Name", config.MasterGroupName)
+	if config != nil {
+		fmt.Printf(secondLevelTemplateString, "Hostname", config.Hostname)
+		fmt.Printf(secondLevelTemplateInt, "Port", config.Port)
+		fmt.Printf(secondLevelTemplateInt, "Node Count", config.NodeCount)
+		fmt.Printf(secondLevelTemplateString, "Master Group Name", config.MasterGroupName)
+	}
 }
 
 func printSiteWhereInstanceConfigurationPersistence(config *alpha3.SiteWhereInstancePersistenceConfiguration) {
 	fmt.Printf("  Persistence:\n")
-	printSiteWhereInstanceConfigurationCassandraPersistence(config.CassandraConfigurations)
-	printSiteWhereInstanceConfigurationInfluxDBPersistence(config.InfluxDBConfigurations)
-	printSiteWhereInstanceConfigurationRDBPersistence(config.RDBConfigurations)
+	if config != nil {
+		printSiteWhereInstanceConfigurationCassandraPersistence(config.CassandraConfigurations)
+		printSiteWhereInstanceConfigurationInfluxDBPersistence(config.InfluxDBConfigurations)
+		printSiteWhereInstanceConfigurationRDBPersistence(config.RDBConfigurations)
+	}
 }
 
 func printSiteWhereInstanceConfigurationCassandraPersistence(config map[string]alpha3.SiteWhereInstancePersistenceCassandraConfiguration) {
 	fmt.Printf("    Cassandra:\n")
-	for key, value := range config {
-		fmt.Printf(secondLevelTemplateString, "Entry", key)
-		fmt.Printf(thirdLevelTemplateString, "Contact Points", value.ContactPoints)
-		fmt.Printf(thirdLevelTemplateString, "Keyspace", value.Keyspace)
+	if config != nil {
+		for key, value := range config {
+			fmt.Printf(secondLevelTemplateString, "Entry", key)
+			fmt.Printf(thirdLevelTemplateString, "Contact Points", value.ContactPoints)
+			fmt.Printf(thirdLevelTemplateString, "Keyspace", value.Keyspace)
+		}
 	}
 }
 
 func printSiteWhereInstanceConfigurationInfluxDBPersistence(config map[string]alpha3.SiteWhereInstancePersistenceInfluxDBConfiguration) {
 	fmt.Printf("    InfluxDB:\n")
-	for key, value := range config {
-		fmt.Printf(secondLevelTemplateString, "Entry", key)
-		fmt.Printf(thirdLevelTemplateString, "Hostname", value.Hostname)
-		fmt.Printf(thirdLevelTemplateInt, "Port", value.Port)
-		fmt.Printf(thirdLevelTemplateString, "Database Name", value.DatabaseName)
+	if config != nil {
+		for key, value := range config {
+			fmt.Printf(secondLevelTemplateString, "Entry", key)
+			fmt.Printf(thirdLevelTemplateString, "Hostname", value.Hostname)
+			fmt.Printf(thirdLevelTemplateInt, "Port", value.Port)
+			fmt.Printf(thirdLevelTemplateString, "Database Name", value.DatabaseName)
+		}
 	}
 }
 
