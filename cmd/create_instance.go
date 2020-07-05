@@ -124,7 +124,7 @@ func createNamespaceAndResources(instance *alpha3.SiteWhereInstance) (*rest.Conf
 	}
 
 	var ns *v1.Namespace
-	ns, err = createNamespaceIfNotExists(instance.Namespace, clientset)
+	ns, err = internal.CreateNamespaceIfNotExists(instance.Namespace, clientset)
 	if err != nil {
 		fmt.Printf("Error Creating Namespace: %s, %v", instance.Namespace, err)
 		return nil, err
@@ -190,40 +190,6 @@ func createSiteWhereResources(instance *alpha3.SiteWhereInstance, namespace stri
 			}
 		}
 	}
-}
-
-func createNamespaceIfNotExists(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
-	var err error
-	var ns *v1.Namespace
-
-	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
-
-	if err != nil && k8serror.IsNotFound(err) {
-		ns = &v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-				Labels: map[string]string{
-					"app": namespace,
-				},
-			},
-		}
-
-		result, err := clientset.CoreV1().Namespaces().Create(context.TODO(),
-			ns,
-			metav1.CreateOptions{})
-
-		if err != nil {
-			return nil, err
-		}
-
-		return result, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return ns, nil
 }
 
 func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*v1.ServiceAccount, error) {
