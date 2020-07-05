@@ -44,6 +44,22 @@ curl -L https://github.com/sitewhere/swctl/releases/latest/download/swctl.window
 
 ## Usage
 
+### Install SiteWhere
+
+To install SiteWhere 3.0 on your Kubernetes cluster, run the following command.
+
+```console
+swctl install
+```
+
+This comamnd will install do the following for you:
+
+- Create `sitewhere-system` Namespace.
+- Install SiteWhere Custom Resource Definitions.
+- Install SiteWhere Templates.
+- Install SiteWhere Operator.
+- Install SiteWhere Infrastructure.
+
 ### Listing SiteWhere Instances
 
 ```console
