@@ -34,6 +34,9 @@ func InstallSiteWhereOperator(config *rest.Config, statikFS http.FileSystem) err
 	}
 
 	_, err = CreateNamespaceIfNotExists(sitewhereSystemNamespace, clientset)
+	if err != nil {
+		return err
+	}
 
 	for i := 1; i <= operatorFileNumber; i++ {
 		var operatorResource = fmt.Sprintf(operatorFileTemplate, i)
