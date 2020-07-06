@@ -255,6 +255,11 @@ func DeleteNamespaceIfExists(namespace string, clientset *kubernetes.Clientset) 
 		metav1.DeleteOptions{})
 }
 
+// DeleteSiteWhereNamespaceIfExists Delete a Namespace in Kubernetes if it does exists.
+func DeleteSiteWhereNamespaceIfExists(clientset *kubernetes.Clientset) error {
+	return DeleteNamespaceIfExists(sitewhereSystemNamespace, clientset)
+}
+
 // CreateServiceAccountIfNotExists Create a Service Account if it does not exists.
 func CreateServiceAccountIfNotExists(sa *v1.ServiceAccount, clientset *kubernetes.Clientset, namespace string) (*v1.ServiceAccount, error) {
 	var err error

@@ -50,10 +50,10 @@ This command will uninstall:
 				return
 			}
 
-			// Uninstall sitewhere-system namespace
-			err = internal.DeleteNamespaceIfExists("sitewhere-system", clientset)
+			// Uninstall SiteWhere namespace
+			err = internal.DeleteSiteWhereNamespaceIfExists(clientset)
 			if err != nil {
-				fmt.Printf("Error Deleting Namespace sitewhere-system: %v\n", err)
+				fmt.Printf("Error Deleting SiteWhere Namespace: %v\n", err)
 				return
 			}
 
