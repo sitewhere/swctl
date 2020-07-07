@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -41,9 +43,34 @@ func InstallSiteWhereOperator(config *rest.Config, statikFS http.FileSystem) err
 	for i := 1; i <= operatorFileNumber; i++ {
 		var operatorResource = fmt.Sprintf(operatorFileTemplate, i)
 		err = InstallResourceFromFile(operatorResource, config, statikFS)
-		if err != nil {
+		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// UninstallSiteWhereOperator Uninstall SiteWhere Operator resource file in the cluster
+func UninstallSiteWhereOperator(config *rest.Config, statikFS http.FileSystem) error {
+	var err error
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	for i := 1; i <= operatorFileNumber; i++ {
+		var operatorResource = fmt.Sprintf(operatorFileTemplate, i)
+		err = UninstallResourceFromFile(operatorResource, config, statikFS)
+		if err != nil && !errors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	err = DeleteNamespaceIfExists(sitewhereSystemNamespace, clientset)
+	if err != nil && !errors.IsNotFound(err) {
+		return err
 	}
 
 	return nil

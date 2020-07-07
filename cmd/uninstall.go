@@ -10,12 +10,8 @@ package cmd
 
 import (
 	"fmt"
-	// "net/http"
-
-	// "k8s.io/client-go/rest"
 
 	"github.com/rakyll/statik/fs"
-	"k8s.io/client-go/kubernetes"
 
 	"github.com/sitewhere/swctl/internal"
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
@@ -43,23 +39,23 @@ This command will uninstall:
 				return
 			}
 
-			clientset, err := kubernetes.NewForConfig(config)
-
-			if err != nil {
-				fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-				return
-			}
-
-			// Uninstall SiteWhere namespace
-			err = internal.DeleteSiteWhereNamespaceIfExists(clientset)
-			if err != nil {
-				fmt.Printf("Error Deleting SiteWhere Namespace: %v\n", err)
-				return
-			}
-
 			statikFS, err := fs.New()
 			if err != nil {
 				fmt.Printf("Error Reading Resources: %v\n", err)
+				return
+			}
+
+			// Uninstall Infrastructure
+			err = internal.UninstallSiteWhereInfrastructure(config, statikFS)
+			if err != nil {
+				fmt.Printf("Error Uninstalling SiteWhere Infrastucture: %v\n", err)
+				return
+			}
+
+			// Uninstall Operator
+			err = internal.UninstallSiteWhereOperator(config, statikFS)
+			if err != nil {
+				fmt.Printf("Error Uninstalling SiteWhere Operator: %v\n", err)
 				return
 			}
 

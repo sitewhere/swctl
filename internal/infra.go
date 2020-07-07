@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"k8s.io/client-go/rest"
 )
 
@@ -28,7 +30,20 @@ func InstallSiteWhereInfrastructure(config *rest.Config, statikFS http.FileSyste
 	for i := 1; i <= infraFileNumber; i++ {
 		var infraResource = fmt.Sprintf(infraFileTemplate, i)
 		err = InstallResourceFromFile(infraResource, config, statikFS)
-		if err != nil {
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+	return nil
+}
+
+// UninstallSiteWhereInfrastructure Uninstall SiteWhere Infrastructure components in the cluster
+func UninstallSiteWhereInfrastructure(config *rest.Config, statikFS http.FileSystem) error {
+	var err error
+	for i := 1; i <= infraFileNumber; i++ {
+		var infraResource = fmt.Sprintf(infraFileTemplate, i)
+		err = UninstallResourceFromFile(infraResource, config, statikFS)
+		if err != nil && !errors.IsNotFound(err) {
 			return err
 		}
 	}

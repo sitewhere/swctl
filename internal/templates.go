@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"k8s.io/client-go/rest"
 )
 
@@ -28,7 +30,7 @@ func InstallSiteWhereTemplates(config *rest.Config, statikFS http.FileSystem) er
 	for i := 1; i <= templatesFileNumber; i++ {
 		var templateName = fmt.Sprintf(templateFileTemplate, i)
 		CreateCustomResourceFromFile(templateName, config, statikFS)
-		if err != nil {
+		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	}

@@ -164,11 +164,10 @@ func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS ht
 
 	_ = groupVersionKind
 
-	// if err != nil {
-	// 	// If we can decode, try installing custom resource
-	// 	installSiteWhereTemplate(crdName, config, statikFS)
-	// 	return err
-	// }
+	if err != nil {
+		// If we can decode, try uninstalling custom resource
+		return DeleteCustomResourceFromFile(fileName, config, statikFS)
+	}
 
 	// now use switch over the type of the object
 	// and match each type-case
@@ -206,8 +205,7 @@ func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS ht
 		_ = o //o is unknown for us
 	}
 
-	if err != nil {
-		fmt.Printf("Error Creating Resource: %v\n", err)
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	return nil
@@ -843,6 +841,67 @@ func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 		if !errors.IsAlreadyExists(err) {
 			fmt.Printf("Error creating resource from file %s of Kind: %s: %v", crName, gvk.GroupKind().Kind, err)
 		}
+		return err
+	}
+	return nil
+}
+
+// DeleteCustomResourceFromFile Reads a File from statik and deletes a CustomResource from it.
+func DeleteCustomResourceFromFile(crName string, config *rest.Config, statikFS http.FileSystem) error {
+	r, err := statikFS.Open(crName)
+	if err != nil {
+		fmt.Printf("Error reading %s: %v\n", crName, err)
+		return err
+	}
+	defer r.Close()
+	contents, err := ioutil.ReadAll(r)
+	if err != nil {
+		fmt.Printf("Error reading content: %v\n", err)
+		return err
+	}
+
+	// 1. Prepare a RESTMapper to find GVR
+	dc, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		fmt.Printf("Error getting NewDiscoveryClientForConfig: %v\n", err)
+		return err
+	}
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
+
+	// 2. Prepare the dynamic client
+	dyn, err := dynamic.NewForConfig(config)
+	if err != nil {
+		fmt.Printf("Error getting NewForConfig: %v\n", err)
+		return err
+	}
+
+	// 3. Decode YAML manifest into unstructured.Unstructured
+	obj := &unstructured.Unstructured{}
+	_, gvk, err := decUnstructured.Decode([]byte(contents), nil, obj)
+	if err != nil {
+		fmt.Printf("Error decoding: %v\n", err)
+	}
+
+	// 4. Find GVR
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		fmt.Printf("Error finding GRV: %v\n", err)
+	}
+
+	// 5. Obtain REST interface for the GVR
+	var dr dynamic.ResourceInterface
+	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+		// namespaced resources should specify the namespace
+		dr = dyn.Resource(mapping.Resource).Namespace(obj.GetNamespace())
+	} else {
+		// for cluster-wide resources
+		dr = dyn.Resource(mapping.Resource)
+	}
+
+	err = dr.Delete(context.TODO(), obj.GetName(), metav1.DeleteOptions{})
+
+	if err != nil && !errors.IsNotFound(err) {
+		fmt.Printf("Error deleting resource from file %s of Kind: %s: %v", crName, gvk.GroupKind().Kind, err)
 		return err
 	}
 	return nil

@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"k8s.io/client-go/rest"
 )
 
@@ -28,7 +30,7 @@ func InstallSiteWhereCRDs(config *rest.Config, statikFS http.FileSystem) error {
 	for i := 1; i <= crdFileNumber; i++ {
 		var crdName = fmt.Sprintf(crdFileTemplate, i)
 		err = InstallResourceFromFile(crdName, config, statikFS)
-		if err != nil {
+		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	}
