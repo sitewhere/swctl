@@ -259,7 +259,7 @@ func DeleteSiteWhereNamespaceIfExists(clientset kubernetes.Interface) error {
 }
 
 // CreateServiceAccountIfNotExists Create a Service Account if it does not exists.
-func CreateServiceAccountIfNotExists(sa *v1.ServiceAccount, clientset *kubernetes.Clientset, namespace string) (*v1.ServiceAccount, error) {
+func CreateServiceAccountIfNotExists(sa *v1.ServiceAccount, clientset kubernetes.Interface, namespace string) (*v1.ServiceAccount, error) {
 	var err error
 	var existingSA *v1.ServiceAccount
 
@@ -289,7 +289,7 @@ func CreateServiceAccountIfNotExists(sa *v1.ServiceAccount, clientset *kubernete
 }
 
 // DeleteServiceAccountIfExists Delete a Service Account if it exists.
-func DeleteServiceAccountIfExists(sa *v1.ServiceAccount, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteServiceAccountIfExists(sa *v1.ServiceAccount, clientset kubernetes.Interface, namespace string) error {
 	return clientset.CoreV1().ServiceAccounts(namespace).Delete(
 		context.TODO(),
 		sa.ObjectMeta.Name,
