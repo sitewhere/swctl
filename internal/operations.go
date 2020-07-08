@@ -254,7 +254,7 @@ func DeleteNamespaceIfExists(namespace string, clientset kubernetes.Interface) e
 }
 
 // DeleteSiteWhereNamespaceIfExists Delete a Namespace in Kubernetes if it does exists.
-func DeleteSiteWhereNamespaceIfExists(clientset *kubernetes.Clientset) error {
+func DeleteSiteWhereNamespaceIfExists(clientset kubernetes.Interface) error {
 	return DeleteNamespaceIfExists(sitewhereSystemNamespace, clientset)
 }
 
