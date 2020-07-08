@@ -26,11 +26,7 @@ var (
 		Use:   "version",
 		Short: "Version will output the current build information",
 		Long:  ``,
-		Run: func(_ *cobra.Command, _ []string) {
-			resp := goVersion.FuncWithOutput(shortened, version, commit, date, versionOutput)
-			fmt.Print(resp)
-			return
-		},
+		Run:   printSiteWhereVersion,
 	}
 )
 
@@ -38,4 +34,10 @@ func init() {
 	versionCmd.Flags().BoolVarP(&shortened, "short", "s", false, "Print just the version number.")
 	versionCmd.Flags().StringVarP(&versionOutput, "output", "o", "json", "Output format. One of 'yaml' or 'json'.")
 	rootCmd.AddCommand(versionCmd)
+}
+
+func printSiteWhereVersion(_ *cobra.Command, _ []string) {
+	resp := goVersion.FuncWithOutput(shortened, version, commit, date, versionOutput)
+	fmt.Print(resp)
+	return
 }
