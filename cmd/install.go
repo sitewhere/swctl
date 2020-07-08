@@ -29,53 +29,55 @@ This command will install:
  - SiteWhere Templates.
  - SiteWhere Operator.
  - SiteWhere Infrastructure.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-
-		config, err := internal.GetKubeConfigFromKubeconfig()
-		if err != nil {
-			fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-			return
-		}
-
-		statikFS, err := fs.New()
-		if err != nil {
-			fmt.Printf("Error Reading Resources: %v\n", err)
-			return
-		}
-
-		// Install Custom Resource Definitions
-		err = internal.InstallSiteWhereCRDs(config, statikFS)
-		if err != nil {
-			fmt.Printf("Error Installing SiteWhere CRDs: %v\n", err)
-			return
-		}
-
-		// Install Templates
-		err = internal.InstallSiteWhereTemplates(config, statikFS)
-		if err != nil {
-			fmt.Printf("Error Installing SiteWhere Templates: %v\n", err)
-			return
-		}
-
-		// Install Operator
-		err = internal.InstallSiteWhereOperator(config, statikFS)
-		if err != nil {
-			fmt.Printf("Error Installing SiteWhere Operator: %v\n", err)
-			return
-		}
-
-		// Install Infrastructure
-		err = internal.InstallSiteWhereInfrastructure(config, statikFS)
-		if err != nil {
-			fmt.Printf("Error Installing SiteWhere Infrastucture: %v\n", err)
-			return
-		}
-
-		fmt.Printf("SiteWhere 3.0 Installed\n")
-	},
+	Run: installSiteWhereCommand,
 }
 
 func init() {
 	rootCmd.AddCommand(installCmd)
+}
+
+func installSiteWhereCommand(cmd *cobra.Command, args []string) {
+	var err error
+
+	config, err := internal.GetKubeConfigFromKubeconfig()
+	if err != nil {
+		fmt.Printf("Error getting Kubernetes Config: %v\n", err)
+		return
+	}
+
+	statikFS, err := fs.New()
+	if err != nil {
+		fmt.Printf("Error Reading Resources: %v\n", err)
+		return
+	}
+
+	// Install Custom Resource Definitions
+	err = internal.InstallSiteWhereCRDs(config, statikFS)
+	if err != nil {
+		fmt.Printf("Error Installing SiteWhere CRDs: %v\n", err)
+		return
+	}
+
+	// Install Templates
+	err = internal.InstallSiteWhereTemplates(config, statikFS)
+	if err != nil {
+		fmt.Printf("Error Installing SiteWhere Templates: %v\n", err)
+		return
+	}
+
+	// Install Operator
+	err = internal.InstallSiteWhereOperator(config, statikFS)
+	if err != nil {
+		fmt.Printf("Error Installing SiteWhere Operator: %v\n", err)
+		return
+	}
+
+	// Install Infrastructure
+	err = internal.InstallSiteWhereInfrastructure(config, statikFS)
+	if err != nil {
+		fmt.Printf("Error Installing SiteWhere Infrastucture: %v\n", err)
+		return
+	}
+
+	fmt.Printf("SiteWhere 3.0 Installed\n")
 }

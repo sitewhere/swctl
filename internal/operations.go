@@ -212,7 +212,7 @@ func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS ht
 }
 
 // CreateNamespaceIfNotExists Create a Namespace in Kubernetes if it does not exists.
-func CreateNamespaceIfNotExists(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
+func CreateNamespaceIfNotExists(namespace string, clientset kubernetes.Interface) (*v1.Namespace, error) {
 	var err error
 	var ns *v1.Namespace
 
