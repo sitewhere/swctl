@@ -31,43 +31,45 @@ This command will uninstall:
  - SiteWhere Templates.
  - SiteWhere Operator.
  - SiteWhere Infrastructure.`,
-		Run: func(cmd *cobra.Command, args []string) {
-
-			config, err := internal.GetKubeConfigFromKubeconfig()
-			if err != nil {
-				fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-				return
-			}
-
-			statikFS, err := fs.New()
-			if err != nil {
-				fmt.Printf("Error Reading Resources: %v\n", err)
-				return
-			}
-
-			// Uninstall Infrastructure
-			err = internal.UninstallSiteWhereInfrastructure(config, statikFS)
-			if err != nil {
-				fmt.Printf("Error Uninstalling SiteWhere Infrastucture: %v\n", err)
-				return
-			}
-
-			// Uninstall Operator
-			err = internal.UninstallSiteWhereOperator(config, statikFS)
-			if err != nil {
-				fmt.Printf("Error Uninstalling SiteWhere Operator: %v\n", err)
-				return
-			}
-
-			// Uninstall Custom Resource Definitions
-			internal.UninstallSiteWhereCRDs(config, statikFS)
-
-			fmt.Println("SiteWhere 3.0 uninstalled.")
-		},
+		Run: uninstallSiteWhereCommand,
 	}
 )
 
 func init() {
 	uninstallCmd.Flags().BoolVarP(&purge, "purge", "p", false, "Purge data.")
 	rootCmd.AddCommand(uninstallCmd)
+}
+
+// uninstallSiteWhereCommand Performs the steps necessary to uninstall SiteWhere
+func uninstallSiteWhereCommand(_ *cobra.Command, _ []string) {
+	config, err := internal.GetKubeConfigFromKubeconfig()
+	if err != nil {
+		fmt.Printf("Error getting Kubernetes Config: %v\n", err)
+		return
+	}
+
+	statikFS, err := fs.New()
+	if err != nil {
+		fmt.Printf("Error Reading Resources: %v\n", err)
+		return
+	}
+
+	// Uninstall Infrastructure
+	err = internal.UninstallSiteWhereInfrastructure(config, statikFS)
+	if err != nil {
+		fmt.Printf("Error Uninstalling SiteWhere Infrastucture: %v\n", err)
+		return
+	}
+
+	// Uninstall Operator
+	err = internal.UninstallSiteWhereOperator(config, statikFS)
+	if err != nil {
+		fmt.Printf("Error Uninstalling SiteWhere Operator: %v\n", err)
+		return
+	}
+
+	// Uninstall Custom Resource Definitions
+	internal.UninstallSiteWhereCRDs(config, statikFS)
+
+	fmt.Println("SiteWhere 3.0 uninstalled.")
 }
