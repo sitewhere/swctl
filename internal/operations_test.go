@@ -10,6 +10,7 @@ LICENSE file.
 package internal
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -63,6 +64,52 @@ func TestCreateNamespaceIfNotExists(t *testing.T) {
 				} else {
 					if result.ObjectMeta.Name != single.namespace {
 						t.Fatalf("expected %s pods, got %s", single.namespace, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteNamespaceIfExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// Namespaces exists, should return existing
+		{
+			namespace: "existing",
+			clientset: fake.NewSimpleClientset(&v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Namespaces does not exist, should return created ns
+		{
+			namespace: "non-existing",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("namespaces \"non-existing\" not found"),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.namespace, func(single struct {
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteNamespaceIfExists(single.namespace, single.clientset)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
 					}
 				}
 			}

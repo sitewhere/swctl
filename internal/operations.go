@@ -247,7 +247,7 @@ func CreateNamespaceIfNotExists(namespace string, clientset kubernetes.Interface
 }
 
 // DeleteNamespaceIfExists Delete a Namespace in Kubernetes if it does exists.
-func DeleteNamespaceIfExists(namespace string, clientset *kubernetes.Clientset) error {
+func DeleteNamespaceIfExists(namespace string, clientset kubernetes.Interface) error {
 	return clientset.CoreV1().Namespaces().Delete(context.TODO(),
 		namespace,
 		metav1.DeleteOptions{})
