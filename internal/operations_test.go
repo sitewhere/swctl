@@ -658,3 +658,126 @@ func TestDeleteSecretIfExists(t *testing.T) {
 		}(single))
 	}
 }
+
+func TestCreatePersistentVolumeClaimIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		pvc       v1.PersistentVolumeClaim
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// PersistentVolumeClaim exists, should return existing
+		{
+			pvc: v1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// PersistentVolumeClaim does not exist, should return created ns
+		{
+			pvc: v1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.pvc.ObjectMeta.Name, func(single struct {
+			pvc       v1.PersistentVolumeClaim
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreatePersistentVolumeClaimIfNotExists(&single.pvc, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.pvc.ObjectMeta.Name {
+						t.Fatalf("expected %s persistentvolumeclaim, got %s", single.pvc.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeletePersistentVolumeClaimIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		pvc       v1.PersistentVolumeClaim
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// PersistentVolumeClaim exists, should return existing
+		{
+			pvc: v1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// PersistentVolumeClaim does not exist, should return created ns
+		{
+			pvc: v1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("persistentvolumeclaims \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.pvc.ObjectMeta.Name, func(single struct {
+			pvc       v1.PersistentVolumeClaim
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeletePersistentVolumeClaimIfExists(&single.pvc, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
