@@ -386,7 +386,7 @@ func TestDeletePodIfExists(t *testing.T) {
 			}},
 			namespace: "ns",
 			clientset: fake.NewSimpleClientset(),
-			err:       fmt.Errorf("pod \"non-existing\" not found"),
+			err:       fmt.Errorf("pods \"non-existing\" not found"),
 		},
 	}
 
