@@ -289,7 +289,6 @@ func TestDeleteServiceAccountIfExists(t *testing.T) {
 }
 
 func TestCreatePodIfNotExists(t *testing.T) {
-
 	t.Parallel()
 	data := []struct {
 		pod       v1.Pod
@@ -399,6 +398,130 @@ func TestDeletePodIfExists(t *testing.T) {
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
 				err := DeletePodIfExists(&single.pod, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestCreateConfigMapIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		cm        v1.ConfigMap
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// ConfigMap exists, should return existing
+		{
+			cm: v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// ConfigMap does not exist, should return created ns
+		{
+			cm: v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.cm.ObjectMeta.Name, func(single struct {
+			cm        v1.ConfigMap
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateConfigMapIfNotExists(&single.cm, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.cm.ObjectMeta.Name {
+						t.Fatalf("expected %s configmap, got %s", single.cm.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteConfigMapIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		cm        v1.ConfigMap
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+
+		// Service Account exists, should return existing
+		{
+			cm: v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Service Account does not exist, should return created ns
+		{
+			cm: v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("configmaps \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.cm.ObjectMeta.Name, func(single struct {
+			cm        v1.ConfigMap
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteConfigMapIfExists(&single.cm, single.clientset, single.namespace)
 
 				if err != nil {
 					if single.err == nil {
