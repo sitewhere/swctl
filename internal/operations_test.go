@@ -360,7 +360,7 @@ func TestDeletePodIfExists(t *testing.T) {
 		err       error
 	}{
 
-		// Service Account exists, should return existing
+		// Pod exists, should return existing
 		{
 			pod: v1.Pod{ObjectMeta: metav1.ObjectMeta{
 				Name:        "existing",
@@ -376,7 +376,7 @@ func TestDeletePodIfExists(t *testing.T) {
 				},
 			}),
 		},
-		// Service Account does not exist, should return created ns
+		// Pod does not exist, should return created ns
 		{
 			pod: v1.Pod{ObjectMeta: metav1.ObjectMeta{
 				Name:        "non-existing",
@@ -484,7 +484,7 @@ func TestDeleteConfigMapIfExists(t *testing.T) {
 		err       error
 	}{
 
-		// Service Account exists, should return existing
+		// ConfigMap exists, should return existing
 		{
 			cm: v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
 				Name:        "existing",
@@ -500,7 +500,7 @@ func TestDeleteConfigMapIfExists(t *testing.T) {
 				},
 			}),
 		},
-		// Service Account does not exist, should return created ns
+		// ConfigMap does not exist, should return created ns
 		{
 			cm: v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
 				Name:        "non-existing",
@@ -522,6 +522,129 @@ func TestDeleteConfigMapIfExists(t *testing.T) {
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
 				err := DeleteConfigMapIfExists(&single.cm, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestCreateSecretIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		sec       v1.Secret
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// Secret exists, should return existing
+		{
+			sec: v1.Secret{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Secret does not exist, should return created ns
+		{
+			sec: v1.Secret{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.sec.ObjectMeta.Name, func(single struct {
+			sec       v1.Secret
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateSecretIfNotExists(&single.sec, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.sec.ObjectMeta.Name {
+						t.Fatalf("expected %s secrets, got %s", single.sec.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteSecretIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		sec       v1.Secret
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// Secret exists, should return existing
+		{
+			sec: v1.Secret{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Secret does not exist, should return created ns
+		{
+			sec: v1.Secret{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("secrets \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.sec.ObjectMeta.Name, func(single struct {
+			sec       v1.Secret
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteSecretIfExists(&single.sec, single.clientset, single.namespace)
 
 				if err != nil {
 					if single.err == nil {
