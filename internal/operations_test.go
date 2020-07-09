@@ -287,3 +287,128 @@ func TestDeleteServiceAccountIfExists(t *testing.T) {
 		}(single))
 	}
 }
+
+func TestCreatePodIfNotExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		pod       v1.Pod
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// Pod exists, should return existing
+		{
+			pod: v1.Pod{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Pod does not exist, should return created ns
+		{
+			pod: v1.Pod{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.pod.ObjectMeta.Name, func(single struct {
+			pod       v1.Pod
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreatePodIfNotExists(&single.pod, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.pod.ObjectMeta.Name {
+						t.Fatalf("expected %s pod, got %s", single.pod.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeletePodIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		pod       v1.Pod
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+
+		// Service Account exists, should return existing
+		{
+			pod: v1.Pod{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Service Account does not exist, should return created ns
+		{
+			pod: v1.Pod{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("pod \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.pod.ObjectMeta.Name, func(single struct {
+			pod       v1.Pod
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeletePodIfExists(&single.pod, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}

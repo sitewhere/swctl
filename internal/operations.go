@@ -297,7 +297,7 @@ func DeleteServiceAccountIfExists(sa *v1.ServiceAccount, clientset kubernetes.In
 }
 
 // CreatePodIfNotExists Create a Service Account if it does not exists.
-func CreatePodIfNotExists(pod *v1.Pod, clientset *kubernetes.Clientset, namespace string) (*v1.Pod, error) {
+func CreatePodIfNotExists(pod *v1.Pod, clientset kubernetes.Interface, namespace string) (*v1.Pod, error) {
 	var err error
 	var existingPod *v1.Pod
 
@@ -327,7 +327,7 @@ func CreatePodIfNotExists(pod *v1.Pod, clientset *kubernetes.Clientset, namespac
 }
 
 // DeletePodIfExists Delete a Service Account if it exists.
-func DeletePodIfExists(pod *v1.Pod, clientset *kubernetes.Clientset, namespace string) error {
+func DeletePodIfExists(pod *v1.Pod, clientset kubernetes.Interface, namespace string) error {
 	return clientset.CoreV1().Pods(namespace).Delete(
 		context.TODO(),
 		pod.ObjectMeta.Name,
@@ -335,7 +335,7 @@ func DeletePodIfExists(pod *v1.Pod, clientset *kubernetes.Clientset, namespace s
 }
 
 // CreateConfigMapIfNotExists Create a Service Account if it does not exists.
-func CreateConfigMapIfNotExists(cm *v1.ConfigMap, clientset *kubernetes.Clientset, namespace string) (*v1.ConfigMap, error) {
+func CreateConfigMapIfNotExists(cm *v1.ConfigMap, clientset kubernetes.Interface, namespace string) (*v1.ConfigMap, error) {
 	var err error
 	var existingCM *v1.ConfigMap
 
@@ -365,7 +365,7 @@ func CreateConfigMapIfNotExists(cm *v1.ConfigMap, clientset *kubernetes.Clientse
 }
 
 // DeleteConfigMapIfExists Delete a Service Account if it exists.
-func DeleteConfigMapIfExists(cm *v1.ConfigMap, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteConfigMapIfExists(cm *v1.ConfigMap, clientset kubernetes.Interface, namespace string) error {
 	return clientset.CoreV1().ConfigMaps(namespace).Delete(
 		context.TODO(),
 		cm.ObjectMeta.Name,
@@ -373,7 +373,7 @@ func DeleteConfigMapIfExists(cm *v1.ConfigMap, clientset *kubernetes.Clientset, 
 }
 
 // CreateSecretIfNotExists Create a Service Account if it does not exists.
-func CreateSecretIfNotExists(sec *v1.Secret, clientset *kubernetes.Clientset, namespace string) (*v1.Secret, error) {
+func CreateSecretIfNotExists(sec *v1.Secret, clientset kubernetes.Interface, namespace string) (*v1.Secret, error) {
 	var err error
 	var existingSec *v1.Secret
 
@@ -403,7 +403,7 @@ func CreateSecretIfNotExists(sec *v1.Secret, clientset *kubernetes.Clientset, na
 }
 
 // DeleteSecretIfExists Delete a Service Account if it exists.
-func DeleteSecretIfExists(sec *v1.Secret, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteSecretIfExists(sec *v1.Secret, clientset kubernetes.Interface, namespace string) error {
 	return clientset.CoreV1().Secrets(namespace).Delete(
 		context.TODO(),
 		sec.ObjectMeta.Name,
@@ -411,7 +411,7 @@ func DeleteSecretIfExists(sec *v1.Secret, clientset *kubernetes.Clientset, names
 }
 
 // CreatePersistentVolumeClaimIfNotExists Create a Service Account if it does not exists.
-func CreatePersistentVolumeClaimIfNotExists(pvc *v1.PersistentVolumeClaim, clientset *kubernetes.Clientset, namespace string) (*v1.PersistentVolumeClaim, error) {
+func CreatePersistentVolumeClaimIfNotExists(pvc *v1.PersistentVolumeClaim, clientset kubernetes.Interface, namespace string) (*v1.PersistentVolumeClaim, error) {
 	var err error
 	var existingPVC *v1.PersistentVolumeClaim
 
@@ -441,7 +441,7 @@ func CreatePersistentVolumeClaimIfNotExists(pvc *v1.PersistentVolumeClaim, clien
 }
 
 // DeletePersistentVolumeClaimIfExists Delete a Service Account if it exists.
-func DeletePersistentVolumeClaimIfExists(pvc *v1.PersistentVolumeClaim, clientset *kubernetes.Clientset, namespace string) error {
+func DeletePersistentVolumeClaimIfExists(pvc *v1.PersistentVolumeClaim, clientset kubernetes.Interface, namespace string) error {
 	return clientset.CoreV1().PersistentVolumeClaims(namespace).Delete(
 		context.TODO(),
 		pvc.ObjectMeta.Name,
@@ -449,7 +449,7 @@ func DeletePersistentVolumeClaimIfExists(pvc *v1.PersistentVolumeClaim, clientse
 }
 
 // CreateServiceIfNotExists Create a Service Account if it does not exists.
-func CreateServiceIfNotExists(svc *v1.Service, clientset *kubernetes.Clientset, namespace string) (*v1.Service, error) {
+func CreateServiceIfNotExists(svc *v1.Service, clientset kubernetes.Interface, namespace string) (*v1.Service, error) {
 	var err error
 	var existingSVC *v1.Service
 
@@ -479,7 +479,7 @@ func CreateServiceIfNotExists(svc *v1.Service, clientset *kubernetes.Clientset, 
 }
 
 // DeleteServiceIfExists Delete a Service Account if it exists.
-func DeleteServiceIfExists(svc *v1.Service, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteServiceIfExists(svc *v1.Service, clientset kubernetes.Interface, namespace string) error {
 	return clientset.CoreV1().Services(namespace).Delete(
 		context.TODO(),
 		svc.ObjectMeta.Name,
@@ -487,7 +487,7 @@ func DeleteServiceIfExists(svc *v1.Service, clientset *kubernetes.Clientset, nam
 }
 
 // CreateDeploymentIfNotExists Create a Service Account if it does not exists.
-func CreateDeploymentIfNotExists(deploy *appsv1.Deployment, clientset *kubernetes.Clientset, namespace string) (*appsv1.Deployment, error) {
+func CreateDeploymentIfNotExists(deploy *appsv1.Deployment, clientset kubernetes.Interface, namespace string) (*appsv1.Deployment, error) {
 	var err error
 	var existingDeploy *appsv1.Deployment
 
@@ -517,7 +517,7 @@ func CreateDeploymentIfNotExists(deploy *appsv1.Deployment, clientset *kubernete
 }
 
 // DeleteDeploymentIfExists Delete a Service Account if it does not exists.
-func DeleteDeploymentIfExists(deploy *appsv1.Deployment, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteDeploymentIfExists(deploy *appsv1.Deployment, clientset kubernetes.Interface, namespace string) error {
 	return clientset.AppsV1().Deployments(namespace).Delete(
 		context.TODO(),
 		deploy.ObjectMeta.Name,
@@ -525,7 +525,7 @@ func DeleteDeploymentIfExists(deploy *appsv1.Deployment, clientset *kubernetes.C
 }
 
 // CreateStatefulSetIfNotExists Create a Service Account if it does not exists.
-func CreateStatefulSetIfNotExists(ss *appsv1.StatefulSet, clientset *kubernetes.Clientset, namespace string) (*appsv1.StatefulSet, error) {
+func CreateStatefulSetIfNotExists(ss *appsv1.StatefulSet, clientset kubernetes.Interface, namespace string) (*appsv1.StatefulSet, error) {
 	var err error
 	var existingSS *appsv1.StatefulSet
 
@@ -555,7 +555,7 @@ func CreateStatefulSetIfNotExists(ss *appsv1.StatefulSet, clientset *kubernetes.
 }
 
 // DeleteStatefulSetIfExists Delete a Service Account if it exists.
-func DeleteStatefulSetIfExists(ss *appsv1.StatefulSet, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteStatefulSetIfExists(ss *appsv1.StatefulSet, clientset kubernetes.Interface, namespace string) error {
 	return clientset.AppsV1().StatefulSets(namespace).Delete(
 		context.TODO(),
 		ss.ObjectMeta.Name,
@@ -563,7 +563,7 @@ func DeleteStatefulSetIfExists(ss *appsv1.StatefulSet, clientset *kubernetes.Cli
 }
 
 // CreateClusterRoleIfNotExists Create a ClusterRole if it does not exists.
-func CreateClusterRoleIfNotExists(cr *rbacV1.ClusterRole, clientset *kubernetes.Clientset) (*rbacV1.ClusterRole, error) {
+func CreateClusterRoleIfNotExists(cr *rbacV1.ClusterRole, clientset kubernetes.Interface) (*rbacV1.ClusterRole, error) {
 	var err error
 	var existingCR *rbacV1.ClusterRole
 
@@ -593,7 +593,7 @@ func CreateClusterRoleIfNotExists(cr *rbacV1.ClusterRole, clientset *kubernetes.
 }
 
 // DeleteClusterRoleIfExists Delete a ClusterRole if it exists.
-func DeleteClusterRoleIfExists(cr *rbacV1.ClusterRole, clientset *kubernetes.Clientset) error {
+func DeleteClusterRoleIfExists(cr *rbacV1.ClusterRole, clientset kubernetes.Interface) error {
 	return clientset.RbacV1().ClusterRoles().Delete(
 		context.TODO(),
 		cr.ObjectMeta.Name,
@@ -601,7 +601,7 @@ func DeleteClusterRoleIfExists(cr *rbacV1.ClusterRole, clientset *kubernetes.Cli
 }
 
 // CreateClusterRoleBindingIfNotExists Create a ClusterRoleBinding if it does not exists.
-func CreateClusterRoleBindingIfNotExists(crb *rbacV1.ClusterRoleBinding, clientset *kubernetes.Clientset) (*rbacV1.ClusterRoleBinding, error) {
+func CreateClusterRoleBindingIfNotExists(crb *rbacV1.ClusterRoleBinding, clientset kubernetes.Interface) (*rbacV1.ClusterRoleBinding, error) {
 	var err error
 	var existingCRB *rbacV1.ClusterRoleBinding
 
@@ -631,7 +631,7 @@ func CreateClusterRoleBindingIfNotExists(crb *rbacV1.ClusterRoleBinding, clients
 }
 
 // DeleteClusterRoleBindingIfExists Delete a ClusterRoleBinding if it exists.
-func DeleteClusterRoleBindingIfExists(crb *rbacV1.ClusterRoleBinding, clientset *kubernetes.Clientset) error {
+func DeleteClusterRoleBindingIfExists(crb *rbacV1.ClusterRoleBinding, clientset kubernetes.Interface) error {
 	return clientset.RbacV1().ClusterRoleBindings().Delete(
 		context.TODO(),
 		crb.ObjectMeta.Name,
@@ -639,7 +639,7 @@ func DeleteClusterRoleBindingIfExists(crb *rbacV1.ClusterRoleBinding, clientset 
 }
 
 // CreateRoleIfNotExists Create a Role if it does not exists.
-func CreateRoleIfNotExists(role *rbacV1.Role, clientset *kubernetes.Clientset, namespace string) (*rbacV1.Role, error) {
+func CreateRoleIfNotExists(role *rbacV1.Role, clientset kubernetes.Interface, namespace string) (*rbacV1.Role, error) {
 	var err error
 	var existingRole *rbacV1.Role
 
@@ -669,7 +669,7 @@ func CreateRoleIfNotExists(role *rbacV1.Role, clientset *kubernetes.Clientset, n
 }
 
 // DeleteRoleIfExists Delete a Role if it does not exists.
-func DeleteRoleIfExists(role *rbacV1.Role, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteRoleIfExists(role *rbacV1.Role, clientset kubernetes.Interface, namespace string) error {
 	return clientset.RbacV1().Roles(namespace).Delete(
 		context.TODO(),
 		role.ObjectMeta.Name,
@@ -677,7 +677,7 @@ func DeleteRoleIfExists(role *rbacV1.Role, clientset *kubernetes.Clientset, name
 }
 
 // CreateRoleBindingIfNotExists Create a RoleBinding if it does not exists.
-func CreateRoleBindingIfNotExists(rb *rbacV1.RoleBinding, clientset *kubernetes.Clientset, namespace string) (*rbacV1.RoleBinding, error) {
+func CreateRoleBindingIfNotExists(rb *rbacV1.RoleBinding, clientset kubernetes.Interface, namespace string) (*rbacV1.RoleBinding, error) {
 	var err error
 	var existingRoleBinding *rbacV1.RoleBinding
 
@@ -707,7 +707,7 @@ func CreateRoleBindingIfNotExists(rb *rbacV1.RoleBinding, clientset *kubernetes.
 }
 
 // DeleteRoleBindingIfExists Delete a RoleBinding if it exists.
-func DeleteRoleBindingIfExists(rb *rbacV1.RoleBinding, clientset *kubernetes.Clientset, namespace string) error {
+func DeleteRoleBindingIfExists(rb *rbacV1.RoleBinding, clientset kubernetes.Interface, namespace string) error {
 	return clientset.RbacV1().RoleBindings(namespace).Delete(
 		context.TODO(),
 		rb.ObjectMeta.Name,
@@ -715,7 +715,7 @@ func DeleteRoleBindingIfExists(rb *rbacV1.RoleBinding, clientset *kubernetes.Cli
 }
 
 // CreatePodDisruptionBudgetIfNotExists Create a PodDisruptionBudget if it does not exists.
-func CreatePodDisruptionBudgetIfNotExists(rb *policyV1beta1.PodDisruptionBudget, clientset *kubernetes.Clientset, namespace string) (*policyV1beta1.PodDisruptionBudget, error) {
+func CreatePodDisruptionBudgetIfNotExists(rb *policyV1beta1.PodDisruptionBudget, clientset kubernetes.Interface, namespace string) (*policyV1beta1.PodDisruptionBudget, error) {
 	var err error
 	var existingPodDisruptionBudget *policyV1beta1.PodDisruptionBudget
 
@@ -745,7 +745,7 @@ func CreatePodDisruptionBudgetIfNotExists(rb *policyV1beta1.PodDisruptionBudget,
 }
 
 // DeletePodDisruptionBudgetIfExists Delete a PodDisruptionBudget if it exists.
-func DeletePodDisruptionBudgetIfExists(rb *policyV1beta1.PodDisruptionBudget, clientset *kubernetes.Clientset, namespace string) error {
+func DeletePodDisruptionBudgetIfExists(rb *policyV1beta1.PodDisruptionBudget, clientset kubernetes.Interface, namespace string) error {
 	return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Delete(
 		context.TODO(),
 		rb.ObjectMeta.Name,
