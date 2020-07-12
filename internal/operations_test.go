@@ -1028,3 +1028,126 @@ func TestDeleteDeploymentIfExists(t *testing.T) {
 		}(single))
 	}
 }
+
+func TestCreateStatefulSetIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		svc       appsv1.StatefulSet
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// StatefulSet exists, should return existing
+		{
+			svc: appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&appsv1.StatefulSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// StatefulSet does not exist, should return created ns
+		{
+			svc: appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.svc.ObjectMeta.Name, func(single struct {
+			svc       appsv1.StatefulSet
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateStatefulSetIfNotExists(&single.svc, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.svc.ObjectMeta.Name {
+						t.Fatalf("expected %s service, got %s", single.svc.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteStatefulSetIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		depl      appsv1.StatefulSet
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// StatefulSet exists, should return existing
+		{
+			depl: appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&appsv1.StatefulSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// StatefulSet does not exist, should return created ns
+		{
+			depl: appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("statefulsets.apps \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.depl.ObjectMeta.Name, func(single struct {
+			depl      appsv1.StatefulSet
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteStatefulSetIfExists(&single.depl, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
