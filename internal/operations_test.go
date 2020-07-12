@@ -16,6 +16,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	policyV1beta1 "k8s.io/api/policy/v1beta1"
 	rbacV1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -1603,6 +1604,129 @@ func TestDeleteRoleBindingIfExists(t *testing.T) {
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
 				err := DeleteRoleBindingIfExists(&single.rb, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestCreatePodDisruptionBudgetIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		pdb       policyV1beta1.PodDisruptionBudget
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// PodDisruptionBudget exists, should return existing
+		{
+			pdb: policyV1beta1.PodDisruptionBudget{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&policyV1beta1.PodDisruptionBudget{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// PodDisruptionBudget does not exist, should return created ns
+		{
+			pdb: policyV1beta1.PodDisruptionBudget{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.pdb.ObjectMeta.Name, func(single struct {
+			pdb       policyV1beta1.PodDisruptionBudget
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreatePodDisruptionBudgetIfNotExists(&single.pdb, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.pdb.ObjectMeta.Name {
+						t.Fatalf("expected %s service, got %s", single.pdb.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeletePodDisruptionBudgetIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		pdb       policyV1beta1.PodDisruptionBudget
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// PodDisruptionBudget exists, should return existing
+		{
+			pdb: policyV1beta1.PodDisruptionBudget{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&policyV1beta1.PodDisruptionBudget{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// PodDisruptionBudget does not exist, should return created ns
+		{
+			pdb: policyV1beta1.PodDisruptionBudget{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("poddisruptionbudgets.policy \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.pdb.ObjectMeta.Name, func(single struct {
+			pdb       policyV1beta1.PodDisruptionBudget
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeletePodDisruptionBudgetIfExists(&single.pdb, single.clientset, single.namespace)
 
 				if err != nil {
 					if single.err == nil {
