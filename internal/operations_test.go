@@ -1370,3 +1370,249 @@ func TestDeleteClusterRoleBindingIfExists(t *testing.T) {
 		}(single))
 	}
 }
+
+func TestCreateRoleIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		role      rbacV1.Role
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// Role exists, should return existing
+		{
+			role: rbacV1.Role{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&rbacV1.Role{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Role does not exist, should return created ns
+		{
+			role: rbacV1.Role{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.role.ObjectMeta.Name, func(single struct {
+			role      rbacV1.Role
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateRoleIfNotExists(&single.role, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.role.ObjectMeta.Name {
+						t.Fatalf("expected %s role, got %s", single.role.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteRoleIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		role      rbacV1.Role
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// Role exists, should return existing
+		{
+			role: rbacV1.Role{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&rbacV1.Role{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Role does not exist, should return created ns
+		{
+			role: rbacV1.Role{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("roles.rbac.authorization.k8s.io \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.role.ObjectMeta.Name, func(single struct {
+			role      rbacV1.Role
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteRoleIfExists(&single.role, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestCreateRoleBindingIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		rb        rbacV1.RoleBinding
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// RoleBinding exists, should return existing
+		{
+			rb: rbacV1.RoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&rbacV1.RoleBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// RoleBinding does not exist, should return created ns
+		{
+			rb: rbacV1.RoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.rb.ObjectMeta.Name, func(single struct {
+			rb        rbacV1.RoleBinding
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateRoleBindingIfNotExists(&single.rb, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.rb.ObjectMeta.Name {
+						t.Fatalf("expected %s service, got %s", single.rb.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteRoleBindingIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		rb        rbacV1.RoleBinding
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// RoleBinding exists, should return existing
+		{
+			rb: rbacV1.RoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&rbacV1.RoleBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// RoleBinding does not exist, should return created ns
+		{
+			rb: rbacV1.RoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("rolebindings.rbac.authorization.k8s.io \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.rb.ObjectMeta.Name, func(single struct {
+			rb        rbacV1.RoleBinding
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteRoleBindingIfExists(&single.rb, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
