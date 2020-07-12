@@ -16,6 +16,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	rbacV1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/client-go/kubernetes"
@@ -1138,6 +1139,115 @@ func TestDeleteStatefulSetIfExists(t *testing.T) {
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
 				err := DeleteStatefulSetIfExists(&single.depl, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestCreateClusterRoleIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		cr        rbacV1.ClusterRole
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// ClusterRole exists, should return existing
+		{
+			cr: rbacV1.ClusterRole{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(&rbacV1.ClusterRole{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// ClusterRole does not exist, should return created ns
+		{
+			cr: rbacV1.ClusterRole{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.cr.ObjectMeta.Name, func(single struct {
+			cr        rbacV1.ClusterRole
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateClusterRoleIfNotExists(&single.cr, single.clientset)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.cr.ObjectMeta.Name {
+						t.Fatalf("expected %s service, got %s", single.cr.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteClusterRoleIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		depl      rbacV1.ClusterRole
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// ClusterRole exists, should return existing
+		{
+			depl: rbacV1.ClusterRole{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(&rbacV1.ClusterRole{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// ClusterRole does not exist, should return created ns
+		{
+			depl: rbacV1.ClusterRole{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("clusterroles.rbac.authorization.k8s.io \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.depl.ObjectMeta.Name, func(single struct {
+			depl      rbacV1.ClusterRole
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteClusterRoleIfExists(&single.depl, single.clientset)
 
 				if err != nil {
 					if single.err == nil {
