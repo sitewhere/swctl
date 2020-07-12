@@ -1261,3 +1261,112 @@ func TestDeleteClusterRoleIfExists(t *testing.T) {
 		}(single))
 	}
 }
+
+func TestCreateClusterRoleBindingIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		crb       rbacV1.ClusterRoleBinding
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// ClusterRoleBinding exists, should return existing
+		{
+			crb: rbacV1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(&rbacV1.ClusterRoleBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// ClusterRoleBinding does not exist, should return created ns
+		{
+			crb: rbacV1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.crb.ObjectMeta.Name, func(single struct {
+			crb       rbacV1.ClusterRoleBinding
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateClusterRoleBindingIfNotExists(&single.crb, single.clientset)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.crb.ObjectMeta.Name {
+						t.Fatalf("expected %s service, got %s", single.crb.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteClusterRoleBindingIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		depl      rbacV1.ClusterRoleBinding
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// ClusterRoleBinding exists, should return existing
+		{
+			depl: rbacV1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(&rbacV1.ClusterRoleBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// ClusterRoleBinding does not exist, should return created ns
+		{
+			depl: rbacV1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Annotations: map[string]string{},
+			}},
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("clusterrolebindings.rbac.authorization.k8s.io \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.depl.ObjectMeta.Name, func(single struct {
+			depl      rbacV1.ClusterRoleBinding
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteClusterRoleBindingIfExists(&single.depl, single.clientset)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
