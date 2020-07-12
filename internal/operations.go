@@ -112,7 +112,13 @@ func InstallResourceFromFile(fileName string, config *rest.Config, statikFS http
 	case *policyV1beta1.PodDisruptionBudget:
 		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, sitewhereSystemNamespace)
 	case *apiextv1beta1.CustomResourceDefinition:
-		_, err = CreateCustomResourceDefinitionIfNotExists(o, config)
+		apixClient, err := apixv1beta1client.NewForConfig(config)
+
+		if err != nil {
+			fmt.Printf("Error getting Kubernetes Client: %v\n", err)
+			return err
+		}
+		_, err = CreateCustomResourceDefinitionIfNotExists(o, apixClient)
 
 	default:
 		fmt.Println(fmt.Sprintf("Resource with type %v not handled.", groupVersionKind))
@@ -753,15 +759,8 @@ func DeletePodDisruptionBudgetIfExists(rb *policyV1beta1.PodDisruptionBudget, cl
 }
 
 // CreateCustomResourceDefinitionIfNotExists Create a CustomResourceDefinition if it does not exists.
-func CreateCustomResourceDefinitionIfNotExists(crd *apiextv1beta1.CustomResourceDefinition, config *rest.Config) (*apiextv1beta1.CustomResourceDefinition, error) {
+func CreateCustomResourceDefinitionIfNotExists(crd *apiextv1beta1.CustomResourceDefinition, apixClient *apixv1beta1client.ApiextensionsV1beta1Client) (*apiextv1beta1.CustomResourceDefinition, error) {
 	var err error
-
-	apixClient, err := apixv1beta1client.NewForConfig(config)
-
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return nil, err
-	}
 
 	crds := apixClient.CustomResourceDefinitions()
 
