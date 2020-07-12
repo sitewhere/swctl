@@ -26,14 +26,20 @@ script:
   - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="swctl.{{.OS}}.{{.Arch}}" -ldflags "-X github.com/sitewhere/swctl/cmd.commit=`git rev-parse --short HEAD` -X github.com/sitewhere/swctl/cmd.date=$(date +'%Y-%m-%d_%T') -X github.com/sitewhere/swctl/cmd.version=$(git describe --tags `git rev-list --tags --max-count=1`)" -verbose ./...; fi
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
-  - wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
-  - chmod +x send.sh
-  - "./send.sh success $WEBHOOK_URL"
+  - |
+    if [ "${LATEST}" = "true" ]; then
+      bash <(curl -s https://codecov.io/bash)
+      wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
+      chmod +x send.sh
+      "./send.sh success $WEBHOOK_URL"
+    fi
 after_failure:
-  - wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
-  - chmod +x send.sh
-  - "./send.sh failure $WEBHOOK_URL"
+  - |
+    if [ "${LATEST}" = "true" ]; then
+      wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
+      chmod +x send.sh
+      "./send.sh failure $WEBHOOK_URL"
+    fi
 
 deploy:
   provider: releases
