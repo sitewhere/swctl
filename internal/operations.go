@@ -28,7 +28,7 @@ import (
 	policyV1beta1 "k8s.io/api/policy/v1beta1"
 	rbacV1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -112,13 +112,12 @@ func InstallResourceFromFile(fileName string, config *rest.Config, statikFS http
 	case *policyV1beta1.PodDisruptionBudget:
 		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, sitewhereSystemNamespace)
 	case *apiextv1beta1.CustomResourceDefinition:
-		apixClient, err := apixv1beta1client.NewForConfig(config)
-
+		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config)
 		if err != nil {
-			fmt.Printf("Error getting Kubernetes Client: %v\n", err)
+			fmt.Printf("Error getting Kubernetes API Extension Client: %v\n", err)
 			return err
 		}
-		_, err = CreateCustomResourceDefinitionIfNotExists(o, apixClient)
+		_, err = CreateCustomResourceDefinitionIfNotExists(o, apiextensionsClient)
 
 	default:
 		fmt.Println(fmt.Sprintf("Resource with type %v not handled.", groupVersionKind))
@@ -148,13 +147,6 @@ func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS ht
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return err
-	}
-
-	apixClient, err := apixv1beta1client.NewForConfig(config)
-
 	if err != nil {
 		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
 		return err
@@ -205,7 +197,12 @@ func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS ht
 	case *policyV1beta1.PodDisruptionBudget:
 		err = DeletePodDisruptionBudgetIfExists(o, clientset, sitewhereSystemNamespace)
 	case *apiextv1beta1.CustomResourceDefinition:
-		err = DeleteCustomResourceDefinitionIfExists(o, apixClient)
+		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config)
+		if err != nil {
+			fmt.Printf("Error getting Kubernetes API Extension Client: %v\n", err)
+			return err
+		}
+		err = DeleteCustomResourceDefinitionIfExists(o, apiextensionsClient)
 	default:
 		fmt.Println(fmt.Sprintf("Resource with type %v not handled.", groupVersionKind))
 		_ = o //o is unknown for us
@@ -759,12 +756,12 @@ func DeletePodDisruptionBudgetIfExists(rb *policyV1beta1.PodDisruptionBudget, cl
 }
 
 // CreateCustomResourceDefinitionIfNotExists Create a CustomResourceDefinition if it does not exists.
-func CreateCustomResourceDefinitionIfNotExists(crd *apiextv1beta1.CustomResourceDefinition, apixClient *apixv1beta1client.ApiextensionsV1beta1Client) (*apiextv1beta1.CustomResourceDefinition, error) {
+func CreateCustomResourceDefinitionIfNotExists(crd *apiextv1beta1.CustomResourceDefinition, apiextensionsclientset apiextensionsclientset.Interface) (*apiextv1beta1.CustomResourceDefinition, error) {
 	var err error
 
-	crds := apixClient.CustomResourceDefinitions()
+	crds := apiextensionsclientset.ApiextensionsV1beta1().CustomResourceDefinitions()
 
-	crd, err = crds.Create(context.TODO(), crd, metav1.CreateOptions{})
+	_, err = crds.Create(context.TODO(), crd, metav1.CreateOptions{})
 	if err != nil {
 		if !errors.IsAlreadyExists(err) {
 			return nil, err
@@ -775,8 +772,8 @@ func CreateCustomResourceDefinitionIfNotExists(crd *apiextv1beta1.CustomResource
 }
 
 // DeleteCustomResourceDefinitionIfExists Delete a CustomResourceDefinition if it exists
-func DeleteCustomResourceDefinitionIfExists(crd *apiextv1beta1.CustomResourceDefinition, apixClient *apixv1beta1client.ApiextensionsV1beta1Client) error {
-	return apixClient.CustomResourceDefinitions().Delete(
+func DeleteCustomResourceDefinitionIfExists(crd *apiextv1beta1.CustomResourceDefinition, apiextensionsclientset apiextensionsclientset.Interface) error {
+	return apiextensionsclientset.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(
 		context.TODO(),
 		crd.ObjectMeta.Name,
 		metav1.DeleteOptions{})

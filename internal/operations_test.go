@@ -14,12 +14,16 @@ import (
 	"strings"
 	"testing"
 
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	policyV1beta1 "k8s.io/api/policy/v1beta1"
 	rbacV1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	extensionFake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -1734,6 +1738,70 @@ func TestDeletePodDisruptionBudgetIfExists(t *testing.T) {
 					}
 					if !strings.EqualFold(single.err.Error(), err.Error()) {
 						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+//"github.com/wking/fakefs"
+func TestCreateCustomResourceDefinitionIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		crd                    apiextv1beta1.CustomResourceDefinition
+		apiextensionsclientset apiextensionsclientset.Interface
+		err                    error
+	}{
+		// CustomResourceDefinition exists, should return existing
+		{
+			crd: apiextv1beta1.CustomResourceDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Annotations: map[string]string{},
+				},
+				Spec: apiextv1beta1.CustomResourceDefinitionSpec{
+					Group:   "acme.com",
+					Version: "v1alpha1",
+					Names: apiextv1beta1.CustomResourceDefinitionNames{
+						Kind: "Test",
+					},
+				},
+			},
+			apiextensionsclientset: extensionFake.NewSimpleClientset(&apiextv1beta1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Annotations: map[string]string{},
+			}}),
+		},
+		// CustomResourceDefinition does not exist, should return created ns
+		{
+			crd: apiextv1beta1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Annotations: map[string]string{},
+			}},
+			apiextensionsclientset: extensionFake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.crd.ObjectMeta.Name, func(single struct {
+			crd                    apiextv1beta1.CustomResourceDefinition
+			apiextensionsclientset apiextensionsclientset.Interface
+			err                    error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+
+				result, err := CreateCustomResourceDefinitionIfNotExists(&single.crd, single.apiextensionsclientset)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.crd.ObjectMeta.Name {
+						t.Fatalf("expected %s service, got %s", single.crd.ObjectMeta.Name, result.ObjectMeta.Name)
 					}
 				}
 			}
