@@ -48,41 +48,8 @@ To create an instance with the minimal profile use:
 
   swctl create instance sitewhere -m
 `,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return errors.New("requires one argument")
-			}
-			return nil
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			name := args[0]
-			var profile alpha3.SiteWhereProfile = alpha3.Default
-
-			if namespace == "" {
-				namespace = name
-			}
-			if tag == "" {
-				tag = dockerImageDefaultTag
-			}
-
-			var configurationTemplate = "default"
-
-			if minimal {
-				profile = alpha3.Minimal
-				configurationTemplate = "minimal"
-			}
-
-			instance := alpha3.SiteWhereInstance{
-				Name:                  name,
-				Namespace:             namespace,
-				Tag:                   tag,
-				Debug:                 debug,
-				ConfigurationTemplate: configurationTemplate,
-				DatasetTemplate:       "default",
-				Profile:               profile}
-
-			createSiteWhereInstance(&instance)
-		},
+		Args: commandCreateInstanceArgs,
+		Run:  commandCreateInstanceRun,
 	}
 )
 
@@ -92,6 +59,43 @@ func init() {
 	createInstanceCmd.Flags().StringVarP(&tag, "tag", "t", "", "Docker image tag.")
 	createInstanceCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Debug mode.")
 	createCmd.AddCommand(createInstanceCmd)
+}
+
+func commandCreateInstanceArgs(cmd *cobra.Command, args []string) error {
+	if len(args) != 1 {
+		return errors.New("requires one argument")
+	}
+	return nil
+}
+
+func commandCreateInstanceRun(cmd *cobra.Command, args []string) {
+	name := args[0]
+	var profile alpha3.SiteWhereProfile = alpha3.Default
+
+	if namespace == "" {
+		namespace = name
+	}
+	if tag == "" {
+		tag = dockerImageDefaultTag
+	}
+
+	var configurationTemplate = "default"
+
+	if minimal {
+		profile = alpha3.Minimal
+		configurationTemplate = "minimal"
+	}
+
+	instance := alpha3.SiteWhereInstance{
+		Name:                  name,
+		Namespace:             namespace,
+		Tag:                   tag,
+		Debug:                 debug,
+		ConfigurationTemplate: configurationTemplate,
+		DatasetTemplate:       "default",
+		Profile:               profile}
+
+	createSiteWhereInstance(&instance)
 }
 
 func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
