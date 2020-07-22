@@ -789,14 +789,14 @@ func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 	defer r.Close()
 	contents, err := ioutil.ReadAll(r)
 	if err != nil {
-		fmt.Printf("Error reading content: %v\n", err)
+		fmt.Printf("Error reading content of %s: %v\n", crName, err)
 		return err
 	}
 
 	// 1. Prepare a RESTMapper to find GVR
 	dc, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
-		fmt.Printf("Error getting NewDiscoveryClientForConfig: %v\n", err)
+		fmt.Printf("Error getting NewDiscoveryClientForConfig for %s: %v\n", crName, err)
 		return err
 	}
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
@@ -804,7 +804,7 @@ func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 	// 2. Prepare the dynamic client
 	dyn, err := dynamic.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error getting NewForConfig: %v\n", err)
+		fmt.Printf("Error getting NewForConfig for %s: %v\n", crName, err)
 		return err
 	}
 
@@ -812,14 +812,14 @@ func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 	obj := &unstructured.Unstructured{}
 	_, gvk, err := decUnstructured.Decode([]byte(contents), nil, obj)
 	if err != nil {
-		fmt.Printf("Error decoding: %v\n", err)
+		fmt.Printf("Error decoding for %s: %v\n", crName, err)
 		return err
 	}
 
 	// 4. Find GVR
 	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
-		fmt.Printf("Error finding GRV: %v\n", err)
+		fmt.Printf("Error finding GRV for %s: %v\n", crName, err)
 		return err
 	}
 
