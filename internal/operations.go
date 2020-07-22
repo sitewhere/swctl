@@ -813,12 +813,14 @@ func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 	_, gvk, err := decUnstructured.Decode([]byte(contents), nil, obj)
 	if err != nil {
 		fmt.Printf("Error decoding: %v\n", err)
+		return err
 	}
 
 	// 4. Find GVR
 	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		fmt.Printf("Error finding GRV: %v\n", err)
+		return err
 	}
 
 	// 5. Obtain REST interface for the GVR
