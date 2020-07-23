@@ -22,7 +22,7 @@ import (
 const templateFileTemplate = "/templates/template-%02d.yaml"
 
 // Number of CRD Files
-const templatesFileNumber = 39
+const templatesFileNumber = 37
 
 // InstallSiteWhereTemplates Install SiteWhere Templates CRD
 func InstallSiteWhereTemplates(config *rest.Config, statikFS http.FileSystem) error {

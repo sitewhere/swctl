@@ -18,34 +18,90 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// Template for generating a Infrastucture Filename
-const infraFileTemplate = "/infra-min/infra-min-%02d.yaml"
+// InfraTemplateResource template for resources files
+type InfraTemplateResource struct {
+	FileTemplate string
+	FileCount    int
+	Enabled      bool
+}
 
-// Number of Infrastructure Files
-const infraFileNumber = 28
+var infraTemplate = []InfraTemplateResource{
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/01-mosquitto/infra-mosquitto-%02d.yaml",
+		FileCount:    4,
+		Enabled:      true,
+	},
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/02-redis/infra-redis-%02d.yaml",
+		FileCount:    7,
+		Enabled:      true,
+	},
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/03-zookeeper/infra-zookeeper-%02d.yaml",
+		FileCount:    5,
+		Enabled:      true,
+	},
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/04-kafka/infra-kafka-%02d.yaml",
+		FileCount:    1,
+		Enabled:      true,
+	},
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/05-postgresql/infra-postgresql-%02d.yaml",
+		FileCount:    3,
+		Enabled:      true,
+	},
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/06-syncope/infra-syncope-%02d.yaml",
+		FileCount:    4,
+		Enabled:      true,
+	},
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/07-warp10/infra-warp10-%02d.yaml",
+		FileCount:    4,
+		Enabled:      false,
+	},
+	InfraTemplateResource{
+		FileTemplate: "/infra-min/08-influxdb/infra-influxdb-%02d.yaml",
+		FileCount:    4,
+		Enabled:      true,
+	},
+}
 
 // InstallSiteWhereInfrastructure Install SiteWhere Infrastructure components in the cluster
 func InstallSiteWhereInfrastructure(config *rest.Config, statikFS http.FileSystem) error {
 	var err error
-	for i := 1; i <= infraFileNumber; i++ {
-		var infraResource = fmt.Sprintf(infraFileTemplate, i)
-		err = InstallResourceFromFile(infraResource, config, statikFS)
-		if err != nil && !errors.IsAlreadyExists(err) {
-			return err
+
+	for _, tpl := range infraTemplate {
+		if tpl.Enabled {
+			for i := 1; i <= tpl.FileCount; i++ {
+				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
+				err = InstallResourceFromFile(infraResource, config, statikFS)
+				if err != nil && !errors.IsAlreadyExists(err) {
+					return err
+				}
+			}
 		}
 	}
+
 	return nil
 }
 
 // UninstallSiteWhereInfrastructure Uninstall SiteWhere Infrastructure components in the cluster
 func UninstallSiteWhereInfrastructure(config *rest.Config, statikFS http.FileSystem) error {
 	var err error
-	for i := 1; i <= infraFileNumber; i++ {
-		var infraResource = fmt.Sprintf(infraFileTemplate, i)
-		err = UninstallResourceFromFile(infraResource, config, statikFS)
-		if err != nil && !errors.IsNotFound(err) {
-			return err
+
+	for _, tpl := range infraTemplate {
+		if tpl.Enabled {
+			for i := 1; i <= tpl.FileCount; i++ {
+				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
+				err = UninstallResourceFromFile(infraResource, config, statikFS)
+				if err != nil && !errors.IsNotFound(err) {
+					return err
+				}
+			}
 		}
 	}
+
 	return nil
 }
