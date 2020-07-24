@@ -11,12 +11,10 @@ package internal
 
 import (
 	"fmt"
-	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 // Template for generating a Operator Filename
@@ -26,43 +24,39 @@ const operatorFileTemplate = "/operator/operator-%02d.yaml"
 const operatorFileNumber = 23
 
 // InstallSiteWhereOperator Install SiteWhere Operator resource file in the cluster
-func InstallSiteWhereOperator(config *rest.Config, statikFS http.FileSystem) error {
+func InstallSiteWhereOperator(config SiteWhereConfiguration) error {
 	var err error
 
-	clientset, err := kubernetes.NewForConfig(config)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = CreateNamespaceIfNotExists(sitewhereSystemNamespace, clientset)
+	_, err = CreateNamespaceIfNotExists(sitewhereSystemNamespace, config.GetClientset())
 	if err != nil {
 		return err
 	}
 
 	for i := 1; i <= operatorFileNumber; i++ {
 		var operatorResource = fmt.Sprintf(operatorFileTemplate, i)
-		err = InstallResourceFromFile(operatorResource, config, statikFS)
+		err = InstallResourceFromFile(operatorResource, config)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	}
-
+	if config.IsVerbose() {
+		fmt.Printf("SiteWhere Operator: Installed\n")
+	}
 	return nil
 }
 
 // UninstallSiteWhereOperator Uninstall SiteWhere Operator resource file in the cluster
-func UninstallSiteWhereOperator(config *rest.Config, statikFS http.FileSystem) error {
+func UninstallSiteWhereOperator(config *SiteWhereInstallConfiguration) error {
 	var err error
 
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := kubernetes.NewForConfig(config.KubernetesConfig)
 	if err != nil {
 		return err
 	}
 
 	for i := 1; i <= operatorFileNumber; i++ {
 		var operatorResource = fmt.Sprintf(operatorFileTemplate, i)
-		err = UninstallResourceFromFile(operatorResource, config, statikFS)
+		err = UninstallResourceFromFile(operatorResource, config.KubernetesConfig, config.StatikFS)
 		if err != nil && !errors.IsNotFound(err) {
 			return err
 		}
@@ -72,6 +66,8 @@ func UninstallSiteWhereOperator(config *rest.Config, statikFS http.FileSystem) e
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
-
+	if config.Verbose {
+		fmt.Printf("SiteWhere Operator: Uninstalled\n")
+	}
 	return nil
 }

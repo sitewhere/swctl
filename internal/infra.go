@@ -11,19 +11,9 @@ package internal
 
 import (
 	"fmt"
-	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-
-	"k8s.io/client-go/rest"
 )
-
-// InfraTemplateResource template for resources files
-type InfraTemplateResource struct {
-	FileTemplate string
-	FileCount    int
-	Enabled      bool
-}
 
 var infraTemplate = []InfraTemplateResource{
 	InfraTemplateResource{
@@ -69,39 +59,43 @@ var infraTemplate = []InfraTemplateResource{
 }
 
 // InstallSiteWhereInfrastructure Install SiteWhere Infrastructure components in the cluster
-func InstallSiteWhereInfrastructure(config *rest.Config, statikFS http.FileSystem) error {
+func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 	var err error
 
 	for _, tpl := range infraTemplate {
 		if tpl.Enabled {
 			for i := 1; i <= tpl.FileCount; i++ {
 				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
-				err = InstallResourceFromFile(infraResource, config, statikFS)
+				err = InstallResourceFromFile(infraResource, config)
 				if err != nil && !errors.IsAlreadyExists(err) {
 					return err
 				}
 			}
 		}
 	}
-
+	if config.IsVerbose() {
+		fmt.Printf("SiteWhere Infrastructure: Installed\n")
+	}
 	return nil
 }
 
 // UninstallSiteWhereInfrastructure Uninstall SiteWhere Infrastructure components in the cluster
-func UninstallSiteWhereInfrastructure(config *rest.Config, statikFS http.FileSystem) error {
+func UninstallSiteWhereInfrastructure(config *SiteWhereInstallConfiguration) error {
 	var err error
 
 	for _, tpl := range infraTemplate {
 		if tpl.Enabled {
 			for i := 1; i <= tpl.FileCount; i++ {
 				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
-				err = UninstallResourceFromFile(infraResource, config, statikFS)
+				err = UninstallResourceFromFile(infraResource, config.KubernetesConfig, config.StatikFS)
 				if err != nil && !errors.IsNotFound(err) {
 					return err
 				}
 			}
 		}
 	}
-
+	if config.Verbose {
+		fmt.Printf("SiteWhere Infrastructure: Uninstalled\n")
+	}
 	return nil
 }

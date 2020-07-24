@@ -11,11 +11,8 @@ package internal
 
 import (
 	"fmt"
-	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-
-	"k8s.io/client-go/rest"
 )
 
 // Template for generating a Template Filename
@@ -25,14 +22,17 @@ const templateFileTemplate = "/templates/template-%02d.yaml"
 const templatesFileNumber = 37
 
 // InstallSiteWhereTemplates Install SiteWhere Templates CRD
-func InstallSiteWhereTemplates(config *rest.Config, statikFS http.FileSystem) error {
+func InstallSiteWhereTemplates(config SiteWhereConfiguration) error {
 	var err error
 	for i := 1; i <= templatesFileNumber; i++ {
 		var templateName = fmt.Sprintf(templateFileTemplate, i)
-		CreateCustomResourceFromFile(templateName, config, statikFS)
+		CreateCustomResourceFromFile(templateName, config.GetConfig(), config.GetStatikFS())
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
+	}
+	if config.IsVerbose() {
+		fmt.Printf("SiteWhere Templates: Installed\n")
 	}
 	return nil
 }

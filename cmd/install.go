@@ -19,20 +19,26 @@ import (
 )
 
 // installCmd represents the install command
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install SiteWhere CRD and Operator",
-	Long: `Use this command to install SiteWhere 3.0 on a Kubernetes Cluster.
+var (
+	minimalInstall = false // Use minimal install profile. Initialize only essential microservices.
+	verboseInstall = false // Use verbose installation
+	installCmd     = &cobra.Command{
+		Use:   "install",
+		Short: "Install SiteWhere CRD and Operator",
+		Long: `Use this command to install SiteWhere 3.0 on a Kubernetes Cluster.
 This command will install:
  - SiteWhere System Namespace: sitewhere-system (default)
  - SiteWhere Custom Resources Definition.
  - SiteWhere Templates.
  - SiteWhere Operator.
  - SiteWhere Infrastructure.`,
-	Run: installSiteWhereCommand,
-}
+		Run: installSiteWhereCommand,
+	}
+)
 
 func init() {
+	installCmd.Flags().BoolVarP(&minimalInstall, "minimal", "m", false, "Minimal installation.")
+	installCmd.Flags().BoolVarP(&verboseInstall, "verbose", "v", false, "Verbose installation.")
 	rootCmd.AddCommand(installCmd)
 }
 
@@ -51,29 +57,36 @@ func installSiteWhereCommand(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	var sitewhereConfig internal.SiteWhereConfiguration = &internal.SiteWhereInstallConfiguration{
+		Minimal:          minimalInstall,
+		Verbose:          verboseInstall,
+		KubernetesConfig: config,
+		StatikFS:         statikFS,
+	}
+
 	// Install Custom Resource Definitions
-	err = internal.InstallSiteWhereCRDs(config, statikFS)
+	err = internal.InstallSiteWhereCRDs(sitewhereConfig)
 	if err != nil {
 		fmt.Printf("Error Installing SiteWhere CRDs: %v\n", err)
 		return
 	}
 
 	// Install Templates
-	err = internal.InstallSiteWhereTemplates(config, statikFS)
+	err = internal.InstallSiteWhereTemplates(sitewhereConfig)
 	if err != nil {
 		fmt.Printf("Error Installing SiteWhere Templates: %v\n", err)
 		return
 	}
 
 	// Install Operator
-	err = internal.InstallSiteWhereOperator(config, statikFS)
+	err = internal.InstallSiteWhereOperator(sitewhereConfig)
 	if err != nil {
 		fmt.Printf("Error Installing SiteWhere Operator: %v\n", err)
 		return
 	}
 
 	// Install Infrastructure
-	err = internal.InstallSiteWhereInfrastructure(config, statikFS)
+	err = internal.InstallSiteWhereInfrastructure(sitewhereConfig)
 	if err != nil {
 		fmt.Printf("Error Installing SiteWhere Infrastucture: %v\n", err)
 		return

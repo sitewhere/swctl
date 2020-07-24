@@ -11,11 +11,8 @@ package internal
 
 import (
 	"fmt"
-	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-
-	"k8s.io/client-go/rest"
 )
 
 // Template for generating a CRD Filename
@@ -25,27 +22,33 @@ const crdFileTemplate = "/crd/crd-%02d.yaml"
 const crdFileNumber = 14
 
 // InstallSiteWhereCRDs Install SiteWhere Custom Resource Definitions
-func InstallSiteWhereCRDs(config *rest.Config, statikFS http.FileSystem) error {
+func InstallSiteWhereCRDs(config SiteWhereConfiguration) error {
 	var err error
 	for i := 1; i <= crdFileNumber; i++ {
 		var crdName = fmt.Sprintf(crdFileTemplate, i)
-		err = InstallResourceFromFile(crdName, config, statikFS)
+		err = InstallResourceFromFile(crdName, config)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
+	}
+	if config.IsVerbose() {
+		fmt.Printf("SiteWhere Custom Resources Definition: Installed\n")
 	}
 	return nil
 }
 
 // UninstallSiteWhereCRDs Uninstall SiteWhere Custom Resource Definitions
-func UninstallSiteWhereCRDs(config *rest.Config, statikFS http.FileSystem) error {
+func UninstallSiteWhereCRDs(config SiteWhereConfiguration) error {
 	var err error
 	for i := 1; i <= crdFileNumber; i++ {
 		var crdName = fmt.Sprintf(crdFileTemplate, i)
-		UninstallResourceFromFile(crdName, config, statikFS)
+		UninstallResourceFromFile(crdName, config.GetConfig(), config.GetStatikFS())
 		if err != nil {
 			return err
 		}
+	}
+	if config.IsVerbose() {
+		fmt.Printf("SiteWhere Custom Resources Definition: Uninstalled\n")
 	}
 	return nil
 }

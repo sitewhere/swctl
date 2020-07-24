@@ -48,8 +48,8 @@ var sitewhereSystemNamespace = "sitewhere-system"
 var decUnstructured = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 
 // InstallResourceFromFile Install a resource from a file name
-func InstallResourceFromFile(fileName string, config *rest.Config, statikFS http.FileSystem) error {
-	r, err := statikFS.Open(fileName)
+func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) error {
+	r, err := config.GetStatikFS().Open(fileName)
 	if err != nil {
 		fmt.Printf("Error reading %s: %v\n", fileName, err)
 		return err
@@ -73,14 +73,10 @@ func InstallResourceFromFile(fileName string, config *rest.Config, statikFS http
 
 	if err != nil {
 		// If we can decode, try installing custom resource
-		return CreateCustomResourceFromFile(fileName, config, statikFS)
+		return CreateCustomResourceFromFile(fileName, config.GetConfig(), config.GetStatikFS())
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return err
-	}
+	clientset := config.GetClientset()
 
 	// now use switch over the type of the object
 	// and match each type-case
@@ -112,7 +108,7 @@ func InstallResourceFromFile(fileName string, config *rest.Config, statikFS http
 	case *policyV1beta1.PodDisruptionBudget:
 		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, sitewhereSystemNamespace)
 	case *apiextv1beta1.CustomResourceDefinition:
-		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config)
+		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config.GetConfig())
 		if err != nil {
 			fmt.Printf("Error getting Kubernetes API Extension Client: %v\n", err)
 			return err

@@ -20,8 +20,9 @@ import (
 
 // uninstallCmd represents the uninstall command
 var (
-	purge        = false // Purge data
-	uninstallCmd = &cobra.Command{
+	purge            = false // Purge data
+	verboseUninstall = false // Use verbose uninstallation
+	uninstallCmd     = &cobra.Command{
 		Use:   "uninstall",
 		Short: "Uninstall SiteWhere from your Kubernetes Cluster",
 		Long: `Uninstall SiteWhere from your Kubernetes Cluster.
@@ -37,6 +38,7 @@ This command will uninstall:
 
 func init() {
 	uninstallCmd.Flags().BoolVarP(&purge, "purge", "p", false, "Purge data.")
+	uninstallCmd.Flags().BoolVarP(&verboseUninstall, "verbose", "v", false, "Verbose uninstallation.")
 	rootCmd.AddCommand(uninstallCmd)
 }
 
@@ -54,22 +56,28 @@ func uninstallSiteWhereCommand(_ *cobra.Command, _ []string) {
 		return
 	}
 
+	var sitewhereConfig = internal.SiteWhereInstallConfiguration{
+		Verbose:          verboseUninstall,
+		KubernetesConfig: config,
+		StatikFS:         statikFS,
+	}
+
 	// Uninstall Infrastructure
-	err = internal.UninstallSiteWhereInfrastructure(config, statikFS)
+	err = internal.UninstallSiteWhereInfrastructure(&sitewhereConfig)
 	if err != nil {
 		fmt.Printf("Error Uninstalling SiteWhere Infrastucture: %v\n", err)
 		return
 	}
 
 	// Uninstall Operator
-	err = internal.UninstallSiteWhereOperator(config, statikFS)
+	err = internal.UninstallSiteWhereOperator(&sitewhereConfig)
 	if err != nil {
 		fmt.Printf("Error Uninstalling SiteWhere Operator: %v\n", err)
 		return
 	}
 
 	// Uninstall Custom Resource Definitions
-	internal.UninstallSiteWhereCRDs(config, statikFS)
+	internal.UninstallSiteWhereCRDs(&sitewhereConfig)
 
-	fmt.Println("SiteWhere 3.0 uninstalled.")
+	fmt.Println("SiteWhere 3.0 Uninstalled.")
 }
