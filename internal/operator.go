@@ -39,6 +39,21 @@ func InstallSiteWhereOperator(config SiteWhereConfiguration) error {
 			return err
 		}
 	}
+
+	err = waitForDeploymentAvailable(config.GetClientset(), "sitewhere-operator", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Deploymene sitewhere-operator: Available\n")
+	}
+	err = waitForDeploymentAvailable(config.GetClientset(), "strimzi-cluster-operator", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Deploymene strimzi-cluster-operator: Available\n")
+	}
 	if config.IsVerbose() {
 		fmt.Printf("SiteWhere Operator: Installed\n")
 	}

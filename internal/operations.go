@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	discovery "k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached/memory"
@@ -41,11 +42,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SiteWhere System Namespace
-var sitewhereSystemNamespace = "sitewhere-system"
+var (
+	sitewhereSystemNamespace = "sitewhere-system"                                              // SiteWhere System Namespace
+	decUnstructured          = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme) // Decoding Unstructed
+)
 
-// Decoding Unstructed
-var decUnstructured = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+const (
+	deployRunningThreshold     = time.Minute * 10 // Max wait time
+	deployRunningCheckInterval = time.Second * 2
+)
 
 // InstallResourceFromFile Install a resource from a file name
 func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) error {
@@ -900,4 +905,86 @@ func DeleteCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 		return err
 	}
 	return nil
+}
+
+func waitForPodContainersRunning(clientset kubernetes.Interface, podName string, namespace string) error {
+	end := time.Now().Add(deployRunningThreshold)
+
+	for true {
+		<-time.NewTimer(deployRunningCheckInterval).C
+
+		var err error
+		running, err := podContainersRunning(clientset, podName, namespace)
+		if running {
+			return nil
+		}
+
+		if err != nil && k8serror.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for running pods: %s", err))
+		}
+
+		if time.Now().After(end) {
+			return fmt.Errorf("Failed to get all running containers")
+		}
+	}
+	return nil
+}
+
+func podContainersRunning(clientset kubernetes.Interface, podName string, namespace string) (bool, error) {
+	existingPod, err := clientset.CoreV1().Pods(namespace).Get(
+		context.TODO(),
+		podName,
+		metav1.GetOptions{})
+
+	if err != nil {
+		return false, err
+	}
+
+	for _, status := range existingPod.Status.ContainerStatuses {
+		if !status.Ready {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+func waitForDeploymentAvailable(clientset kubernetes.Interface, deploymentName string, namespace string) error {
+	end := time.Now().Add(deployRunningThreshold)
+
+	for true {
+		<-time.NewTimer(deployRunningCheckInterval).C
+
+		var err error
+		running, err := deploymentAvailable(clientset, deploymentName, namespace)
+		if running {
+			return nil
+		}
+
+		if err != nil && k8serror.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s", err))
+		}
+
+		if time.Now().After(end) {
+			return fmt.Errorf("Failed to get deployment available")
+		}
+	}
+	return nil
+}
+
+func deploymentAvailable(clientset kubernetes.Interface, deploymentName string, namespace string) (bool, error) {
+	existingDeploy, err := clientset.AppsV1().Deployments(namespace).Get(
+		context.TODO(),
+		deploymentName,
+		metav1.GetOptions{})
+
+	if err != nil {
+		return false, err
+	}
+
+	if existingDeploy.Status.ReadyReplicas < existingDeploy.Status.AvailableReplicas {
+		return false, nil
+	}
+
+	return true, nil
 }

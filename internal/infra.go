@@ -73,6 +73,72 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 			}
 		}
 	}
+
+	err = waitForDeploymentAvailable(config.GetClientset(), "sitewhere-infrastructure-mosquitto", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Deploymene sitewhere-infrastructure-mosquitto: Available\n")
+	}
+
+	err = waitForDeploymentAvailable(config.GetClientset(), "sitewhere-kafka-entity-operator", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Deploymene sitewhere-kafka-entity-operator: Available\n")
+	}
+
+	err = waitForDeploymentAvailable(config.GetClientset(), "sitewhere-syncope", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Deploymene sitewhere-syncope: Available\n")
+	}
+
+	err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-infrastructure-zookeeper-0", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Pod sitewhere-infrastructure-zookeeper-0: Ready\n")
+	}
+	// TODO if not minimal, wait for -1 and -2
+
+	err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-kafka-kafka-0", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Pod sitewhere-kafka-kafka-0: Ready\n")
+	}
+
+	err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-postgresql-0", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Pod sitewhere-postgresql-0: Ready\n")
+	}
+
+	err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-infrastructure-redis-ha-server-0", sitewhereSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if config.IsVerbose() {
+		fmt.Printf("Pod sitewhere-infrastructure-redis-ha-server-0: Ready\n")
+	}
+
+	// err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-infrastructure-warp10-0", sitewhereSystemNamespace)
+	// if err != nil {
+	// 	return err
+	// }
+	// if config.IsVerbose() {
+	// 	fmt.Printf("Pod sitewhere-infrastructure-warp10-0: Ready\n")
+	// }
+
 	if config.IsVerbose() {
 		fmt.Printf("SiteWhere Infrastructure: Installed\n")
 	}
