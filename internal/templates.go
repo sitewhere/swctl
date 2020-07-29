@@ -26,7 +26,7 @@ func InstallSiteWhereTemplates(config SiteWhereConfiguration) error {
 	var err error
 	for i := 1; i <= templatesFileNumber; i++ {
 		var templateName = fmt.Sprintf(templateFileTemplate, i)
-		CreateCustomResourceFromFile(templateName, config.GetConfig(), config.GetStatikFS())
+		CreateCustomResourceFromFile(templateName, config)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}

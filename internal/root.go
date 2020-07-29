@@ -12,6 +12,7 @@ package internal
 import (
 	"net/http"
 
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -22,6 +23,7 @@ type SiteWhereConfiguration interface {
 	GetConfig() *rest.Config
 	GetStatikFS() http.FileSystem
 	GetClientset() kubernetes.Interface
+	GetApiextensionsClient() apiextensionsclientset.Interface
 }
 
 // SiteWhereInstallConfiguration Hold install configuration data
@@ -61,4 +63,13 @@ func (c *SiteWhereInstallConfiguration) GetClientset() kubernetes.Interface {
 		return nil
 	}
 	return clienset
+}
+
+// GetApiextensionsClient Kubernetes API Extension clienset
+func (c *SiteWhereInstallConfiguration) GetApiextensionsClient() apiextensionsclientset.Interface {
+	apiextensionsClient, err := apiextensionsclientset.NewForConfig(c.KubernetesConfig)
+	if err != nil {
+		return nil
+	}
+	return apiextensionsClient
 }

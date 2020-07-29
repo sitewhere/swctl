@@ -78,7 +78,7 @@ func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) err
 
 	if err != nil {
 		// If we can decode, try installing custom resource
-		return CreateCustomResourceFromFile(fileName, config.GetConfig(), config.GetStatikFS())
+		return CreateCustomResourceFromFile(fileName, config)
 	}
 
 	clientset := config.GetClientset()
@@ -113,13 +113,7 @@ func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) err
 	case *policyV1beta1.PodDisruptionBudget:
 		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, sitewhereSystemNamespace)
 	case *apiextv1beta1.CustomResourceDefinition:
-		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config.GetConfig())
-		if err != nil {
-			fmt.Printf("Error getting Kubernetes API Extension Client: %v\n", err)
-			return err
-		}
-		_, err = CreateCustomResourceDefinitionIfNotExists(o, apiextensionsClient)
-
+		_, err = CreateCustomResourceDefinitionIfNotExists(o, config.GetApiextensionsClient())
 	default:
 		fmt.Println(fmt.Sprintf("Resource with type %v not handled.", groupVersionKind))
 		_ = o //o is unknown for us
@@ -781,8 +775,8 @@ func DeleteCustomResourceDefinitionIfExists(crd *apiextv1beta1.CustomResourceDef
 }
 
 // CreateCustomResourceFromFile Reads a File from statik and creates a CustomResource from it.
-func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS http.FileSystem) error {
-	r, err := statikFS.Open(crName)
+func CreateCustomResourceFromFile(crName string, config SiteWhereConfiguration) error {
+	r, err := config.GetStatikFS().Open(crName)
 	if err != nil {
 		fmt.Printf("Error reading %s: %v\n", crName, err)
 		return err
@@ -795,7 +789,7 @@ func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 	}
 
 	// 1. Prepare a RESTMapper to find GVR
-	dc, err := discovery.NewDiscoveryClientForConfig(config)
+	dc, err := discovery.NewDiscoveryClientForConfig(config.GetConfig())
 	if err != nil {
 		fmt.Printf("Error getting NewDiscoveryClientForConfig for %s: %v\n", crName, err)
 		return err
@@ -803,7 +797,7 @@ func CreateCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
 
 	// 2. Prepare the dynamic client
-	dyn, err := dynamic.NewForConfig(config)
+	dyn, err := dynamic.NewForConfig(config.GetConfig())
 	if err != nil {
 		fmt.Printf("Error getting NewForConfig for %s: %v\n", crName, err)
 		return err
@@ -961,7 +955,7 @@ func waitForDeploymentAvailable(clientset kubernetes.Interface, deploymentName s
 			return nil
 		}
 
-		if err != nil && k8serror.IsNotFound(err) {
+		if err != nil && !k8serror.IsNotFound(err) {
 			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s", err))
 		}
 
