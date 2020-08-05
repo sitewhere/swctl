@@ -471,6 +471,30 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 					"name":        "Instance Management",
 					"description": "Handles APIs for managing global aspects of an instance",
 					"icon":        "language",
+					"logging": map[string]interface{}{
+						"overrides": []map[string]interface{}{
+							{
+								"logger": "com.sitewhere",
+								"level":  "info",
+							},
+							{
+								"logger": "com.sitewhere.grpc.client",
+								"level":  "info",
+							},
+							{
+								"logger": "com.sitewhere.microservice.grpc",
+								"level":  "info",
+							},
+							{
+								"logger": "com.sitewhere.microservice.kafka",
+								"level":  "info",
+							},
+							{
+								"logger": "org.redisson",
+								"level":  "info",
+							},
+						},
+					},
 					"configuration": map[string]interface{}{
 						"userManagement": map[string]interface{}{
 							"syncopeHost":            "sitewhere-syncope.sitewhere-system",
