@@ -12,6 +12,7 @@ package internal
 import (
 	"fmt"
 
+	"github.com/gookit/color"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"k8s.io/client-go/kubernetes"
@@ -45,17 +46,20 @@ func InstallSiteWhereOperator(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Deploymene sitewhere-operator: Available\n")
+		fmt.Print("Deployment sitewhere-operator: ")
+		color.Info.Println("Available")
 	}
 	err = waitForDeploymentAvailable(config.GetClientset(), "strimzi-cluster-operator", sitewhereSystemNamespace)
 	if err != nil {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Deploymene strimzi-cluster-operator: Available\n")
+		fmt.Print("Deployment strimzi-cluster-operator: ")
+		color.Info.Println("Available")
 	}
 	if config.IsVerbose() {
-		fmt.Printf("SiteWhere Operator: Installed\n")
+		fmt.Print("SiteWhere Operator: ")
+		color.Info.Println("Installed")
 	}
 	return nil
 }
@@ -82,7 +86,8 @@ func UninstallSiteWhereOperator(config *SiteWhereInstallConfiguration) error {
 		return err
 	}
 	if config.Verbose {
-		fmt.Printf("SiteWhere Operator: Uninstalled\n")
+		fmt.Print("SiteWhere Operator: ")
+		color.Info.Println("Uninstalled")
 	}
 	return nil
 }

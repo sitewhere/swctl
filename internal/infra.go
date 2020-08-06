@@ -12,6 +12,8 @@ package internal
 import (
 	"fmt"
 
+	"github.com/gookit/color"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -79,7 +81,8 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Deploymene sitewhere-infrastructure-mosquitto: Available\n")
+		fmt.Print("Deployment sitewhere-infrastructure-mosquitto: ")
+		color.Info.Println("Available")
 	}
 
 	err = waitForDeploymentAvailable(config.GetClientset(), "sitewhere-kafka-entity-operator", sitewhereSystemNamespace)
@@ -87,7 +90,8 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Deploymene sitewhere-kafka-entity-operator: Available\n")
+		fmt.Print("Deployment sitewhere-kafka-entity-operator: ")
+		color.Info.Println("Available")
 	}
 
 	err = waitForDeploymentAvailable(config.GetClientset(), "sitewhere-syncope", sitewhereSystemNamespace)
@@ -95,7 +99,8 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Deploymene sitewhere-syncope: Available\n")
+		fmt.Print("Deployment sitewhere-syncope: ")
+		color.Info.Println("Available")
 	}
 
 	err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-infrastructure-zookeeper-0", sitewhereSystemNamespace)
@@ -103,7 +108,8 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Pod sitewhere-infrastructure-zookeeper-0: Ready\n")
+		fmt.Print("Pod sitewhere-infrastructure-zookeeper-0: ")
+		color.Info.Println("Ready")
 	}
 	// TODO if not minimal, wait for -1 and -2
 
@@ -112,7 +118,8 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Pod sitewhere-kafka-kafka-0: Ready\n")
+		fmt.Print("Pod sitewhere-kafka-kafka-0: ")
+		color.Info.Println("Ready")
 	}
 
 	err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-postgresql-0", sitewhereSystemNamespace)
@@ -120,7 +127,8 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Pod sitewhere-postgresql-0: Ready\n")
+		fmt.Print("Pod sitewhere-postgresql-0: ")
+		color.Info.Println("Ready")
 	}
 
 	err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-infrastructure-redis-ha-server-0", sitewhereSystemNamespace)
@@ -128,7 +136,8 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 		return err
 	}
 	if config.IsVerbose() {
-		fmt.Printf("Pod sitewhere-infrastructure-redis-ha-server-0: Ready\n")
+		fmt.Print("Pod sitewhere-infrastructure-redis-ha-server-0: ")
+		color.Info.Println("Ready")
 	}
 
 	// err = waitForPodContainersRunning(config.GetClientset(), "sitewhere-infrastructure-warp10-0", sitewhereSystemNamespace)
@@ -140,7 +149,7 @@ func InstallSiteWhereInfrastructure(config SiteWhereConfiguration) error {
 	// }
 
 	if config.IsVerbose() {
-		fmt.Printf("SiteWhere Infrastructure: Installed\n")
+		color.Info.Println("SiteWhere Infrastructure: Installed")
 	}
 	return nil
 }
@@ -161,7 +170,7 @@ func UninstallSiteWhereInfrastructure(config *SiteWhereInstallConfiguration) err
 		}
 	}
 	if config.Verbose {
-		fmt.Printf("SiteWhere Infrastructure: Uninstalled\n")
+		color.Info.Println("\nSiteWhere Infrastructure: Uninstalled")
 	}
 	return nil
 }

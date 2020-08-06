@@ -12,6 +12,8 @@ package internal
 import (
 	"fmt"
 
+	"github.com/gookit/color"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -32,7 +34,8 @@ func InstallSiteWhereCRDs(config SiteWhereConfiguration) error {
 		}
 	}
 	if config.IsVerbose() {
-		fmt.Printf("SiteWhere Custom Resources Definition: Installed\n")
+		fmt.Print("SiteWhere Custom Resources Definition: ")
+		color.Info.Println("Installed")
 	}
 	return nil
 }
@@ -48,7 +51,8 @@ func UninstallSiteWhereCRDs(config SiteWhereConfiguration) error {
 		}
 	}
 	if config.IsVerbose() {
-		fmt.Printf("SiteWhere Custom Resources Definition: Uninstalled\n")
+		fmt.Print("SiteWhere Custom Resources Definition: ")
+		color.Info.Println("Uninstalled")
 	}
 	return nil
 }

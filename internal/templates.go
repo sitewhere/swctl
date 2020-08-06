@@ -12,6 +12,8 @@ package internal
 import (
 	"fmt"
 
+	"github.com/gookit/color"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -32,7 +34,8 @@ func InstallSiteWhereTemplates(config SiteWhereConfiguration) error {
 		}
 	}
 	if config.IsVerbose() {
-		fmt.Printf("SiteWhere Templates: Installed\n")
+		fmt.Print("SiteWhere Templates: ")
+		color.Info.Println("Installed")
 	}
 	return nil
 }
