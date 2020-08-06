@@ -556,16 +556,19 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 							{
 								"port":       8080,
 								"targetPort": 8080,
+								"protocol":   "TCP",
 								"name":       "http-rest",
 							},
 							{
 								"port":       9000,
 								"targetPort": 9000,
+								"protocol":   "TCP",
 								"name":       "grpc-api",
 							},
 							{
 								"port":       9090,
 								"targetPort": 9090,
+								"protocol":   "TCP",
 								"name":       "http-metrics",
 							},
 						},
@@ -691,11 +694,13 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 							{
 								"port":       9000,
 								"targetPort": 9000,
+								"protocol":   "TCP",
 								"name":       "grpc-api",
 							},
 							{
 								"port":       9090,
 								"targetPort": 9090,
+								"protocol":   "TCP",
 								"name":       "http-metrics",
 							},
 						},
