@@ -655,7 +655,7 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 							{
 								"level":  "info",
 								"logger": microservice.Logger,
-							}
+							},
 						},
 					},
 					"helm": map[string]interface{}{ // TODO Remove when operatior udpates to not using helm
