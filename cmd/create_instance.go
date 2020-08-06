@@ -761,14 +761,12 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 					},
 				},
 				"spec": map[string]interface{}{
-					"configuration": map[string]interface{}{
-						"test": 123,
-					},
-					"replicas":    1, // TODO from parameter
-					"multitenant": true,
-					"name":        microservice.Name,
-					"description": microservice.Description,
-					"icon":        microservice.Icon,
+					"configuration": map[string]interface{}{},
+					"replicas":      1, // TODO from parameter
+					"multitenant":   true,
+					"name":          microservice.Name,
+					"description":   microservice.Description,
+					"icon":          microservice.Icon,
 					"logging": map[string]interface{}{
 						"overrides": []map[string]interface{}{
 							{
