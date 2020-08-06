@@ -30,12 +30,12 @@ import (
 // SiteWhere Docker Image default tag name
 const dockerImageDefaultTag = "3.0.0.beta1"
 
-// createInstanceCmd represents the instance command
 var (
-	namespace         = ""    // Namespace to use
-	minimal           = false // Use minimal profile. Initialize only essential microservices.
-	tag               = ""    // Docker image tag
-	debug             = false // Use debug mode
+	namespace = ""    // Namespace to use
+	minimal   = false // Use minimal profile. Initialize only essential microservices.
+	tag       = ""    // Docker image tag
+	debug     = false // Use debug mode
+	// createInstanceCmd represents the instance command
 	createInstanceCmd = &cobra.Command{
 		Use:   "instance <name>",
 		Short: "Create SiteWhere Instance",

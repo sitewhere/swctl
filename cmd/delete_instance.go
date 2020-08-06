@@ -25,41 +25,45 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// deleteInstanceCmd represents the instance command
-var deleteInstanceCmd = &cobra.Command{
-	Use:   "instance",
-	Short: "Delete SiteWhere Instance",
-	Long: `A longer description that spans multiple lines and likely contains examples
+var (
+	purgeInstance = false // Purge instance
+	// deleteInstanceCmd represents the instance command
+	deleteInstanceCmd = &cobra.Command{
+		Use:   "instance",
+		Short: "Delete SiteWhere Instance",
+		Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
-			return errors.New("requires one argument")
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		name := args[0]
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return errors.New("requires one argument")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
 
-		if namespace == "" {
-			namespace = name
-		}
+			if namespace == "" {
+				namespace = name
+			}
 
-		instance := alpha3.SiteWhereInstance{
-			Name:                  name,
-			Namespace:             namespace,
-			ConfigurationTemplate: "default",
-			DatasetTemplate:       "default"}
+			instance := alpha3.SiteWhereInstance{
+				Name:                  name,
+				Namespace:             namespace,
+				ConfigurationTemplate: "default",
+				DatasetTemplate:       "default"}
 
-		deleteSiteWhereInstance(&instance)
-	},
-}
+			deleteSiteWhereInstance(&instance)
+		},
+	}
+)
 
 func init() {
+	deleteCmd.Flags().BoolVarP(&purgeInstance, "purge", "p", false, "Purge instance.")
 	deleteCmd.AddCommand(deleteInstanceCmd)
 }
 
@@ -82,10 +86,12 @@ func deleteSiteWhereInstance(instance *alpha3.SiteWhereInstance) error {
 		return err
 	}
 
-	err = deleteSiteWhereNamespace(instance, config)
-	if err != nil {
-		fmt.Printf("Error deleting namespace: %v\n", err)
-		return err
+	if purgeInstance {
+		err = deleteSiteWhereNamespace(instance, config)
+		if err != nil {
+			fmt.Printf("Error deleting namespace: %v\n", err)
+			return err
+		}
 	}
 
 	fmt.Printf("SiteWhere Instance '%s' deleted\n", instance.Name)
