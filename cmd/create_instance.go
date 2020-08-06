@@ -616,6 +616,30 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 					"name":        microservice.Name,
 					"description": microservice.Description,
 					"icon":        microservice.Icon,
+					"logging": map[string]interface{}{
+						"overrides": []map[string]interface{}{
+							{
+								"logger": "com.sitewhere",
+								"level":  "info",
+							},
+							{
+								"logger": "com.sitewhere.grpc.client",
+								"level":  "info",
+							},
+							{
+								"logger": "com.sitewhere.microservice.grpc",
+								"level":  "info",
+							},
+							{
+								"logger": "com.sitewhere.microservice.kafka",
+								"level":  "info",
+							},
+							{
+								"logger": "org.redisson",
+								"level":  "info",
+							},
+						},
+					},
 					"helm": map[string]interface{}{ // TODO Remove when operatior udpates to not using helm
 						"chartName":      "sitewhere-0.3.0",
 						"releaseName":    instance.Name,
