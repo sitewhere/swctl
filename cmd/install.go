@@ -11,6 +11,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/gookit/color"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cobra"
 
@@ -92,5 +93,5 @@ func installSiteWhereCommand(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	fmt.Printf("SiteWhere 3.0 Installed\n")
+	color.Style{color.FgGreen, color.OpBold}.Println("\nSiteWhere 3.0 Installed")
 }
