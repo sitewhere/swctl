@@ -487,7 +487,7 @@ func createClusterRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, ser
 			},
 			RoleRef: rbacV1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",
-				Kind:     "Role",
+				Kind:     "ClusterRole",
 				Name:     clusterRole.ObjectMeta.Name,
 			},
 		}
