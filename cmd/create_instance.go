@@ -493,6 +493,14 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 								"logger": "org.redisson",
 								"level":  "info",
 							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.instance",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.web",
+							},
 						},
 					},
 					"configuration": map[string]interface{}{
@@ -614,6 +622,9 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 					},
 				},
 				"spec": map[string]interface{}{
+					"configuration": map[string]interface{}{
+						"test": 123,
+					},
 					"replicas":    1, // TODO from parameter
 					"multitenant": true,
 					"name":        microservice.Name,
@@ -640,6 +651,50 @@ func createCRSiteWhereMicroserviceIfNotExists(instance *alpha3.SiteWhereInstance
 							{
 								"logger": "org.redisson",
 								"level":  "info",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.asset",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.batch",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.commands",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.device",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.registration",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.devicestate",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.event",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.sources",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.inbound",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.labels",
+							},
+							{
+								"level":  "info",
+								"logger": "com.sitewhere.connectors",
 							},
 						},
 					},
