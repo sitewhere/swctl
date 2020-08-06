@@ -143,16 +143,16 @@ func createNamespaceAndResources(instance *alpha3.SiteWhereInstance) (*rest.Conf
 		return nil, err
 	}
 
-	var role *rbacV1.Role
-	role, err = createRoleIfNotExists(instance, namespace, clientset)
+	var role *rbacV1.ClusterRole
+	role, err = createClusterRoleIfNotExists(instance, clientset)
 	if err != nil {
-		fmt.Printf("Error Creating Role: %s, %v", instance.Namespace, err)
+		fmt.Printf("Error Creating Cluster Role: %s, %v", instance.Namespace, err)
 		return nil, err
 	}
 
-	_, err = createRoleBindingIfNotExists(instance, namespace, sa, role, clientset)
+	_, err = createClusterRoleBindingIfNotExists(instance, sa, role, clientset)
 	if err != nil {
-		fmt.Printf("Error Creating Role Binding: %s, %v", instance.Namespace, err)
+		fmt.Printf("Error Creating Cluster Role Binding: %s, %v", instance.Namespace, err)
 		return nil, err
 	}
 
@@ -369,6 +369,145 @@ func createRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, namespace 
 	}
 
 	return roleBinding, nil
+}
+
+func createClusterRoleIfNotExists(instance *alpha3.SiteWhereInstance, clientset *kubernetes.Clientset) (*rbacV1.ClusterRole, error) {
+	var err error
+	var clusterRole *rbacV1.ClusterRole
+
+	roleName := fmt.Sprintf("sitewhere-instance-clusterrole-%s", instance.Name)
+
+	clusterRole, err = clientset.RbacV1().ClusterRoles().Get(context.TODO(), roleName, metav1.GetOptions{})
+	if err != nil && k8serror.IsNotFound(err) {
+		clusterRole = &rbacV1.ClusterRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: roleName,
+				Labels: map[string]string{
+					"app": instance.Name,
+				},
+			},
+			Rules: []rbacV1.PolicyRule{
+				{
+					APIGroups: []string{
+						"sitewhere.io",
+					},
+					Resources: []string{
+						"instances",
+						"instances/status",
+						"microservices",
+						"tenants",
+						"tenantengines",
+						"tenantengines/status",
+					},
+					Verbs: []string{
+						"*",
+					},
+				}, {
+					APIGroups: []string{
+						"templates.sitewhere.io",
+					},
+					Resources: []string{
+						"instanceconfigurations",
+						"instancedatasets",
+						"tenantconfigurations",
+						"tenantengineconfigurations",
+						"tenantdatasets",
+						"tenantenginedatasets",
+					},
+					Verbs: []string{
+						"*",
+					},
+				}, {
+					APIGroups: []string{
+						"scripting.sitewhere.io",
+					},
+					Resources: []string{
+						"scriptcategories",
+						"scripttemplates",
+						"scripts",
+						"scriptversions",
+					},
+					Verbs: []string{
+						"*",
+					},
+				}, {
+					APIGroups: []string{
+						"apiextensions.k8s.io",
+					},
+					Resources: []string{
+						"customresourcedefinitions",
+					},
+					Verbs: []string{
+						"*",
+					},
+				},
+			},
+		}
+
+		result, err := clientset.RbacV1().ClusterRoles().Create(context.TODO(),
+			clusterRole,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return clusterRole, nil
+}
+
+func createClusterRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, serviceAccount *v1.ServiceAccount,
+	clusterRole *rbacV1.ClusterRole, clientset *kubernetes.Clientset) (*rbacV1.ClusterRoleBinding, error) {
+	var err error
+	var clusterRoleBinding *rbacV1.ClusterRoleBinding
+
+	roleBindingName := fmt.Sprintf("sitewhere-instance-clusterrole-binding-%s", instance.Name)
+
+	clusterRoleBinding, err = clientset.RbacV1().ClusterRoleBindings().Get(context.TODO(), roleBindingName, metav1.GetOptions{})
+	if err != nil && k8serror.IsNotFound(err) {
+		clusterRoleBinding = &rbacV1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: roleBindingName,
+				Labels: map[string]string{
+					"app": instance.Name,
+				},
+			},
+			Subjects: []rbacV1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Namespace: namespace,
+					Name:      serviceAccount.ObjectMeta.Name,
+				},
+			},
+			RoleRef: rbacV1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     "Role",
+				Name:     clusterRole.ObjectMeta.Name,
+			},
+		}
+
+		result, err := clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(),
+			clusterRoleBinding,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return clusterRoleBinding, nil
 }
 
 func createLoadBalancerServiceIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*v1.Service, error) {
