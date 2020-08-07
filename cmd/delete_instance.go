@@ -63,7 +63,7 @@ to quickly create a Cobra application.`,
 )
 
 func init() {
-	deleteCmd.Flags().BoolVarP(&purgeInstance, "purge", "p", false, "Purge instance.")
+	deleteInstanceCmd.Flags().BoolVarP(&purgeInstance, "purge", "p", false, "Purge instance.")
 	deleteCmd.AddCommand(deleteInstanceCmd)
 }
 

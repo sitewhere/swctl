@@ -11,7 +11,10 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/gookit/color"
 	"github.com/rakyll/statik/fs"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/sitewhere/swctl/internal"
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
@@ -20,8 +23,9 @@ import (
 
 // uninstallCmd represents the uninstall command
 var (
-	purge            = false // Purge data
+	minimalUninstall = false // Use minimal uninstall profile.
 	verboseUninstall = false // Use verbose uninstallation
+	purge            = false // Purge data
 	uninstallCmd     = &cobra.Command{
 		Use:   "uninstall",
 		Short: "Uninstall SiteWhere from your Kubernetes Cluster",
@@ -37,8 +41,9 @@ This command will uninstall:
 )
 
 func init() {
-	uninstallCmd.Flags().BoolVarP(&purge, "purge", "p", false, "Purge data.")
+	uninstallCmd.Flags().BoolVarP(&minimalUninstall, "minimal", "m", false, "Minimal uninstallation.")
 	uninstallCmd.Flags().BoolVarP(&verboseUninstall, "verbose", "v", false, "Verbose uninstallation.")
+	uninstallCmd.Flags().BoolVarP(&purge, "purge", "p", false, "Purge data.")
 	rootCmd.AddCommand(uninstallCmd)
 }
 
@@ -57,6 +62,7 @@ func uninstallSiteWhereCommand(_ *cobra.Command, _ []string) {
 	}
 
 	var sitewhereConfig = internal.SiteWhereInstallConfiguration{
+		Minimal:          minimalUninstall,
 		Verbose:          verboseUninstall,
 		KubernetesConfig: config,
 		StatikFS:         statikFS,
@@ -79,5 +85,13 @@ func uninstallSiteWhereCommand(_ *cobra.Command, _ []string) {
 	// Uninstall Custom Resource Definitions
 	internal.UninstallSiteWhereCRDs(&sitewhereConfig)
 
-	fmt.Println("SiteWhere 3.0 Uninstalled.")
+	if purge {
+		err = internal.DeleteSiteWhereNamespaceIfExists(sitewhereConfig.GetClientset())
+		if err != nil && !errors.IsNotFound(err) {
+			fmt.Printf("Error Uninstalling SiteWhere Namespace: %v\n", err)
+			return
+		}
+	}
+
+	color.Style{color.FgGreen, color.OpBold}.Println("\nSiteWhere 3.0 Uninstalled")
 }

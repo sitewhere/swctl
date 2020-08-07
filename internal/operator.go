@@ -14,8 +14,6 @@ import (
 
 	"github.com/gookit/color"
 	"k8s.io/apimachinery/pkg/api/errors"
-
-	"k8s.io/client-go/kubernetes"
 )
 
 // Template for generating a Operator Filename
@@ -68,11 +66,6 @@ func InstallSiteWhereOperator(config SiteWhereConfiguration) error {
 func UninstallSiteWhereOperator(config *SiteWhereInstallConfiguration) error {
 	var err error
 
-	clientset, err := kubernetes.NewForConfig(config.KubernetesConfig)
-	if err != nil {
-		return err
-	}
-
 	for i := 1; i <= operatorFileNumber; i++ {
 		var operatorResource = fmt.Sprintf(operatorFileTemplate, i)
 		err = UninstallResourceFromFile(operatorResource, config.KubernetesConfig, config.StatikFS)
@@ -81,10 +74,6 @@ func UninstallSiteWhereOperator(config *SiteWhereInstallConfiguration) error {
 		}
 	}
 
-	err = DeleteNamespaceIfExists(sitewhereSystemNamespace, clientset)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
 	if config.Verbose {
 		fmt.Print("SiteWhere Operator: ")
 		color.Info.Println("Uninstalled")

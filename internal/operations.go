@@ -26,8 +26,10 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	policyV1beta1 "k8s.io/api/policy/v1beta1"
 	rbacV1 "k8s.io/api/rbac/v1"
+
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 
@@ -38,7 +40,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
-	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -112,6 +113,8 @@ func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) err
 		_, err = CreateRoleBindingIfNotExists(o, clientset, sitewhereSystemNamespace)
 	case *policyV1beta1.PodDisruptionBudget:
 		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, sitewhereSystemNamespace)
+	case *networkingv1.NetworkPolicy:
+		_, err = CreateNetworkPolicyIfNotExists(o, clientset, sitewhereSystemNamespace)
 	case *apiextv1beta1.CustomResourceDefinition:
 		_, err = CreateCustomResourceDefinitionIfNotExists(o, config.GetApiextensionsClient())
 	default:
@@ -191,6 +194,8 @@ func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS ht
 		err = DeleteRoleBindingIfExists(o, clientset, sitewhereSystemNamespace)
 	case *policyV1beta1.PodDisruptionBudget:
 		err = DeletePodDisruptionBudgetIfExists(o, clientset, sitewhereSystemNamespace)
+	case *networkingv1.NetworkPolicy:
+		err = DeleteNetworkPolicyIfExists(o, clientset, sitewhereSystemNamespace)
 	case *apiextv1beta1.CustomResourceDefinition:
 		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config)
 		if err != nil {
@@ -216,7 +221,7 @@ func CreateNamespaceIfNotExists(namespace string, clientset kubernetes.Interface
 
 	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		ns = &v1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
@@ -266,7 +271,7 @@ func CreateServiceAccountIfNotExists(sa *v1.ServiceAccount, clientset kubernetes
 		sa.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.CoreV1().ServiceAccounts(namespace).Create(
 			context.TODO(),
 			sa,
@@ -304,7 +309,7 @@ func CreatePodIfNotExists(pod *v1.Pod, clientset kubernetes.Interface, namespace
 		pod.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.CoreV1().Pods(namespace).Create(
 			context.TODO(),
 			pod,
@@ -342,7 +347,7 @@ func CreateConfigMapIfNotExists(cm *v1.ConfigMap, clientset kubernetes.Interface
 		cm.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.CoreV1().ConfigMaps(namespace).Create(
 			context.TODO(),
 			cm,
@@ -380,7 +385,7 @@ func CreateSecretIfNotExists(sec *v1.Secret, clientset kubernetes.Interface, nam
 		sec.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.CoreV1().Secrets(namespace).Create(
 			context.TODO(),
 			sec,
@@ -418,7 +423,7 @@ func CreatePersistentVolumeClaimIfNotExists(pvc *v1.PersistentVolumeClaim, clien
 		pvc.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.CoreV1().PersistentVolumeClaims(namespace).Create(
 			context.TODO(),
 			pvc,
@@ -456,7 +461,7 @@ func CreateServiceIfNotExists(svc *v1.Service, clientset kubernetes.Interface, n
 		svc.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.CoreV1().Services(namespace).Create(
 			context.TODO(),
 			svc,
@@ -494,7 +499,7 @@ func CreateDeploymentIfNotExists(deploy *appsv1.Deployment, clientset kubernetes
 		deploy.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.AppsV1().Deployments(namespace).Create(
 			context.TODO(),
 			deploy,
@@ -532,7 +537,7 @@ func CreateStatefulSetIfNotExists(ss *appsv1.StatefulSet, clientset kubernetes.I
 		ss.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.AppsV1().StatefulSets(namespace).Create(
 			context.TODO(),
 			ss,
@@ -570,7 +575,7 @@ func CreateClusterRoleIfNotExists(cr *rbacV1.ClusterRole, clientset kubernetes.I
 		cr.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.RbacV1().ClusterRoles().Create(
 			context.TODO(),
 			cr,
@@ -608,7 +613,7 @@ func CreateClusterRoleBindingIfNotExists(crb *rbacV1.ClusterRoleBinding, clients
 		crb.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.RbacV1().ClusterRoleBindings().Create(
 			context.TODO(),
 			crb,
@@ -646,7 +651,7 @@ func CreateRoleIfNotExists(role *rbacV1.Role, clientset kubernetes.Interface, na
 		role.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.RbacV1().Roles(namespace).Create(
 			context.TODO(),
 			role,
@@ -684,7 +689,7 @@ func CreateRoleBindingIfNotExists(rb *rbacV1.RoleBinding, clientset kubernetes.I
 		rb.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.RbacV1().RoleBindings(namespace).Create(
 			context.TODO(),
 			rb,
@@ -722,7 +727,7 @@ func CreatePodDisruptionBudgetIfNotExists(rb *policyV1beta1.PodDisruptionBudget,
 		rb.ObjectMeta.Name,
 		metav1.GetOptions{})
 
-	if err != nil && k8serror.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) {
 		result, err := clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Create(
 			context.TODO(),
 			rb,
@@ -901,6 +906,44 @@ func DeleteCustomResourceFromFile(crName string, config *rest.Config, statikFS h
 	return nil
 }
 
+// CreateNetworkPolicyIfNotExists Create a CustomResourceDefinition if it does not exists.
+func CreateNetworkPolicyIfNotExists(np *networkingv1.NetworkPolicy, clientset kubernetes.Interface, namespace string) (*networkingv1.NetworkPolicy, error) {
+	var err error
+	var existingNP *networkingv1.NetworkPolicy
+
+	existingNP, err = clientset.NetworkingV1().NetworkPolicies(namespace).Get(
+		context.TODO(),
+		np.ObjectMeta.Name,
+		metav1.GetOptions{})
+
+	if err != nil && errors.IsNotFound(err) {
+		result, err := clientset.NetworkingV1().NetworkPolicies(namespace).Create(
+			context.TODO(),
+			np,
+			metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return result, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return existingNP, nil
+}
+
+// DeleteNetworkPolicyIfExists Delete a NetworkPolicy if it exists
+func DeleteNetworkPolicyIfExists(np *networkingv1.NetworkPolicy, clientset kubernetes.Interface, namespace string) error {
+	return clientset.NetworkingV1().NetworkPolicies(namespace).Delete(
+		context.TODO(),
+		np.ObjectMeta.Name,
+		metav1.DeleteOptions{})
+}
+
 func waitForPodContainersRunning(clientset kubernetes.Interface, podName string, namespace string) error {
 	end := time.Now().Add(deployRunningThreshold)
 
@@ -913,8 +956,8 @@ func waitForPodContainersRunning(clientset kubernetes.Interface, podName string,
 			return nil
 		}
 
-		if err != nil && k8serror.IsNotFound(err) {
-			fmt.Printf(fmt.Sprintf("Encountered an error checking for running pods: %s", err))
+		if err != nil && errors.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for running pods: %s\n", err))
 		}
 
 		if time.Now().After(end) {
@@ -955,8 +998,8 @@ func waitForDeploymentAvailable(clientset kubernetes.Interface, deploymentName s
 			return nil
 		}
 
-		if err != nil && !k8serror.IsNotFound(err) {
-			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s", err))
+		if err != nil && !errors.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s\n", err))
 		}
 
 		if time.Now().After(end) {

@@ -20,6 +20,7 @@ import (
 // SiteWhereConfiguration define a configuration
 type SiteWhereConfiguration interface {
 	IsVerbose() bool
+	IsMinimal() bool
 	GetConfig() *rest.Config
 	GetStatikFS() http.FileSystem
 	GetClientset() kubernetes.Interface
@@ -44,6 +45,11 @@ type InfraTemplateResource struct {
 // IsVerbose Verbose value
 func (c *SiteWhereInstallConfiguration) IsVerbose() bool {
 	return c.Verbose
+}
+
+// IsMinimal Minimal install
+func (c *SiteWhereInstallConfiguration) IsMinimal() bool {
+	return c.Minimal
 }
 
 // GetConfig Kubernetes Config
