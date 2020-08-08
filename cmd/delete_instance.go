@@ -33,40 +33,39 @@ var (
 	deleteInstanceCmd = &cobra.Command{
 		Use:   "instance",
 		Short: "Delete SiteWhere Instance",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return errors.New("requires one argument")
-			}
-			return nil
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			name := args[0]
-
-			if namespace == "" {
-				namespace = name
-			}
-
-			instance := alpha3.SiteWhereInstance{
-				Name:                  name,
-				Namespace:             namespace,
-				ConfigurationTemplate: "default",
-				DatasetTemplate:       "default"}
-
-			deleteSiteWhereInstance(&instance)
-		},
+		Long: `Use this command to delete a SiteWhere Instance. 
+Use can use purge flag to remove the namespace of the instance.`,
+		Args: commandDeleteInstanceArgs,
+		Run:  commandDeleteInstanceRun,
 	}
 )
 
 func init() {
 	deleteInstanceCmd.Flags().BoolVarP(&purgeInstance, "purge", "p", false, "Purge instance.")
 	deleteCmd.AddCommand(deleteInstanceCmd)
+}
+
+func commandDeleteInstanceArgs(cmd *cobra.Command, args []string) error {
+	if len(args) != 1 {
+		return errors.New("requires one argument")
+	}
+	return nil
+}
+
+func commandDeleteInstanceRun(cmd *cobra.Command, args []string) {
+	name := args[0]
+
+	if namespace == "" {
+		namespace = name
+	}
+
+	instance := alpha3.SiteWhereInstance{
+		Name:                  name,
+		Namespace:             namespace,
+		ConfigurationTemplate: "default",
+		DatasetTemplate:       "default"}
+
+	deleteSiteWhereInstance(&instance)
 }
 
 func deleteSiteWhereInstance(instance *alpha3.SiteWhereInstance) error {
@@ -155,7 +154,6 @@ func deleteSiteWhereMicroservicesResources(instance *alpha3.SiteWhereInstance, c
 	}
 
 	return nil
-	//	return res.Delete(context.TODO(), instance.Name, metav1.DeleteOptions{})
 }
 
 func deleteSiteWhereResources(instance *alpha3.SiteWhereInstance, client dynamic.Interface) error {
