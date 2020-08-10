@@ -19,6 +19,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	policyV1beta1 "k8s.io/api/policy/v1beta1"
 	rbacV1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1802,6 +1803,129 @@ func TestCreateCustomResourceDefinitionIfNotExists(t *testing.T) {
 				} else {
 					if result.ObjectMeta.Name != single.crd.ObjectMeta.Name {
 						t.Fatalf("expected %s service, got %s", single.crd.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestCreateNetworkPolicyIfNotExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		np        networkingv1.NetworkPolicy
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// NetworkPolicy exists, should return existing
+		{
+			np: networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&networkingv1.NetworkPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// NetworkPolicy does not exist, should return created ns
+		{
+			np: networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+		},
+	}
+	for _, single := range data {
+		t.Run(single.np.ObjectMeta.Name, func(single struct {
+			np        networkingv1.NetworkPolicy
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				result, err := CreateNetworkPolicyIfNotExists(&single.np, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
+					}
+				} else {
+					if result.ObjectMeta.Name != single.np.ObjectMeta.Name {
+						t.Fatalf("expected %s networkpolicy, got %s", single.np.ObjectMeta.Name, result.ObjectMeta.Name)
+					}
+				}
+			}
+		}(single))
+	}
+}
+
+func TestDeleteNetworkPolicyIfExists(t *testing.T) {
+
+	t.Parallel()
+	data := []struct {
+		np        networkingv1.NetworkPolicy
+		namespace string
+		clientset kubernetes.Interface
+		err       error
+	}{
+		// NetworkPolicy exists, should return existing
+		{
+			np: networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{
+				Name:        "existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(&networkingv1.NetworkPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Namespace:   "ns",
+					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// NetworkPolicy does not exist, should return created ns
+		{
+			np: networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{
+				Name:        "non-existing",
+				Namespace:   "ns",
+				Annotations: map[string]string{},
+			}},
+			namespace: "ns",
+			clientset: fake.NewSimpleClientset(),
+			err:       fmt.Errorf("networkpolicies.networking.k8s.io \"non-existing\" not found"),
+		},
+	}
+
+	for _, single := range data {
+		t.Run(single.np.ObjectMeta.Name, func(single struct {
+			np        networkingv1.NetworkPolicy
+			namespace string
+			clientset kubernetes.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := DeleteNetworkPolicyIfExists(&single.np, single.clientset, single.namespace)
+
+				if err != nil {
+					if single.err == nil {
+						t.Fatalf(err.Error())
+					}
+					if !strings.EqualFold(single.err.Error(), err.Error()) {
+						t.Fatalf("expected err: %s got err: %s", single.err, err)
 					}
 				}
 			}
