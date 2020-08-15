@@ -54,7 +54,7 @@ const (
 )
 
 // InstallResourceFromFile Install a resource from a file name
-func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) error {
+func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) error { //nolint:gocyclo
 	r, err := config.GetStatikFS().Open(fileName)
 	if err != nil {
 		fmt.Printf("Error reading %s: %v\n", fileName, err)
@@ -131,7 +131,7 @@ func InstallResourceFromFile(fileName string, config SiteWhereConfiguration) err
 }
 
 // UninstallResourceFromFile Uninstall a resource from a file name
-func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS http.FileSystem) error {
+func UninstallResourceFromFile(fileName string, config *rest.Config, statikFS http.FileSystem) error { //nolint:gocyclo
 	r, err := statikFS.Open(fileName)
 	if err != nil {
 		fmt.Printf("Error reading %s: %v\n", fileName, err)
