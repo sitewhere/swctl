@@ -10,6 +10,7 @@ LICENSE file.
 package internal
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -35,7 +36,14 @@ func GetKubeConfig(pathToCfg string) (*rest.Config, error) {
 		// in cluster access
 		return rest.InClusterConfig()
 	}
-	return clientcmd.BuildConfigFromFlags("", pathToCfg)
+
+	cfg, err := clientcmd.BuildConfigFromFlags("", pathToCfg)
+
+	if err != nil {
+		log.Println("Using in cluster config")
+		return GetKubeConfig("")
+	}
+	return cfg, nil
 }
 
 // GetKubernetesClient Returns Kubernetes Client
