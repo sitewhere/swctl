@@ -6,5 +6,8 @@ license, a copy of which has been included with this distribution in the
 LICENSE file.
 */
 
-// Package alpha3 defines SiteWhere Structures
-package cmd
+package install
+
+// SiteWhereInstall destribe the installation of SiteWhere.
+type SiteWhereInstall struct {
+}

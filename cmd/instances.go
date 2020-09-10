@@ -57,8 +57,8 @@ const (
 
 // instancesCmd represents the instances command
 var (
-	output       = ""
-	instancesCmd = &cobra.Command{
+	instancesOutput = ""
+	instancesCmd    = &cobra.Command{
 		Use:   "instances [OPTIONS] [instance]",
 		Short: "Manage SiteWhere Instance",
 		Long:  `Manage SiteWhere Instance.`,
@@ -80,7 +80,7 @@ var (
 )
 
 func init() {
-	instancesCmd.Flags().StringVarP(&output, "output", "o", "", "Output format. One of 'yaml' or 'json'.")
+	instancesCmd.Flags().StringVarP(&instancesOutput, "output", "o", "", "Output format. One of 'yaml' or 'json'.")
 	rootCmd.AddCommand(instancesCmd)
 }
 
@@ -157,9 +157,9 @@ func handleInstance(instanceName string) {
 func printSiteWhereInstance(crSiteWhereInstace *unstructured.Unstructured) {
 	sitewhereInstace := extractFromResource(crSiteWhereInstace)
 
-	if strings.TrimSpace(output) == "json" {
+	if strings.TrimSpace(instancesOutput) == "json" {
 		printJSONSiteWhereInstance(sitewhereInstace)
-	} else if strings.TrimSpace(output) == "yaml" {
+	} else if strings.TrimSpace(instancesOutput) == "yaml" {
 		printYAMLSiteWhereInstance(sitewhereInstace)
 	} else {
 		printStandardSiteWhereInstance(sitewhereInstace)

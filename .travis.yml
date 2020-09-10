@@ -23,7 +23,7 @@ script:
   - go vet $(go list ./... | grep -v /vendor/)
   - go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
   # Only build binaries from the latest Go release.
-  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="swctl.{{.OS}}.{{.Arch}}" -ldflags "-w -extldflags "-static" -X github.com/sitewhere/swctl/cmd.commit=`git rev-parse --short HEAD` -X github.com/sitewhere/swctl/cmd.date=$(date +'%Y-%m-%d_%T') -X github.com/sitewhere/swctl/cmd.version=$(git describe --tags `git rev-list --tags --max-count=1`)" -verbose ./...; fi
+  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="swctl.{{.OS}}.{{.Arch}}" -ldflags "-w -extldflags "-static" -X github.com/sitewhere/swctl/internal/version.commit=`git rev-parse --short HEAD` -X github.com/sitewhere/swctl/internal/version.date=$(date +'%Y-%m-%d_%T') -X github.com/sitewhere/swctl/internal/version.version=$(git describe --tags `git rev-list --tags --max-count=1`)" -verbose ./...; fi
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

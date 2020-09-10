@@ -10,13 +10,44 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/sitewhere/swctl/pkg/action"
+
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
+
+var globalUsage = `SiteWhere Control allow you to manage SiteWhere CE Instances.`
+
+// NewRootCmd creates a new root command.
+func NewRootCmd(actionConfig *action.Configuration, out io.Writer, args []string) (*cobra.Command, error) {
+	cmd := &cobra.Command{
+		Use:          "swctl",
+		Short:        "SiteWhere Control CLI.",
+		Long:         globalUsage,
+		SilenceUsage: true,
+		// This breaks completion for 'helm help <TAB>'
+		// The Cobra release following 1.0 will fix this
+		//ValidArgsFunction: noCompletions, // Disable file completion
+	}
+	flags := cmd.PersistentFlags()
+
+	// Command completion
+	flags.ParseErrorsWhitelist.UnknownFlags = true
+	flags.Parse(args)
+
+	// Add subcommands
+	cmd.AddCommand(
+		newInstallCmd(actionConfig, out),
+		newCheckInstallCmd(actionConfig, out),
+		newVersionCmd(out))
+
+	return cmd, nil
+}
 
 var cfgFile string
 
