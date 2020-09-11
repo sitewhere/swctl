@@ -40,7 +40,7 @@ func NewInstall(cfg *Configuration) *Install {
 	}
 }
 
-// Run executes the list command, returning a set of matches.
+// Run executes the install command, returning the result of the installation
 func (i *Install) Run() (*install.SiteWhereInstall, error) {
 
 	// // Install Custom Resource Definitions

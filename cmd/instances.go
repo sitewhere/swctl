@@ -81,7 +81,7 @@ var (
 
 func init() {
 	instancesCmd.Flags().StringVarP(&instancesOutput, "output", "o", "", "Output format. One of 'yaml' or 'json'.")
-	rootCmd.AddCommand(instancesCmd)
+	// rootCmd.AddCommand(instancesCmd)
 }
 
 func handleListInstances() {

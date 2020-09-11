@@ -9,203 +9,67 @@ LICENSE file.
 package cmd
 
 import (
-	"context"
-	"errors"
-	"fmt"
-
-	"k8s.io/client-go/rest"
-
-	"github.com/sitewhere/swctl/internal"
-	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
+	"io"
 
 	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
-	k8serror "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
+	"github.com/spf13/pflag"
+
+	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/pkg/action"
+	"github.com/sitewhere/swctl/pkg/cli/output"
+	"github.com/sitewhere/swctl/pkg/instance"
 )
 
-var (
-	purgeInstance = false // Purge instance
-	// deleteInstanceCmd represents the instance command
-	deleteInstanceCmd = &cobra.Command{
-		Use:   "instance",
-		Short: "Delete SiteWhere Instance",
-		Long: `Use this command to delete a SiteWhere Instance. 
-Use can use purge flag to remove the namespace of the instance.`,
-		Args: commandDeleteInstanceArgs,
-		Run:  commandDeleteInstanceRun,
-	}
-)
+var deleteInstanceDesc = `
+Use this command to delete a SiteWhere Instance. 
+Use can use purge flag to remove the namespace of the instance.
+`
 
-func init() {
-	deleteInstanceCmd.Flags().BoolVarP(&purgeInstance, "purge", "p", false, "Purge instance.")
-	deleteCmd.AddCommand(deleteInstanceCmd)
-}
+func newDeleteInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+	client := action.NewDeleteInstance(cfg)
+	var outfmt output.Format
 
-func commandDeleteInstanceArgs(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return errors.New("requires one argument")
-	}
-	return nil
-}
-
-func commandDeleteInstanceRun(cmd *cobra.Command, args []string) {
-	name := args[0]
-
-	if namespace == "" {
-		namespace = name
-	}
-
-	instance := alpha3.SiteWhereInstance{
-		Name:                  name,
-		Namespace:             namespace,
-		ConfigurationTemplate: "default",
-		DatasetTemplate:       "default"}
-
-	deleteSiteWhereInstance(&instance)
-}
-
-func deleteSiteWhereInstance(instance *alpha3.SiteWhereInstance) error {
-	config, err := internal.GetKubeConfigFromKubeconfig()
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-		return err
-	}
-
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return err
-	}
-
-	err = deleteSiteWhereMicroservicesResources(instance, client)
-	if err != nil {
-		fmt.Printf("Error deleting instance: %v\n", err)
-		return err
-	}
-
-	if purgeInstance {
-		err = deleteSiteWhereResources(instance, client)
-		if err != nil {
-			fmt.Printf("Error deleting instance: %v\n", err)
-			return err
-		}
-
-		err = deleteSiteWhereNamespace(instance, config)
-		if err != nil {
-			fmt.Printf("Error deleting namespace: %v\n", err)
-			return err
-		}
-	}
-
-	fmt.Printf("SiteWhere Instance '%s' deleted\n", instance.Name)
-
-	return err
-}
-
-func deleteSiteWhereMicroservicesResources(instance *alpha3.SiteWhereInstance, client dynamic.Interface) error {
-
-	res := client.Resource(sitewhereMicroserviceGVR).Namespace(instance.Namespace)
-
-	microservices, err := res.List(context.TODO(), metav1.ListOptions{})
-
-	// delete instance
-	if k8serror.IsNotFound(err) {
-		errorMessage := fmt.Sprintf("SiteWhere Microservices '%s' not found in namespace '%s'", instance.Name, instance.Namespace)
-		return errors.New(errorMessage)
-	}
-	if err != nil {
-		return err
-	}
-
-	for _, microservice := range microservices.Items {
-		metadata, exists, err := unstructured.NestedMap(microservice.Object, "metadata")
-
-		if err != nil {
-			fmt.Printf("Error reading metadata for %s: %v\n", instance.Name, err)
-			return nil
-		}
-		if !exists {
-			fmt.Printf("Metadata not found for for SiteWhere Instance: %s", instance.Name)
-		} else {
-			name, exists, err := unstructured.NestedString(metadata, "name")
-
+	cmd := &cobra.Command{
+		Use:               "instance [NAME]",
+		Short:             "delete an instance",
+		Long:              deleteInstanceDesc,
+		Args:              require.ExactArgs(1),
+		ValidArgsFunction: noCompletions,
+		RunE: func(_ *cobra.Command, args []string) error {
+			results, err := client.Run()
 			if err != nil {
-				fmt.Printf("Error reading metadata for %s: %v\n", instance.Name, err)
-				return nil
+				return err
 			}
-			if !exists {
-				fmt.Printf("Metadata not found for for SiteWhere Instance: %s", instance.Name)
-			} else {
-				err = res.Delete(context.TODO(), name, metav1.DeleteOptions{})
-
-				if k8serror.IsNotFound(err) {
-					errorMessage := fmt.Sprintf("SiteWhere Microservice '%s' not found in namespace '%s'", name, instance.Namespace)
-					return errors.New(errorMessage)
-				}
-				if err != nil {
-					return err
-				}
-			}
-		}
+			return outfmt.Write(out, newDeleteInstanceWriter(results))
+		},
 	}
 
+	addDeleteInstanceFlags(cmd, cmd.Flags(), client)
+	bindOutputFlag(cmd, &outfmt)
+
+	return cmd
+}
+
+func addDeleteInstanceFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action.DeleteInstance) {
+	f.BoolVarP(&client.Pruge, "purge", "p", false, "Purge instance.")
+}
+
+type deleteInstancePrinter struct {
+	instance *instance.DeleteSiteWhereInstance
+}
+
+func newDeleteInstanceWriter(result *instance.DeleteSiteWhereInstance) *deleteInstancePrinter {
+	return &deleteInstancePrinter{instance: result}
+}
+
+func (s deleteInstancePrinter) WriteJSON(out io.Writer) error {
+	return output.EncodeJSON(out, s.instance)
+}
+
+func (s deleteInstancePrinter) WriteYAML(out io.Writer) error {
+	return output.EncodeYAML(out, s.instance)
+}
+
+func (s deleteInstancePrinter) WriteTable(out io.Writer) error {
 	return nil
-}
-
-func deleteSiteWhereResources(instance *alpha3.SiteWhereInstance, client dynamic.Interface) error {
-
-	res := client.Resource(sitewhereInstanceGVR)
-
-	_, err := res.Get(context.TODO(), instance.Name, metav1.GetOptions{})
-
-	// delete instance
-	if k8serror.IsNotFound(err) {
-		errorMessage := fmt.Sprintf("SiteWhere Instance '%s' not found", instance.Name)
-		return errors.New(errorMessage)
-	}
-	if err != nil {
-		return err
-	}
-	return res.Delete(context.TODO(), instance.Name, metav1.DeleteOptions{})
-}
-
-func deleteSiteWhereNamespace(instance *alpha3.SiteWhereInstance, config *rest.Config) error {
-	var err error
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return err
-	}
-
-	var ns *v1.Namespace
-	ns, err = existNamespace(instance.Namespace, clientset)
-	if err != nil {
-		fmt.Printf("Error Deleting Namespace: %s, %v", instance.Namespace, err)
-		return err
-	}
-
-	var namespace = ns.ObjectMeta.Name
-
-	// delete namespace
-	err = clientset.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
-
-	return err
-}
-
-func existNamespace(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
-	var err error
-	var ns *v1.Namespace
-
-	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return ns, nil
 }

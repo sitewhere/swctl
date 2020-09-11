@@ -9,21 +9,31 @@ LICENSE file.
 package cmd
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
+
+	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/pkg/action"
 )
 
-// deleteCmd represents the delete command
-var deleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var deleteHelp = `
+Delete a SiteWhere resource from a file or from stdin.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-}
+You can delete a SiteWhere instance by using:
+  - swctl delete instance sitewhere
+`
 
-func init() {
-	rootCmd.AddCommand(deleteCmd)
+func newDeleteCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "delete",
+		Short:             "delete a SiteWhere resource from a file or from stdin.",
+		Long:              deleteHelp,
+		Args:              require.NoArgs,
+		ValidArgsFunction: noCompletions, // Disable file completion
+	}
+
+	cmd.AddCommand(newDeleteInstanceCmd(cfg, out))
+
+	return cmd
 }

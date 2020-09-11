@@ -9,22 +9,31 @@ LICENSE file.
 package cmd
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
+
+	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/pkg/action"
 )
 
-// createCmd represents the create command
-var createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a SiteWhere resource from a file or from stdin.",
-	Long: `Create a SiteWhere resource from a file or from stdin.
+var createHelp = `
+Create a SiteWhere resource from a file or from stdin.
 
-A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+You can create a SiteWhere instance by using:
+  - swctl create instance sitewhere
+`
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`}
+func newCreateCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "create",
+		Short:             "create a SiteWhere resource from a file or from stdin.",
+		Long:              createHelp,
+		Args:              require.NoArgs,
+		ValidArgsFunction: noCompletions, // Disable file completion
+	}
 
-func init() {
-	rootCmd.AddCommand(createCmd)
+	cmd.AddCommand(newCreateInstanceCmd(cfg, out))
+
+	return cmd
 }
