@@ -11,9 +11,12 @@ package action
 import (
 	"github.com/sitewhere/swctl/pkg/kube"
 
+	"github.com/pkg/errors"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
@@ -48,4 +51,23 @@ func (c *Configuration) Init(getter genericclioptions.RESTClientGetter, namespac
 	c.Log = log
 
 	return nil
+}
+
+// KubernetesClientSet creates a new kubernetes ClientSet based on the configuration
+func (c *Configuration) KubernetesClientSet() (kubernetes.Interface, error) {
+	conf, err := c.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to generate config for kubernetes client")
+	}
+
+	return kubernetes.NewForConfig(conf)
+}
+
+// KubernetesAPIExtensionClientSet create a new kubernetes API Extension Clientset
+func (c *Configuration) KubernetesAPIExtensionClientSet() (clientset.Interface, error) {
+	conf, err := c.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to generate config for API Extension Clientset")
+	}
+	return clientset.NewForConfig(conf)
 }

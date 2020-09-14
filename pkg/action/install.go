@@ -15,6 +15,7 @@ import (
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/install"
+	"github.com/sitewhere/swctl/pkg/resources"
 )
 
 // Install is the action for installing SiteWhere
@@ -42,36 +43,41 @@ func NewInstall(cfg *Configuration) *Install {
 
 // Run executes the install command, returning the result of the installation
 func (i *Install) Run() (*install.SiteWhereInstall, error) {
-
-	// // Install Custom Resource Definitions
-	// err = internal.InstallSiteWhereCRDs(sitewhereConfig, i)
-	// if err != nil {
-	// 	fmt.Printf("Error Installing SiteWhere CRDs: %v\n", err)
-	// 	return nil, err
-	// }
-
-	// // Install Templates
-	// err = internal.InstallSiteWhereTemplates(sitewhereConfig)
-	// if err != nil {
-	// 	fmt.Printf("Error Installing SiteWhere Templates: %v\n", err)
-	// 	return nil, err
-	// }
-
-	// // Install Operator
-	// err = internal.InstallSiteWhereOperator(sitewhereConfig)
-	// if err != nil {
-	// 	fmt.Printf("Error Installing SiteWhere Operator: %v\n", err)
-	// 	return nil, err
-	// }
-
-	// // Install Infrastructure
-	// err = internal.InstallSiteWhereInfrastructure(sitewhereConfig)
-	// if err != nil {
-	// 	fmt.Printf("Error Installing SiteWhere Infrastucture: %v\n", err)
-	// 	return nil, err
-	// }
-
-	// color.Style{color.FgGreen, color.OpBold}.Println("\nSiteWhere 3.0 Installed")
-
+	var err error
+	if err = i.cfg.KubeClient.IsReachable(); err != nil {
+		return nil, err
+	}
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+	apiextensionsClientset, err := i.cfg.KubernetesAPIExtensionClientSet()
+	if err != nil {
+		return nil, err
+	}
+	config, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	// Install Custom Resource Definitions
+	err = resources.InstallSiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
+	if err != nil {
+		return nil, err
+	}
+	// Install Templates
+	err = resources.InstallSiteWhereTemplates(i.StatikFS, clientset, apiextensionsClientset, config)
+	if err != nil {
+		return nil, err
+	}
+	// Install Operator
+	err = resources.InstallSiteWhereOperator(i.StatikFS, clientset, apiextensionsClientset, config)
+	if err != nil {
+		return nil, err
+	}
+	// Install Infrastructure
+	err = resources.InstallSiteWhereInfrastructure(i.Minimal, i.StatikFS, clientset, apiextensionsClientset, config)
+	if err != nil {
+		return nil, err
+	}
 	return &install.SiteWhereInstall{}, nil
 }

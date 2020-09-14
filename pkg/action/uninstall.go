@@ -46,6 +46,9 @@ func NewUninstall(cfg *Configuration) *Uninstall {
 
 // Run executes the uninstall command, returning the result of the uninstallation
 func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
+	if err := i.cfg.KubeClient.IsReachable(); err != nil {
+		return nil, err
+	}
 	return &uninstall.SiteWhereUninstall{}, nil
 }
 

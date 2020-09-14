@@ -35,13 +35,6 @@ type SiteWhereInstallConfiguration struct {
 	StatikFS         http.FileSystem
 }
 
-// InfraTemplateResource template for resources files
-type InfraTemplateResource struct {
-	FileTemplate string
-	FileCount    int
-	Enabled      bool
-}
-
 // IsVerbose Verbose value
 func (c *SiteWhereInstallConfiguration) IsVerbose() bool {
 	return c.Verbose

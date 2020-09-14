@@ -6,15 +6,16 @@ license, a copy of which has been included with this distribution in the
 LICENSE file.
 */
 
-// Package internal Implements swctl internal use only functions
-package internal
+package resources
 
 import (
 	"fmt"
+	"net/http"
 
-	"github.com/gookit/color"
-
-	"k8s.io/apimachinery/pkg/api/errors"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	errors "k8s.io/apimachinery/pkg/api/errors"
+	kubernetes "k8s.io/client-go/kubernetes"
+	rest "k8s.io/client-go/rest"
 )
 
 // Template for generating a Template Filename
@@ -24,18 +25,17 @@ const templateFileTemplate = "/templates/template-%02d.yaml"
 const templatesFileNumber = 37
 
 // InstallSiteWhereTemplates Install SiteWhere Templates CRD
-func InstallSiteWhereTemplates(config SiteWhereConfiguration) error {
+func InstallSiteWhereTemplates(statikFS http.FileSystem,
+	clientset kubernetes.Interface,
+	apiextensionsClientset apiextensionsclientset.Interface,
+	config *rest.Config) error {
 	var err error
 	for i := 1; i <= templatesFileNumber; i++ {
 		var templateName = fmt.Sprintf(templateFileTemplate, i)
-		CreateCustomResourceFromFile(templateName, config)
+		err = CreateCustomResourceFromFile(templateName, statikFS, config)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
-	}
-	if config.IsVerbose() {
-		fmt.Print("SiteWhere Templates: ")
-		color.Info.Println("Installed")
 	}
 	return nil
 }

@@ -46,6 +46,9 @@ func NewDeleteInstance(cfg *Configuration) *DeleteInstance {
 
 // Run executes the list command, returning a set of matches.
 func (i *DeleteInstance) Run() (*instance.DeleteSiteWhereInstance, error) {
+	if err := i.cfg.KubeClient.IsReachable(); err != nil {
+		return nil, err
+	}
 	return &instance.DeleteSiteWhereInstance{}, nil
 }
 

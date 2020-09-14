@@ -58,6 +58,9 @@ func NewCreateInstance(cfg *Configuration) *CreateInstance {
 
 // Run executes the list command, returning a set of matches.
 func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
+	if err := i.cfg.KubeClient.IsReachable(); err != nil {
+		return nil, err
+	}
 	return &instance.CreateSiteWhereInstance{}, nil
 }
 
