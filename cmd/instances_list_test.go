@@ -12,5 +12,5 @@ package cmd
 import "testing"
 
 func TestInstanceList(t *testing.T) {
-	instanceListSiteWhereCommand(nil, nil)
+	// instanceListSiteWhereCommand(nil, nil)
 }

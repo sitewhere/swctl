@@ -36,6 +36,11 @@ func newDeleteInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Comma
 		Args:              require.ExactArgs(1),
 		ValidArgsFunction: noCompletions,
 		RunE: func(_ *cobra.Command, args []string) error {
+			instanceName, err := client.ExtractInstanceName(args)
+			if err != nil {
+				return err
+			}
+			client.InstanceName = instanceName
 			results, err := client.Run()
 			if err != nil {
 				return err
@@ -51,7 +56,7 @@ func newDeleteInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Comma
 }
 
 func addDeleteInstanceFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action.DeleteInstance) {
-	f.BoolVarP(&client.Pruge, "purge", "p", false, "Purge instance.")
+	f.BoolVarP(&client.Purge, "purge", "p", client.Purge, "Purge instance.")
 }
 
 type deleteInstancePrinter struct {

@@ -10,10 +10,10 @@ package action
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/pkg/errors"
 
 	v1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -21,26 +21,27 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/internal"
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/sitewhere/swctl/pkg/instance"
+	"github.com/sitewhere/swctl/pkg/resources"
 )
 
 // DeleteInstance is the action for creating a SiteWhere instance
 type DeleteInstance struct {
 	cfg *Configuration
-
+	// Name of the instance
+	InstanceName string
 	// Purge Instance data
-	Pruge bool
+	Purge bool
 }
 
 // NewDeleteInstance constructs a new *Install
 func NewDeleteInstance(cfg *Configuration) *DeleteInstance {
 	return &DeleteInstance{
-		cfg:   cfg,
-		Pruge: false,
+		cfg:          cfg,
+		InstanceName: "",
+		Purge:        false,
 	}
 }
 
@@ -49,62 +50,44 @@ func (i *DeleteInstance) Run() (*instance.DeleteSiteWhereInstance, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+	dynamicClientset, err := i.cfg.KubernetesDynamicClientSet()
+	if err != nil {
+		return nil, err
+	}
+
+	instanceToDelete := alpha3.SiteWhereInstance{
+		Name:                  i.InstanceName,
+		Namespace:             i.InstanceName,
+		ConfigurationTemplate: "default",
+		DatasetTemplate:       "default"}
+
+	err = deleteSiteWhereMicroservicesResources(&instanceToDelete, dynamicClientset)
+	if err != nil {
+		return nil, err
+	}
+	if i.Purge {
+		err = deleteSiteWhereResources(&instanceToDelete, dynamicClientset)
+		if err != nil {
+			return nil, err
+		}
+		err = resources.DeleteNamespaceIfExists(i.InstanceName, clientset)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &instance.DeleteSiteWhereInstance{}, nil
 }
 
-func commandDeleteInstanceRun(cmd *cobra.Command, args []string) {
-	// name := args[0]
-
-	// if namespace == "" {
-	// 	namespace = name
-	// }
-
-	// instance := alpha3.SiteWhereInstance{
-	// 	Name:                  name,
-	// 	Namespace:             namespace,
-	// 	ConfigurationTemplate: "default",
-	// 	DatasetTemplate:       "default"}
-
-	// deleteSiteWhereInstance(&instance)
-}
-
-func deleteSiteWhereInstance(instance *alpha3.SiteWhereInstance) error {
-	config, err := internal.GetKubeConfigFromKubeconfig()
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-		return err
+// ExtractInstanceName returns the name of the instance that should be used.
+func (i *DeleteInstance) ExtractInstanceName(args []string) (string, error) {
+	if len(args) > 1 {
+		return args[0], errors.Errorf("expected at most one arguments, unexpected arguments: %v", strings.Join(args[1:], ", "))
 	}
-
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return err
-	}
-
-	err = deleteSiteWhereMicroservicesResources(instance, client)
-	if err != nil {
-		fmt.Printf("Error deleting instance: %v\n", err)
-		return err
-	}
-
-	//TODO
-	// if purgeInstance {
-	// 	err = deleteSiteWhereResources(instance, client)
-	// 	if err != nil {
-	// 		fmt.Printf("Error deleting instance: %v\n", err)
-	// 		return err
-	// 	}
-
-	// 	err = deleteSiteWhereNamespace(instance, config)
-	// 	if err != nil {
-	// 		fmt.Printf("Error deleting namespace: %v\n", err)
-	// 		return err
-	// 	}
-	// }
-
-	fmt.Printf("SiteWhere Instance '%s' deleted\n", instance.Name)
-
-	return err
+	return args[0], nil
 }
 
 func deleteSiteWhereMicroservicesResources(instance *alpha3.SiteWhereInstance, client dynamic.Interface) error {
@@ -174,19 +157,13 @@ func deleteSiteWhereResources(instance *alpha3.SiteWhereInstance, client dynamic
 	return res.Delete(context.TODO(), instance.Name, metav1.DeleteOptions{})
 }
 
-func deleteSiteWhereNamespace(instance *alpha3.SiteWhereInstance, config *rest.Config) error {
+func deleteSiteWhereNamespace(instance *alpha3.SiteWhereInstance, clientset kubernetes.Interface) error {
 	var err error
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return err
-	}
-
 	var ns *v1.Namespace
-	ns, err = existNamespace(instance.Namespace, clientset)
+	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), instance.Namespace, metav1.GetOptions{})
 	if err != nil {
-		fmt.Printf("Error Deleting Namespace: %s, %v", instance.Namespace, err)
+		// fmt.Printf("Error Deleting Namespace: %s, %v", instance.Namespace, err)
 		return err
 	}
 
@@ -196,17 +173,4 @@ func deleteSiteWhereNamespace(instance *alpha3.SiteWhereInstance, config *rest.C
 	err = clientset.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 
 	return err
-}
-
-func existNamespace(namespace string, clientset *kubernetes.Clientset) (*v1.Namespace, error) {
-	var err error
-	var ns *v1.Namespace
-
-	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return ns, nil
 }

@@ -11,7 +11,7 @@ package cmd
 import (
 	"io"
 
-	"github.com/gosuri/uitable"
+	// "github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
 	"github.com/sitewhere/swctl/cmd/require"
@@ -54,16 +54,12 @@ type checkInstallWriter struct {
 }
 
 func newCheckInstallWriter(install *install.SiteWhereInstall) *checkInstallWriter {
-	return nil
+	return &checkInstallWriter{}
 }
 
 func (i *checkInstallWriter) WriteTable(out io.Writer) error {
-	table := uitable.New()
-	table.AddRow("NAME", "NAMESPACE", "REVISION", "UPDATED", "STATUS", "CHART", "APP VERSION")
-	// for _, r := range r.releases {
-	// 	table.AddRow(r.Name, r.Namespace, r.Revision, r.Updated, r.Status, r.Chart, r.AppVersion)
-	// }
-	return output.EncodeTable(out, table)
+	//return output.EncodeTable(out, table)
+	return nil
 }
 
 func (i *checkInstallWriter) WriteJSON(out io.Writer) error {

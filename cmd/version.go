@@ -17,7 +17,6 @@ import (
 	"github.com/sitewhere/swctl/internal/version"
 
 	"github.com/spf13/cobra"
-	// goVersion "go.hein.dev/go-version"
 )
 
 const versionDesc = `

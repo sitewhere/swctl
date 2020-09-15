@@ -47,7 +47,6 @@ func newCreateInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Comma
 				return err
 			}
 			client.InstanceName = instanceName
-
 			results, err := client.Run()
 			if err != nil {
 				return err
