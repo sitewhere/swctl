@@ -191,39 +191,16 @@ func createSiteWhereResources(client dynamic.Interface, instance *alpha3.SiteWhe
 }
 
 func createServiceAccountIfNotExists(clientset kubernetes.Interface, instance *alpha3.SiteWhereInstance, namespace string) (*v1.ServiceAccount, error) {
-	var err error
-	var sa *v1.ServiceAccount
-
 	saName := fmt.Sprintf("sitewhere-instance-service-account-%s", namespace)
-
-	sa, err = clientset.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), saName, metav1.GetOptions{})
-
-	if err != nil && k8serror.IsNotFound(err) {
-		sa = &v1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: saName,
-				Labels: map[string]string{
-					"app": instance.Name,
-				},
+	var sa *v1.ServiceAccount = &v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: saName,
+			Labels: map[string]string{
+				"app": instance.Name,
 			},
-		}
-
-		result, err := clientset.CoreV1().ServiceAccounts(namespace).Create(context.TODO(),
-			sa,
-			metav1.CreateOptions{})
-
-		if err != nil {
-			return nil, err
-		}
-
-		return result, err
+		},
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return sa, nil
+	return resources.CreateServiceAccountIfNotExists(sa, clientset, namespace)
 }
 
 func createRoleIfNotExists(clientset kubernetes.Interface, instance *alpha3.SiteWhereInstance, namespace string) (*rbacV1.Role, error) {
