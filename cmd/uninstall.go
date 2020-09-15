@@ -11,6 +11,7 @@ package cmd
 import (
 	"io"
 
+	"github.com/gookit/color"
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
@@ -52,7 +53,7 @@ func newUninstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 
 	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal uninstallation.")
-	f.BoolVarP(&client.Verbose, "verbose", "v", false, "Verbose uninstallation.")
+	// f.BoolVarP(&client.Verbose, "verbose", "v", false, "Verbose uninstallation.")
 	f.BoolVarP(&client.Purge, "purge", "p", false, "Purge data.")
 
 	bindOutputFlag(cmd, &outfmt)
@@ -64,7 +65,8 @@ type uninstallWriter struct {
 }
 
 func newUninstallWriter(uninstall *uninstall.SiteWhereUninstall) *uninstallWriter {
-	return nil
+	color.Style{color.FgGreen, color.OpBold}.Println("\nSiteWhere 3.0 Uninstalled")
+	return &uninstallWriter{}
 }
 
 func (i *uninstallWriter) WriteTable(out io.Writer) error {

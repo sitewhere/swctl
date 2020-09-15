@@ -42,6 +42,12 @@ func newCreateInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Comma
 		Args:              require.ExactArgs(1),
 		ValidArgsFunction: noCompletions,
 		RunE: func(_ *cobra.Command, args []string) error {
+			instanceName, err := client.ExtractInstanceName(args)
+			if err != nil {
+				return err
+			}
+			client.InstanceName = instanceName
+
 			results, err := client.Run()
 			if err != nil {
 				return err
@@ -57,12 +63,12 @@ func newCreateInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Comma
 }
 
 func addCreateInstanceFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action.CreateInstance) {
-
-	f.StringVarP(&client.Namespace, "namespace", "n", "", "Namespace of the instance.")
-	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal installation.")
-	f.StringVarP(&client.Tag, "tag", "t", "", "Docker image tag.")
-	f.BoolVarP(&client.Debug, "debug", "d", false, "Debug mode.")
-
+	f.StringVarP(&client.Namespace, "namespace", "n", client.Namespace, "Namespace of the instance.")
+	f.BoolVarP(&client.Minimal, "minimal", "m", client.Minimal, "Minimal installation.")
+	f.StringVarP(&client.Tag, "tag", "t", client.Tag, "Docker image tag.")
+	f.BoolVarP(&client.Debug, "debug", "d", client.Debug, "Debug mode.")
+	f.StringVarP(&client.ConfigurationTemplate, "config-template", "c", client.ConfigurationTemplate, "Configuration template.")
+	f.StringVarP(&client.DatasetTemplate, "dateset-template", "x", client.DatasetTemplate, "Dataset template.")
 }
 
 type createInstancePrinter struct {

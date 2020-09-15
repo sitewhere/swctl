@@ -12,9 +12,11 @@ import (
 	"net/http"
 
 	"github.com/rakyll/statik/fs"
-	"github.com/spf13/cobra"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
+	"github.com/sitewhere/swctl/pkg/resources"
 	"github.com/sitewhere/swctl/pkg/uninstall"
 )
 
@@ -49,54 +51,38 @@ func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+	apiextensionsClientset, err := i.cfg.KubernetesAPIExtensionClientSet()
+	if err != nil {
+		return nil, err
+	}
+	config, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	// Uninstall Infrastructure
+	err = resources.UninstallSiteWhereInfrastructure(i.Minimal, i.StatikFS, clientset, apiextensionsClientset, config)
+	if err != nil {
+		return nil, err
+	}
+	// Uninstall Operator
+	err = resources.UninstallSiteWhereOperator(i.StatikFS, clientset, apiextensionsClientset, config)
+	if err != nil {
+		return nil, err
+	}
+	// Uninstall Custom Resource Definitions
+	err = resources.UninstallSiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
+	if err != nil {
+		return nil, err
+	}
+	if i.Minimal {
+		err = resources.DeleteSiteWhereNamespaceIfExists(clientset)
+		if err != nil && !errors.IsNotFound(err) {
+			return nil, err
+		}
+	}
 	return &uninstall.SiteWhereUninstall{}, nil
-}
-
-// uninstallSiteWhereCommand Performs the steps necessary to uninstall SiteWhere
-func uninstallSiteWhereCommand(_ *cobra.Command, _ []string) {
-	// config, err := internal.GetKubeConfigFromKubeconfig()
-	// if err != nil {
-	// 	fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-	// 	return
-	// }
-
-	// statikFS, err := fs.New()
-	// if err != nil {
-	// 	fmt.Printf("Error Reading Resources: %v\n", err)
-	// 	return
-	// }
-
-	// var sitewhereConfig = internal.SiteWhereInstallConfiguration{
-	// 	Minimal:          minimalUninstall,
-	// 	Verbose:          verboseUninstall,
-	// 	KubernetesConfig: config,
-	// 	StatikFS:         statikFS,
-	// }
-
-	// // Uninstall Infrastructure
-	// err = internal.UninstallSiteWhereInfrastructure(&sitewhereConfig)
-	// if err != nil {
-	// 	fmt.Printf("Error Uninstalling SiteWhere Infrastucture: %v\n", err)
-	// 	return
-	// }
-
-	// // Uninstall Operator
-	// err = internal.UninstallSiteWhereOperator(&sitewhereConfig)
-	// if err != nil {
-	// 	fmt.Printf("Error Uninstalling SiteWhere Operator: %v\n", err)
-	// 	return
-	// }
-
-	// // Uninstall Custom Resource Definitions
-	// internal.UninstallSiteWhereCRDs(&sitewhereConfig)
-
-	// if purge {
-	// 	err = internal.DeleteSiteWhereNamespaceIfExists(sitewhereConfig.GetClientset())
-	// 	if err != nil && !errors.IsNotFound(err) {
-	// 		fmt.Printf("Error Uninstalling SiteWhere Namespace: %v\n", err)
-	// 		return
-	// 	}
-	// }
-
-	// color.Style{color.FgGreen, color.OpBold}.Println("\nSiteWhere 3.0 Uninstalled")
 }

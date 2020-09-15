@@ -123,6 +123,7 @@ var infraTemplateMin = []InfraTemplateResource{
 
 // InstallSiteWhereInfrastructure Install SiteWhere Infrastructure components in the cluster
 func InstallSiteWhereInfrastructure(minimal bool,
+	waitReady bool,
 	statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
@@ -130,9 +131,9 @@ func InstallSiteWhereInfrastructure(minimal bool,
 	var err error
 
 	if minimal {
-		err = installSiteWhereInfrastructureMinimal(statikFS, clientset, apiextensionsClientset, config)
+		err = installSiteWhereInfrastructureMinimal(waitReady, statikFS, clientset, apiextensionsClientset, config)
 	} else {
-		err = installSiteWhereInfrastructureDefault(statikFS, clientset, apiextensionsClientset, config)
+		err = installSiteWhereInfrastructureDefault(waitReady, statikFS, clientset, apiextensionsClientset, config)
 	}
 
 	// if config.IsVerbose() {
@@ -141,7 +142,8 @@ func InstallSiteWhereInfrastructure(minimal bool,
 	return err
 }
 
-func installSiteWhereInfrastructureDefault(statikFS http.FileSystem,
+func installSiteWhereInfrastructureDefault(waitReady bool,
+	statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
@@ -159,81 +161,84 @@ func installSiteWhereInfrastructureDefault(statikFS http.FileSystem,
 		}
 	}
 
-	err = waitForDeploymentAvailable(clientset, "sitewhere-infrastructure-mosquitto", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Deployment sitewhere-infrastructure-mosquitto: ")
-	// 	color.Info.Println("Available")
-	// }
-
-	err = waitForDeploymentAvailable(clientset, "sitewhere-syncope", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Deployment sitewhere-syncope: ")
-	// 	color.Info.Println("Available")
-	// }
-
-	for i := 0; i < 3; i++ {
-		podName := fmt.Sprintf("sitewhere-kafka-zookeeper-%d", i)
-		err = waitForPodContainersRunning(clientset, podName, sitewhereSystemNamespace)
+	if waitReady {
+		err = waitForDeploymentAvailable(clientset, "sitewhere-infrastructure-mosquitto", sitewhereSystemNamespace)
 		if err != nil {
 			return err
 		}
 		// if config.IsVerbose() {
-		// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
-		// 	color.Info.Println("Ready")
+		// 	fmt.Print("Deployment sitewhere-infrastructure-mosquitto: ")
+		// 	color.Info.Println("Available")
 		// }
-	}
 
-	for i := 0; i < 3; i++ {
-		podName := fmt.Sprintf("sitewhere-kafka-kafka-%d", i)
-		err = waitForPodContainersRunning(clientset, podName, sitewhereSystemNamespace)
+		err = waitForDeploymentAvailable(clientset, "sitewhere-syncope", sitewhereSystemNamespace)
 		if err != nil {
 			return err
 		}
 		// if config.IsVerbose() {
-		// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
-		// 	color.Info.Println("Ready")
+		// 	fmt.Print("Deployment sitewhere-syncope: ")
+		// 	color.Info.Println("Available")
 		// }
-	}
 
-	err = waitForPodContainersRunning(clientset, "sitewhere-postgresql-0", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Pod sitewhere-postgresql-0: ")
-	// 	color.Info.Println("Ready")
-	// }
+		for i := 0; i < 3; i++ {
+			podName := fmt.Sprintf("sitewhere-kafka-zookeeper-%d", i)
+			err = waitForPodContainersRunning(clientset, podName, sitewhereSystemNamespace)
+			if err != nil {
+				return err
+			}
+			// if config.IsVerbose() {
+			// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
+			// 	color.Info.Println("Ready")
+			// }
+		}
 
-	for i := 0; i < 3; i++ {
-		podName := fmt.Sprintf("sitewhere-infrastructure-redis-ha-server-%d", i)
-		err = waitForPodContainersRunning(clientset, podName, sitewhereSystemNamespace)
+		for i := 0; i < 3; i++ {
+			podName := fmt.Sprintf("sitewhere-kafka-kafka-%d", i)
+			err = waitForPodContainersRunning(clientset, podName, sitewhereSystemNamespace)
+			if err != nil {
+				return err
+			}
+			// if config.IsVerbose() {
+			// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
+			// 	color.Info.Println("Ready")
+			// }
+		}
+
+		err = waitForPodContainersRunning(clientset, "sitewhere-postgresql-0", sitewhereSystemNamespace)
 		if err != nil {
 			return err
 		}
 		// if config.IsVerbose() {
-		// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
+		// 	fmt.Print("Pod sitewhere-postgresql-0: ")
+		// 	color.Info.Println("Ready")
+		// }
+
+		for i := 0; i < 3; i++ {
+			podName := fmt.Sprintf("sitewhere-infrastructure-redis-ha-server-%d", i)
+			err = waitForPodContainersRunning(clientset, podName, sitewhereSystemNamespace)
+			if err != nil {
+				return err
+			}
+			// if config.IsVerbose() {
+			// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
+			// 	color.Info.Println("Ready")
+			// }
+		}
+
+		// err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-warp10-0", sitewhereSystemNamespace)
+		// if err != nil {
+		// 	return err
+		// }
+		// if config.IsVerbose() {
+		// 	fmt.Print("Pod sitewhere-infrastructure-warp10-0: ")
 		// 	color.Info.Println("Ready")
 		// }
 	}
-
-	// err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-warp10-0", sitewhereSystemNamespace)
-	// if err != nil {
-	// 	return err
-	// }
-	// if config.IsVerbose() {
-	// 	fmt.Print("Pod sitewhere-infrastructure-warp10-0: ")
-	// 	color.Info.Println("Ready")
-	// }
 	return err
 }
 
-func installSiteWhereInfrastructureMinimal(statikFS http.FileSystem,
+func installSiteWhereInfrastructureMinimal(waitReady bool,
+	statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
@@ -251,70 +256,71 @@ func installSiteWhereInfrastructureMinimal(statikFS http.FileSystem,
 		}
 	}
 
-	err = waitForDeploymentAvailable(clientset, "sitewhere-infrastructure-mosquitto", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Deployment sitewhere-infrastructure-mosquitto: ")
-	// 	color.Info.Println("Available")
-	// }
+	if waitReady {
+		err = waitForDeploymentAvailable(clientset, "sitewhere-infrastructure-mosquitto", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		// if config.IsVerbose() {
+		// 	fmt.Print("Deployment sitewhere-infrastructure-mosquitto: ")
+		// 	color.Info.Println("Available")
+		// }
 
-	err = waitForDeploymentAvailable(clientset, "sitewhere-kafka-entity-operator", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Deployment sitewhere-kafka-entity-operator: ")
-	// 	color.Info.Println("Available")
-	// }
+		err = waitForDeploymentAvailable(clientset, "sitewhere-kafka-entity-operator", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		// if config.IsVerbose() {
+		// 	fmt.Print("Deployment sitewhere-kafka-entity-operator: ")
+		// 	color.Info.Println("Available")
+		// }
 
-	err = waitForDeploymentAvailable(clientset, "sitewhere-syncope", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Deployment sitewhere-syncope: ")
-	// 	color.Info.Println("Available")
-	// }
+		err = waitForDeploymentAvailable(clientset, "sitewhere-syncope", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		// if config.IsVerbose() {
+		// 	fmt.Print("Deployment sitewhere-syncope: ")
+		// 	color.Info.Println("Available")
+		// }
 
-	err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-zookeeper-0", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Pod sitewhere-infrastructure-zookeeper-0: ")
-	// 	color.Info.Println("Ready")
-	// }
-	// TODO if not minimal, wait for -1 and -2
+		err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-zookeeper-0", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		// if config.IsVerbose() {
+		// 	fmt.Print("Pod sitewhere-infrastructure-zookeeper-0: ")
+		// 	color.Info.Println("Ready")
+		// }
+		// TODO if not minimal, wait for -1 and -2
 
-	err = waitForPodContainersRunning(clientset, "sitewhere-kafka-kafka-0", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Pod sitewhere-kafka-kafka-0: ")
-	// 	color.Info.Println("Ready")
-	// }
+		err = waitForPodContainersRunning(clientset, "sitewhere-kafka-kafka-0", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		// if config.IsVerbose() {
+		// 	fmt.Print("Pod sitewhere-kafka-kafka-0: ")
+		// 	color.Info.Println("Ready")
+		// }
 
-	err = waitForPodContainersRunning(clientset, "sitewhere-postgresql-0", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Pod sitewhere-postgresql-0: ")
-	// 	color.Info.Println("Ready")
-	// }
+		err = waitForPodContainersRunning(clientset, "sitewhere-postgresql-0", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		// if config.IsVerbose() {
+		// 	fmt.Print("Pod sitewhere-postgresql-0: ")
+		// 	color.Info.Println("Ready")
+		// }
 
-	err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-redis-ha-server-0", sitewhereSystemNamespace)
-	if err != nil {
-		return err
+		err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-redis-ha-server-0", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		// if config.IsVerbose() {
+		// 	fmt.Print("Pod sitewhere-infrastructure-redis-ha-server-0: ")
+		// 	color.Info.Println("Ready")
+		// }
 	}
-	// if config.IsVerbose() {
-	// 	fmt.Print("Pod sitewhere-infrastructure-redis-ha-server-0: ")
-	// 	color.Info.Println("Ready")
-	// }
-
 	return nil
 }
 

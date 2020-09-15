@@ -49,9 +49,10 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 		},
 	}
 
-	//f := cmd.Flags()
+	f := cmd.Flags()
 
-	//f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal installation.")
+	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal installation.")
+	f.BoolVarP(&client.WaitReady, "wait", "w", false, "Wait for components to be ready before return control.")
 	//f.BoolVarP(&client.Verbose, "verbose", "v", false, "Verbose installation.")
 	bindOutputFlag(cmd, &outfmt)
 

@@ -39,20 +39,3 @@ func InstallSiteWhereCRDs(config SiteWhereConfiguration) error {
 	}
 	return nil
 }
-
-// UninstallSiteWhereCRDs Uninstall SiteWhere Custom Resource Definitions
-func UninstallSiteWhereCRDs(config SiteWhereConfiguration) error {
-	var err error
-	for i := 1; i <= crdFileNumber; i++ {
-		var crdName = fmt.Sprintf(crdFileTemplate, i)
-		UninstallResourceFromFile(crdName, config.GetConfig(), config.GetStatikFS())
-		if err != nil {
-			return err
-		}
-	}
-	if config.IsVerbose() {
-		fmt.Print("SiteWhere Custom Resources Definition: ")
-		color.Info.Println("Uninstalled")
-	}
-	return nil
-}

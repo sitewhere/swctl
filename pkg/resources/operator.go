@@ -25,7 +25,8 @@ const operatorFileTemplate = "/operator/operator-%02d.yaml"
 const operatorFileNumber = 23
 
 // InstallSiteWhereOperator Install SiteWhere Operator resource file in the cluster
-func InstallSiteWhereOperator(statikFS http.FileSystem,
+func InstallSiteWhereOperator(waitReady bool,
+	statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
@@ -44,18 +45,20 @@ func InstallSiteWhereOperator(statikFS http.FileSystem,
 		}
 	}
 
-	err = waitForDeploymentAvailable(clientset, "sitewhere-operator", sitewhereSystemNamespace)
-	if err != nil {
-		return err
+	if waitReady {
+		err = waitForDeploymentAvailable(clientset, "sitewhere-operator", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
+		err = waitForDeploymentAvailable(clientset, "strimzi-cluster-operator", sitewhereSystemNamespace)
+		if err != nil {
+			return err
+		}
 	}
 	// if config.IsVerbose() {
 	// 	fmt.Print("Deployment sitewhere-operator: ")
 	// 	color.Info.Println("Available")
 	// }
-	err = waitForDeploymentAvailable(clientset, "strimzi-cluster-operator", sitewhereSystemNamespace)
-	if err != nil {
-		return err
-	}
 	// if config.IsVerbose() {
 	// 	fmt.Print("Deployment strimzi-cluster-operator: ")
 	// 	color.Info.Println("Available")

@@ -40,3 +40,23 @@ func InstallSiteWhereCRDs(statikFS http.FileSystem,
 	}
 	return nil
 }
+
+// UninstallSiteWhereCRDs Uninstall SiteWhere Custom Resource Definitions
+func UninstallSiteWhereCRDs(statikFS http.FileSystem,
+	clientset kubernetes.Interface,
+	apiextensionsClientset apiextensionsclientset.Interface,
+	config *rest.Config) error {
+	var err error
+	for i := 1; i <= crdFileNumber; i++ {
+		var crdName = fmt.Sprintf(crdFileTemplate, i)
+		UninstallResourceFromFile(crdName, statikFS, clientset, apiextensionsClientset, config)
+		if err != nil {
+			return err
+		}
+	}
+	// if config.IsVerbose() {
+	// 	fmt.Print("SiteWhere Custom Resources Definition: ")
+	// 	color.Info.Println("Uninstalled")
+	// }
+	return nil
+}

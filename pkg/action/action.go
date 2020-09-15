@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -70,4 +71,13 @@ func (c *Configuration) KubernetesAPIExtensionClientSet() (clientset.Interface, 
 		return nil, errors.Wrap(err, "unable to generate config for API Extension Clientset")
 	}
 	return clientset.NewForConfig(conf)
+}
+
+// KubernetesDynamicClientSet create a new kubernetes API Extension Clientset
+func (c *Configuration) KubernetesDynamicClientSet() (dynamic.Interface, error) {
+	conf, err := c.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to generate config for Dynamic Clientset")
+	}
+	return dynamic.NewForConfig(conf)
 }

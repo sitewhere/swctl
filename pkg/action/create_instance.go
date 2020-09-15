@@ -11,8 +11,9 @@ package action
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/pkg/errors"
 
 	v1 "k8s.io/api/core/v1"
 	rbacV1 "k8s.io/api/rbac/v1"
@@ -22,16 +23,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/internal"
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/sitewhere/swctl/pkg/instance"
+	"github.com/sitewhere/swctl/pkg/resources"
 )
 
 // CreateInstance is the action for creating a SiteWhere instance
 type CreateInstance struct {
 	cfg *Configuration
+	// Name of the instance
+	InstanceName string
 	// Namespace to use
 	Namespace string
 	// Use minimal profile. Initialize only essential microservices.
@@ -40,19 +42,32 @@ type CreateInstance struct {
 	Tag string
 	// Use debug mode
 	Debug bool
+	// Configuration Template
+	ConfigurationTemplate string
+	// Dataset template
+	DatasetTemplate string
 }
 
 // SiteWhere Docker Image default tag name
 const dockerImageDefaultTag = "3.0.0.beta1"
 
+// Default configuration Template
+const defaultConfigurationTemplate = "default"
+
+// Detaul Dataset template
+const defaultDatasetTemplate = "default"
+
 // NewCreateInstance constructs a new *Install
 func NewCreateInstance(cfg *Configuration) *CreateInstance {
 	return &CreateInstance{
-		cfg:       cfg,
-		Namespace: "",
-		Minimal:   false,
-		Tag:       dockerImageDefaultTag,
-		Debug:     false,
+		cfg:                   cfg,
+		InstanceName:          "",
+		Namespace:             "",
+		Minimal:               false,
+		Tag:                   dockerImageDefaultTag,
+		Debug:                 false,
+		ConfigurationTemplate: defaultConfigurationTemplate,
+		DatasetTemplate:       defaultDatasetTemplate,
 	}
 }
 
@@ -61,117 +76,98 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+	dynamicClientset, err := i.cfg.KubernetesDynamicClientSet()
+	if err != nil {
+		return nil, err
+	}
+	var profile alpha3.SiteWhereProfile = alpha3.Default
+
+	if i.Namespace == "" {
+		i.Namespace = i.InstanceName
+	}
+	if i.Tag == "" {
+		i.Tag = dockerImageDefaultTag
+	}
+	if i.ConfigurationTemplate == "" {
+		i.ConfigurationTemplate = defaultConfigurationTemplate
+	}
+	if i.Minimal {
+		profile = alpha3.Minimal
+		i.ConfigurationTemplate = "minimal"
+	}
+
+	instanceToCreate := alpha3.SiteWhereInstance{
+		Name:                  i.InstanceName,
+		Namespace:             i.Namespace,
+		Tag:                   i.Tag,
+		Debug:                 i.Debug,
+		ConfigurationTemplate: i.ConfigurationTemplate,
+		DatasetTemplate:       i.DatasetTemplate,
+		Profile:               profile}
+
+	err = createNamespaceAndResources(clientset, &instanceToCreate)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = createSiteWhereResources(dynamicClientset, &instanceToCreate, instanceToCreate.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	// fmt.Printf("SiteWhere Instance '%s' created\n", instance.Name)
 	return &instance.CreateSiteWhereInstance{}, nil
 }
 
-func commandCreateInstanceRun(cmd *cobra.Command, args []string) {
-	// name := args[0]
-	// var profile alpha3.SiteWhereProfile = alpha3.Default
-
-	// if namespace == "" {
-	// 	namespace = name
-	// }
-	// if tag == "" {
-	// 	tag = dockerImageDefaultTag
-	// }
-
-	// var configurationTemplate = "default"
-
-	// if minimal {
-	// 	profile = alpha3.Minimal
-	// 	configurationTemplate = "minimal"
-	// }
-
-	// instance := alpha3.SiteWhereInstance{
-	// 	Name:                  name,
-	// 	Namespace:             namespace,
-	// 	Tag:                   tag,
-	// 	Debug:                 debug,
-	// 	ConfigurationTemplate: configurationTemplate,
-	// 	DatasetTemplate:       "default",
-	// 	Profile:               profile}
-
-	// createSiteWhereInstance(&instance)
-}
-
-func createSiteWhereInstance(instance *alpha3.SiteWhereInstance) {
-
-	config, err := createNamespaceAndResources(instance)
-
-	if err != nil {
-		fmt.Printf("Error Setting Namespace and Resources: %v\n", err)
-		return
+// ExtractInstanceName returns the name of the instance that should be used.
+func (i *CreateInstance) ExtractInstanceName(args []string) (string, error) {
+	if len(args) > 1 {
+		return args[0], errors.Errorf("expected at most one arguments, unexpected arguments: %v", strings.Join(args[1:], ", "))
 	}
-
-	createSiteWhereResources(instance, instance.Namespace, config)
-
-	fmt.Printf("SiteWhere Instance '%s' created\n", instance.Name)
+	return args[0], nil
 }
 
-func createNamespaceAndResources(instance *alpha3.SiteWhereInstance) (*rest.Config, error) {
+func createNamespaceAndResources(clientset kubernetes.Interface, instance *alpha3.SiteWhereInstance) error {
 	var err error
 
-	config, err := internal.GetKubeConfigFromKubeconfig()
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-		return nil, err
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return nil, err
-	}
-
 	var ns *v1.Namespace
-	ns, err = internal.CreateNamespaceIfNotExists(instance.Namespace, clientset)
+	ns, err = resources.CreateNamespaceIfNotExists(instance.Namespace, clientset)
 	if err != nil {
-		fmt.Printf("Error Creating Namespace: %s, %v", instance.Namespace, err)
-		return nil, err
+		return err
 	}
-
 	var namespace = ns.ObjectMeta.Name
-
 	var sa *v1.ServiceAccount
-	sa, err = createServiceAccountIfNotExists(instance, namespace, clientset)
+	sa, err = createServiceAccountIfNotExists(clientset, instance, namespace)
 	if err != nil {
-		fmt.Printf("Error Creating Service Account: %s, %v", instance.Namespace, err)
-		return nil, err
+		return err
 	}
-
 	var role *rbacV1.ClusterRole
-	role, err = createClusterRoleIfNotExists(instance, clientset)
+	role, err = createClusterRoleIfNotExists(clientset, instance)
 	if err != nil {
-		fmt.Printf("Error Creating Cluster Role: %s, %v", instance.Namespace, err)
-		return nil, err
+		return err
 	}
-
-	_, err = createClusterRoleBindingIfNotExists(instance, sa, role, clientset)
+	_, err = createClusterRoleBindingIfNotExists(clientset, instance, sa, role)
 	if err != nil {
-		fmt.Printf("Error Creating Cluster Role Binding: %s, %v", instance.Namespace, err)
-		return nil, err
+		return err
 	}
-
-	_, err = createLoadBalancerServiceIfNotExists(instance, namespace, clientset)
+	_, err = createLoadBalancerServiceIfNotExists(clientset, instance, namespace)
 	if err != nil {
-		fmt.Printf("Error Creating Loadbalancer Service: %s, %v", instance.Namespace, err)
-		return nil, err
+		return err
 	}
-
-	return config, nil
+	return nil
 }
 
-func createSiteWhereResources(instance *alpha3.SiteWhereInstance, namespace string, config *rest.Config) {
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Client: %v\n", err)
-		return
-	}
+func createSiteWhereResources(client dynamic.Interface, instance *alpha3.SiteWhereInstance, namespace string) error {
+	var err error
 
 	_, err = createCRSiteWhereInstaceIfNotExists(instance, namespace, client)
 	if err != nil {
-		fmt.Printf("Error Creating CR SiteWhere Instace: %v\n", err)
-		return
+		// fmt.Printf("Error Creating CR SiteWhere Instace: %v\n", err)
+		return err
 	}
 
 	var microservices = alpha3.GetSiteWhereMicroservicesList()
@@ -180,19 +176,21 @@ func createSiteWhereResources(instance *alpha3.SiteWhereInstance, namespace stri
 		if micrservice.ID == "instance-management" {
 			_, err = createCRSiteWhereInstanceManagementIfNotExists(instance, namespace, client)
 			if err != nil {
-				fmt.Printf("Error Creating SiteWhere Instance Management Microservice: %v\n", err)
-				return
+				// fmt.Printf("Error Creating SiteWhere Instance Management Microservice: %v\n", err)
+				return err
 			}
 		} else if instance.Profile == alpha3.Default || instance.Profile != micrservice.Profile {
 			_, err = createCRSiteWhereMicroserviceIfNotExists(instance, namespace, &micrservice, client)
 			if err != nil {
-				fmt.Printf("Error Creating SiteWhere %s Microservice: %v\n", micrservice.Name, err)
+				// fmt.Printf("Error Creating SiteWhere %s Microservice: %v\n", micrservice.Name, err)
+				return err
 			}
 		}
 	}
+	return nil
 }
 
-func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*v1.ServiceAccount, error) {
+func createServiceAccountIfNotExists(clientset kubernetes.Interface, instance *alpha3.SiteWhereInstance, namespace string) (*v1.ServiceAccount, error) {
 	var err error
 	var sa *v1.ServiceAccount
 
@@ -228,7 +226,7 @@ func createServiceAccountIfNotExists(instance *alpha3.SiteWhereInstance, namespa
 	return sa, nil
 }
 
-func createRoleIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*rbacV1.Role, error) {
+func createRoleIfNotExists(clientset kubernetes.Interface, instance *alpha3.SiteWhereInstance, namespace string) (*rbacV1.Role, error) {
 	var err error
 	var role *rbacV1.Role
 
@@ -319,8 +317,11 @@ func createRoleIfNotExists(instance *alpha3.SiteWhereInstance, namespace string,
 	return role, nil
 }
 
-func createRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, serviceAccount *v1.ServiceAccount,
-	role *rbacV1.Role, clientset *kubernetes.Clientset) (*rbacV1.RoleBinding, error) {
+func createRoleBindingIfNotExists(clientset kubernetes.Interface,
+	instance *alpha3.SiteWhereInstance,
+	namespace string,
+	serviceAccount *v1.ServiceAccount,
+	role *rbacV1.Role) (*rbacV1.RoleBinding, error) {
 	var err error
 	var roleBinding *rbacV1.RoleBinding
 
@@ -367,7 +368,9 @@ func createRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, namespace 
 	return roleBinding, nil
 }
 
-func createClusterRoleIfNotExists(instance *alpha3.SiteWhereInstance, clientset *kubernetes.Clientset) (*rbacV1.ClusterRole, error) {
+func createClusterRoleIfNotExists(
+	clientset kubernetes.Interface,
+	instance *alpha3.SiteWhereInstance) (*rbacV1.ClusterRole, error) {
 	var err error
 	var clusterRole *rbacV1.ClusterRole
 
@@ -458,8 +461,10 @@ func createClusterRoleIfNotExists(instance *alpha3.SiteWhereInstance, clientset 
 	return clusterRole, nil
 }
 
-func createClusterRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, serviceAccount *v1.ServiceAccount,
-	clusterRole *rbacV1.ClusterRole, clientset *kubernetes.Clientset) (*rbacV1.ClusterRoleBinding, error) {
+func createClusterRoleBindingIfNotExists(
+	clientset kubernetes.Interface,
+	instance *alpha3.SiteWhereInstance, serviceAccount *v1.ServiceAccount,
+	clusterRole *rbacV1.ClusterRole) (*rbacV1.ClusterRoleBinding, error) {
 	var err error
 	var clusterRoleBinding *rbacV1.ClusterRoleBinding
 
@@ -506,7 +511,9 @@ func createClusterRoleBindingIfNotExists(instance *alpha3.SiteWhereInstance, ser
 	return clusterRoleBinding, nil
 }
 
-func createLoadBalancerServiceIfNotExists(instance *alpha3.SiteWhereInstance, namespace string, clientset *kubernetes.Clientset) (*v1.Service, error) {
+func createLoadBalancerServiceIfNotExists(clientset kubernetes.Interface,
+	instance *alpha3.SiteWhereInstance,
+	namespace string) (*v1.Service, error) {
 	var err error
 	var service *v1.Service
 

@@ -26,6 +26,8 @@ type Install struct {
 
 	// Minimal installation only install escential SiteWhere components.
 	Minimal bool
+	// Wait for components to be ready before return control.
+	WaitReady bool
 	// Use verbose mode
 	Verbose bool
 }
@@ -34,10 +36,11 @@ type Install struct {
 func NewInstall(cfg *Configuration) *Install {
 	statikFS, _ := fs.New()
 	return &Install{
-		cfg:      cfg,
-		StatikFS: statikFS,
-		Minimal:  false,
-		Verbose:  false,
+		cfg:       cfg,
+		StatikFS:  statikFS,
+		Minimal:   false,
+		WaitReady: false,
+		Verbose:   false,
 	}
 }
 
@@ -70,12 +73,12 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		return nil, err
 	}
 	// Install Operator
-	err = resources.InstallSiteWhereOperator(i.StatikFS, clientset, apiextensionsClientset, config)
+	err = resources.InstallSiteWhereOperator(i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Infrastructure
-	err = resources.InstallSiteWhereInfrastructure(i.Minimal, i.StatikFS, clientset, apiextensionsClientset, config)
+	err = resources.InstallSiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
