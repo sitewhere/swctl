@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-package install
+package crds
 
-var (
-	sitewhereSystemNamespace = "sitewhere-system" // SiteWhere System Namespace
+import (
+	"fmt"
 )
 
-// SiteWhereInstall destribe the installation of SiteWhere.
-type SiteWhereInstall struct {
+// Template for generating a CRD Filename
+const crdFileTemplate = "/crd/crd-%02d.yaml"
+
+// Number of CRD Files
+const crdFileNumber = 14
+
+var crdFiles []string
+
+func init() {
+	for i := 1; i <= crdFileNumber; i++ {
+		var fileName = fmt.Sprintf(crdFileTemplate, i)
+		crdFiles = append(crdFiles, fileName)
+	}
+}
+
+// GetSiteWhereCRDFiles returns the name of SiteWhere CRDs files
+func GetSiteWhereCRDFiles() []string {
+	return crdFiles
 }

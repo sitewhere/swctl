@@ -14,50 +14,27 @@
  * limitations under the License.
  */
 
-package resources
+package uninstall
 
 import (
-	"fmt"
 	"net/http"
-
-	"k8s.io/apimachinery/pkg/api/errors"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
+
+	"github.com/sitewhere/swctl/internal/crds"
+	"github.com/sitewhere/swctl/pkg/resources"
 )
 
-// Template for generating a CRD Filename
-const crdFileTemplate = "/crd/crd-%02d.yaml"
-
-// Number of CRD Files
-const crdFileNumber = 14
-
-// InstallSiteWhereCRDs Install SiteWhere Custom Resource Definitions
-func InstallSiteWhereCRDs(statikFS http.FileSystem,
+// SiteWhereCRDs Uninstall SiteWhere Custom Resource Definitions
+func SiteWhereCRDs(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
 	var err error
-	for i := 1; i <= crdFileNumber; i++ {
-		var fileName = fmt.Sprintf(crdFileTemplate, i)
-		err = InstallResourceFromFile(fileName, statikFS, clientset, apiextensionsClientset, config)
-		if err != nil && !errors.IsAlreadyExists(err) {
-			return err
-		}
-	}
-	return nil
-}
-
-// UninstallSiteWhereCRDs Uninstall SiteWhere Custom Resource Definitions
-func UninstallSiteWhereCRDs(statikFS http.FileSystem,
-	clientset kubernetes.Interface,
-	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) error {
-	var err error
-	for i := 1; i <= crdFileNumber; i++ {
-		var crdName = fmt.Sprintf(crdFileTemplate, i)
-		UninstallResourceFromFile(crdName, statikFS, clientset, apiextensionsClientset, config)
+	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
+		resources.UninstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
 		if err != nil {
 			return err
 		}

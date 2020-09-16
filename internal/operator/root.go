@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-package install
+package operator
 
-var (
-	sitewhereSystemNamespace = "sitewhere-system" // SiteWhere System Namespace
+import (
+	"fmt"
 )
 
-// SiteWhereInstall destribe the installation of SiteWhere.
-type SiteWhereInstall struct {
+// Template for generating a Operator Filename
+const operatorFileTemplate = "/operator/operator-%02d.yaml"
+
+// Number of Infrastructure Files
+const operatorFileNumber = 23
+
+var operatorFiles []string
+
+func init() {
+	for i := 1; i <= operatorFileNumber; i++ {
+		var fileName = fmt.Sprintf(operatorFileTemplate, i)
+		operatorFiles = append(operatorFiles, fileName)
+	}
+}
+
+// GetSiteWhereOperatorFiles returns the name of SiteWhere Operator files
+func GetSiteWhereOperatorFiles() []string {
+	return operatorFiles
 }

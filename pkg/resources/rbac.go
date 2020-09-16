@@ -19,16 +19,16 @@ package resources
 import (
 	"context"
 
-	rbacV1 "k8s.io/api/rbac/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubernetes "k8s.io/client-go/kubernetes"
 )
 
 // CreateClusterRoleIfNotExists Create a ClusterRole if it does not exists.
-func CreateClusterRoleIfNotExists(cr *rbacV1.ClusterRole, clientset kubernetes.Interface) (*rbacV1.ClusterRole, error) {
+func CreateClusterRoleIfNotExists(cr *rbacv1.ClusterRole, clientset kubernetes.Interface) (*rbacv1.ClusterRole, error) {
 	var err error
-	var existingCR *rbacV1.ClusterRole
+	var existingCR *rbacv1.ClusterRole
 
 	existingCR, err = clientset.RbacV1().ClusterRoles().Get(
 		context.TODO(),
@@ -56,7 +56,7 @@ func CreateClusterRoleIfNotExists(cr *rbacV1.ClusterRole, clientset kubernetes.I
 }
 
 // DeleteClusterRoleIfExists Delete a ClusterRole if it exists.
-func DeleteClusterRoleIfExists(cr *rbacV1.ClusterRole, clientset kubernetes.Interface) error {
+func DeleteClusterRoleIfExists(cr *rbacv1.ClusterRole, clientset kubernetes.Interface) error {
 	return clientset.RbacV1().ClusterRoles().Delete(
 		context.TODO(),
 		cr.ObjectMeta.Name,
@@ -64,9 +64,9 @@ func DeleteClusterRoleIfExists(cr *rbacV1.ClusterRole, clientset kubernetes.Inte
 }
 
 // CreateClusterRoleBindingIfNotExists Create a ClusterRoleBinding if it does not exists.
-func CreateClusterRoleBindingIfNotExists(crb *rbacV1.ClusterRoleBinding, clientset kubernetes.Interface) (*rbacV1.ClusterRoleBinding, error) {
+func CreateClusterRoleBindingIfNotExists(crb *rbacv1.ClusterRoleBinding, clientset kubernetes.Interface) (*rbacv1.ClusterRoleBinding, error) {
 	var err error
-	var existingCRB *rbacV1.ClusterRoleBinding
+	var existingCRB *rbacv1.ClusterRoleBinding
 
 	existingCRB, err = clientset.RbacV1().ClusterRoleBindings().Get(
 		context.TODO(),
@@ -94,7 +94,7 @@ func CreateClusterRoleBindingIfNotExists(crb *rbacV1.ClusterRoleBinding, clients
 }
 
 // DeleteClusterRoleBindingIfExists Delete a ClusterRoleBinding if it exists.
-func DeleteClusterRoleBindingIfExists(crb *rbacV1.ClusterRoleBinding, clientset kubernetes.Interface) error {
+func DeleteClusterRoleBindingIfExists(crb *rbacv1.ClusterRoleBinding, clientset kubernetes.Interface) error {
 	return clientset.RbacV1().ClusterRoleBindings().Delete(
 		context.TODO(),
 		crb.ObjectMeta.Name,
@@ -102,9 +102,9 @@ func DeleteClusterRoleBindingIfExists(crb *rbacV1.ClusterRoleBinding, clientset 
 }
 
 // CreateRoleIfNotExists Create a Role if it does not exists.
-func CreateRoleIfNotExists(role *rbacV1.Role, clientset kubernetes.Interface, namespace string) (*rbacV1.Role, error) {
+func CreateRoleIfNotExists(role *rbacv1.Role, clientset kubernetes.Interface, namespace string) (*rbacv1.Role, error) {
 	var err error
-	var existingRole *rbacV1.Role
+	var existingRole *rbacv1.Role
 
 	existingRole, err = clientset.RbacV1().Roles(namespace).Get(
 		context.TODO(),
@@ -132,7 +132,7 @@ func CreateRoleIfNotExists(role *rbacV1.Role, clientset kubernetes.Interface, na
 }
 
 // DeleteRoleIfExists Delete a Role if it does not exists.
-func DeleteRoleIfExists(role *rbacV1.Role, clientset kubernetes.Interface, namespace string) error {
+func DeleteRoleIfExists(role *rbacv1.Role, clientset kubernetes.Interface, namespace string) error {
 	return clientset.RbacV1().Roles(namespace).Delete(
 		context.TODO(),
 		role.ObjectMeta.Name,
@@ -140,9 +140,9 @@ func DeleteRoleIfExists(role *rbacV1.Role, clientset kubernetes.Interface, names
 }
 
 // CreateRoleBindingIfNotExists Create a RoleBinding if it does not exists.
-func CreateRoleBindingIfNotExists(rb *rbacV1.RoleBinding, clientset kubernetes.Interface, namespace string) (*rbacV1.RoleBinding, error) {
+func CreateRoleBindingIfNotExists(rb *rbacv1.RoleBinding, clientset kubernetes.Interface, namespace string) (*rbacv1.RoleBinding, error) {
 	var err error
-	var existingRoleBinding *rbacV1.RoleBinding
+	var existingRoleBinding *rbacv1.RoleBinding
 
 	existingRoleBinding, err = clientset.RbacV1().RoleBindings(namespace).Get(
 		context.TODO(),
@@ -170,7 +170,7 @@ func CreateRoleBindingIfNotExists(rb *rbacV1.RoleBinding, clientset kubernetes.I
 }
 
 // DeleteRoleBindingIfExists Delete a RoleBinding if it exists.
-func DeleteRoleBindingIfExists(rb *rbacV1.RoleBinding, clientset kubernetes.Interface, namespace string) error {
+func DeleteRoleBindingIfExists(rb *rbacv1.RoleBinding, clientset kubernetes.Interface, namespace string) error {
 	return clientset.RbacV1().RoleBindings(namespace).Delete(
 		context.TODO(),
 		rb.ObjectMeta.Name,

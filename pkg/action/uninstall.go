@@ -72,17 +72,17 @@ func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
 		return nil, err
 	}
 	// Uninstall Infrastructure
-	err = resources.UninstallSiteWhereInfrastructure(i.Minimal, i.StatikFS, clientset, apiextensionsClientset, config)
+	err = uninstall.SiteWhereInfrastructure(i.Minimal, i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Uninstall Operator
-	err = resources.UninstallSiteWhereOperator(i.StatikFS, clientset, apiextensionsClientset, config)
+	err = uninstall.SiteWhereOperator(i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Uninstall Custom Resource Definitions
-	err = resources.UninstallSiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
+	err = uninstall.SiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}

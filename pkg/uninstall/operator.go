@@ -14,36 +14,37 @@
  * limitations under the License.
  */
 
-package resources
+package uninstall
 
 import (
-	"fmt"
 	"net/http"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
+
+	"github.com/sitewhere/swctl/internal/operator"
+	"github.com/sitewhere/swctl/pkg/resources"
 )
 
-// Template for generating a Template Filename
-const templateFileTemplate = "/templates/template-%02d.yaml"
-
-// Number of CRD Files
-const templatesFileNumber = 37
-
-// InstallSiteWhereTemplates Install SiteWhere Templates CRD
-func InstallSiteWhereTemplates(statikFS http.FileSystem,
+// SiteWhereOperator Uninstall SiteWhere Operator resource file in the cluster
+func SiteWhereOperator(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
 	var err error
-	for i := 1; i <= templatesFileNumber; i++ {
-		var templateName = fmt.Sprintf(templateFileTemplate, i)
-		err = CreateCustomResourceFromFile(templateName, statikFS, config)
-		if err != nil && !errors.IsAlreadyExists(err) {
+
+	for _, operatorFile := range operator.GetSiteWhereOperatorFiles() {
+		err = resources.UninstallResourceFromFile(operatorFile, statikFS, clientset, apiextensionsClientset, config)
+		if err != nil && !errors.IsNotFound(err) {
 			return err
 		}
 	}
+
+	// if config.Verbose {
+	// 	fmt.Print("SiteWhere Operator: ")
+	// 	color.Info.Println("Uninstalled")
+	// }
 	return nil
 }

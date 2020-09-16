@@ -14,12 +14,4 @@
  * limitations under the License.
  */
 
-package install
-
-var (
-	sitewhereSystemNamespace = "sitewhere-system" // SiteWhere System Namespace
-)
-
-// SiteWhereInstall destribe the installation of SiteWhere.
-type SiteWhereInstall struct {
-}
+package uninstall

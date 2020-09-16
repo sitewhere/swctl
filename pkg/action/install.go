@@ -23,7 +23,6 @@ import (
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/install"
-	"github.com/sitewhere/swctl/pkg/resources"
 )
 
 // Install is the action for installing SiteWhere
@@ -71,22 +70,22 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		return nil, err
 	}
 	// Install Custom Resource Definitions
-	err = resources.InstallSiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
+	err = install.SiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Templates
-	err = resources.InstallSiteWhereTemplates(i.StatikFS, clientset, apiextensionsClientset, config)
+	err = install.SiteWhereTemplates(i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Operator
-	err = resources.InstallSiteWhereOperator(i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
+	err = install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Infrastructure
-	err = resources.InstallSiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
+	err = install.SiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}

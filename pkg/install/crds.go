@@ -14,36 +14,32 @@
  * limitations under the License.
  */
 
-// Package internal Implements swctl internal use only functions
-package internal
+package install
 
 import (
-	"fmt"
-
-	"github.com/gookit/color"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	kubernetes "k8s.io/client-go/kubernetes"
+	rest "k8s.io/client-go/rest"
+
+	"github.com/sitewhere/swctl/internal/crds"
+	"github.com/sitewhere/swctl/pkg/resources"
 )
 
-// Template for generating a CRD Filename
-const crdFileTemplate = "/crd/crd-%02d.yaml"
-
-// Number of CRD Files
-const crdFileNumber = 14
-
-// InstallSiteWhereCRDs Install SiteWhere Custom Resource Definitions
-func InstallSiteWhereCRDs(config SiteWhereConfiguration) error {
+// SiteWhereCRDs Install SiteWhere Custom Resource Definitions
+func SiteWhereCRDs(statikFS http.FileSystem,
+	clientset kubernetes.Interface,
+	apiextensionsClientset apiextensionsclientset.Interface,
+	config *rest.Config) error {
 	var err error
-	for i := 1; i <= crdFileNumber; i++ {
-		var crdName = fmt.Sprintf(crdFileTemplate, i)
-		err = InstallResourceFromFile(crdName, config)
+	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
+		err = resources.InstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
-	}
-	if config.IsVerbose() {
-		fmt.Print("SiteWhere Custom Resources Definition: ")
-		color.Info.Println("Installed")
 	}
 	return nil
 }
