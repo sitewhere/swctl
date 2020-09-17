@@ -49,6 +49,7 @@ func NewRootCmd(actionConfig *action.Configuration, out io.Writer, args []string
 		newCheckInstallCmd(actionConfig, out),
 		newCreateCmd(actionConfig, out),
 		newDeleteCmd(actionConfig, out),
+		newInstancesCmd(actionConfig, out),
 		newUninstallCmd(actionConfig, out),
 		newVersionCmd(out))
 

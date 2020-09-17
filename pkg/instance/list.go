@@ -14,26 +14,8 @@
  * limitations under the License.
  */
 
-package cmd
+package instance
 
-import (
-	"fmt"
-
-	"github.com/spf13/cobra"
-)
-
-// listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List instances",
-	Long:  ``,
-	Run:   instanceListSiteWhereCommand,
-}
-
-func init() {
-	instancesCmd.AddCommand(listCmd)
-}
-
-func instanceListSiteWhereCommand(cmd *cobra.Command, args []string) {
-	fmt.Println("list called")
+// ListSiteWhereInstance destribe the listing of a SiteWhere Instance.
+type ListSiteWhereInstance struct {
 }

@@ -14,11 +14,25 @@
  * limitations under the License.
  */
 
-// Package alpha3 defines SiteWhere Structures
-package cmd
+package action
 
-import "testing"
+import (
+	"github.com/sitewhere/swctl/pkg/instance"
+)
 
-func TestInstanceList(t *testing.T) {
-	// instanceListSiteWhereCommand(nil, nil)
+// Instances is the action for listing SiteWhere instances
+type Instances struct {
+	cfg *Configuration
+}
+
+// NewInstances constructs a new *Instances
+func NewInstances(cfg *Configuration) *Instances {
+	return &Instances{
+		cfg: cfg,
+	}
+}
+
+// Run executes the install command, returning the result of the installation
+func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
+	return &instance.ListSiteWhereInstance{}, nil
 }

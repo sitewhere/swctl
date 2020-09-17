@@ -70,7 +70,7 @@ type installWriter struct {
 }
 
 func newInstallWriter(install *install.SiteWhereInstall) *installWriter {
-	return nil
+	return &installWriter{}
 }
 
 func (i *installWriter) WriteTable(out io.Writer) error {
