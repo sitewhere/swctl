@@ -19,6 +19,7 @@ package cmd
 import (
 	"io"
 
+	"github.com/gookit/color"
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
@@ -67,18 +68,21 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 }
 
 type installWriter struct {
+	Results *install.SiteWhereInstall `json:"results"`
 }
 
-func newInstallWriter(install *install.SiteWhereInstall) *installWriter {
-	return &installWriter{}
+func newInstallWriter(results *install.SiteWhereInstall) *installWriter {
+	return &installWriter{Results: results}
 }
 
 func (i *installWriter) WriteTable(out io.Writer) error {
 	table := uitable.New()
-	table.AddRow("NAME", "NAMESPACE", "REVISION", "UPDATED", "STATUS", "CHART", "APP VERSION")
-	// for _, r := range r.releases {
-	// 	table.AddRow(r.Name, r.Namespace, r.Revision, r.Updated, r.Status, r.Chart, r.AppVersion)
-	// }
+	table.AddRow("COMPONENT", "STATUS")
+	table.AddRow("Custom Resource Definitions", color.Info.Render("Installed"))
+	table.AddRow("Templates", color.Info.Render("Installed"))
+	table.AddRow("Operator", color.Info.Render("Installed"))
+	table.AddRow("Infrastructure", color.Info.Render("Installed"))
+	table.AddRow(color.Style{color.FgGreen, color.OpBold}.Render("SiteWhere 3.0 Installed"))
 	return output.EncodeTable(out, table)
 }
 

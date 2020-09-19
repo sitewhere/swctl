@@ -38,14 +38,20 @@ const templatesFileNumber = 37
 func SiteWhereTemplates(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) error {
+	config *rest.Config) ([]SiteWhereTemplateStatus, error) {
 	var err error
+	var result []SiteWhereTemplateStatus
 	for i := 1; i <= templatesFileNumber; i++ {
 		var templateName = fmt.Sprintf(templateFileTemplate, i)
 		err = resources.CreateCustomResourceFromFile(templateName, statikFS, config)
 		if err != nil && !errors.IsAlreadyExists(err) {
-			return err
+			return nil, err
 		}
+		var templateStatus = SiteWhereTemplateStatus{
+			Name:   templateName,
+			Status: Installed,
+		}
+		result = append(result, templateStatus)
 	}
-	return nil
+	return result, nil
 }

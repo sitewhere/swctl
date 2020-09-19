@@ -16,10 +16,48 @@
 
 package install
 
-var (
-	sitewhereSystemNamespace = "sitewhere-system" // SiteWhere System Namespace
+// Status Status of a installable item.
+type Status string
+
+const (
+	// Installed The item is installed.
+	Installed Status = "Installed"
+	// Uninstalled The item is not longer installed.
+	Uninstalled = "Uninstalled"
+	// Unknown We cannot know if the item is installed or not.
+	Unknown = "Unknown"
 )
+
+// SiteWhereCRDStatus represents that status of a CRD installation
+type SiteWhereCRDStatus struct {
+	// Name of the Custom Resource Definition
+	Name string `json:"name,omitempty"`
+	// Install Status
+	Status Status `json:"status,omitempty"`
+}
+
+// SiteWhereTemplateStatus represents that status of a CRD installation
+type SiteWhereTemplateStatus struct {
+	// Name of the Template
+	Name string `json:"name,omitempty"`
+	// Install Status
+	Status Status `json:"status,omitempty"`
+}
+
+// SiteWhereOperatorStatus represents that status of a CRD installation
+type SiteWhereOperatorStatus struct {
+	// Name of the Operator resource
+	Name string `json:"name,omitempty"`
+	// Install Status
+	Status Status `json:"status,omitempty"`
+}
 
 // SiteWhereInstall destribe the installation of SiteWhere.
 type SiteWhereInstall struct {
+	// Status of SiteWhere CDR installation
+	CDRStatues []SiteWhereCRDStatus `json:"crdStatues,omitempty"`
+	// Status of SiteWhere Templates installation
+	TemplatesStatues []SiteWhereTemplateStatus `json:"templatesStatues,omitempty"`
+	// Status of SiteWhere Operator
+	OperatorStatuses []SiteWhereOperatorStatus `json:"operatorStatuses,omitempty"`
 }

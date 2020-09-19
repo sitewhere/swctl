@@ -85,33 +85,33 @@ func InstallResourceFromFile(fileName string,
 	// and match each type-case
 	switch o := obj.(type) {
 	case *v1.Pod:
-		_, err = CreatePodIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreatePodIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.ConfigMap:
-		_, err = CreateConfigMapIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateConfigMapIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.Secret:
-		_, err = CreateSecretIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateSecretIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.ServiceAccount:
-		_, err = CreateServiceAccountIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateServiceAccountIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.PersistentVolumeClaim:
-		_, err = CreatePersistentVolumeClaimIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreatePersistentVolumeClaimIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.Service:
-		_, err = CreateServiceIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateServiceIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *appsv1.Deployment:
-		_, err = CreateDeploymentIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateDeploymentIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *appsv1.StatefulSet:
-		_, err = CreateStatefulSetIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateStatefulSetIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *rbacV1.ClusterRole:
 		_, err = CreateClusterRoleIfNotExists(o, clientset)
 	case *rbacV1.ClusterRoleBinding:
 		_, err = CreateClusterRoleBindingIfNotExists(o, clientset)
 	case *rbacV1.Role:
-		_, err = CreateRoleIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateRoleIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *rbacV1.RoleBinding:
-		_, err = CreateRoleBindingIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateRoleBindingIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *policyV1beta1.PodDisruptionBudget:
-		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *networkingv1.NetworkPolicy:
-		_, err = CreateNetworkPolicyIfNotExists(o, clientset, sitewhereSystemNamespace)
+		_, err = CreateNetworkPolicyIfNotExists(o, clientset, SitewhereSystemNamespace())
 	case *apiextv1beta1.CustomResourceDefinition:
 		_, err = CreateCustomResourceDefinitionIfNotExists(o, apiextensionsClientset)
 	default:
@@ -161,33 +161,33 @@ func UninstallResourceFromFile(fileName string,
 	// and match each type-case
 	switch o := obj.(type) {
 	case *v1.Pod:
-		err = DeletePodIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeletePodIfExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.ConfigMap:
-		err = DeleteConfigMapIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteConfigMapIfExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.Secret:
-		err = DeleteSecretIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteSecretIfExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.ServiceAccount:
-		err = DeleteServiceAccountIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteServiceAccountIfExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.PersistentVolumeClaim:
-		err = DeletePersistentVolumeClaimIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeletePersistentVolumeClaimIfExists(o, clientset, SitewhereSystemNamespace())
 	case *v1.Service:
-		err = DeleteServiceIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteServiceIfExists(o, clientset, SitewhereSystemNamespace())
 	case *appsv1.Deployment:
-		err = DeleteDeploymentIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteDeploymentIfExists(o, clientset, SitewhereSystemNamespace())
 	case *appsv1.StatefulSet:
-		err = DeleteStatefulSetIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteStatefulSetIfExists(o, clientset, SitewhereSystemNamespace())
 	case *rbacV1.ClusterRole:
 		err = DeleteClusterRoleIfExists(o, clientset)
 	case *rbacV1.ClusterRoleBinding:
 		err = DeleteClusterRoleBindingIfExists(o, clientset)
 	case *rbacV1.Role:
-		err = DeleteRoleIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteRoleIfExists(o, clientset, SitewhereSystemNamespace())
 	case *rbacV1.RoleBinding:
-		err = DeleteRoleBindingIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteRoleBindingIfExists(o, clientset, SitewhereSystemNamespace())
 	case *policyV1beta1.PodDisruptionBudget:
-		err = DeletePodDisruptionBudgetIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeletePodDisruptionBudgetIfExists(o, clientset, SitewhereSystemNamespace())
 	case *networkingv1.NetworkPolicy:
-		err = DeleteNetworkPolicyIfExists(o, clientset, sitewhereSystemNamespace)
+		err = DeleteNetworkPolicyIfExists(o, clientset, SitewhereSystemNamespace())
 	case *apiextv1beta1.CustomResourceDefinition:
 		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config)
 		if err != nil {

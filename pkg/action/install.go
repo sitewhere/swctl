@@ -70,17 +70,17 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		return nil, err
 	}
 	// Install Custom Resource Definitions
-	err = install.SiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
+	crdStatues, err := install.SiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Templates
-	err = install.SiteWhereTemplates(i.StatikFS, clientset, apiextensionsClientset, config)
+	templatesStatues, err := install.SiteWhereTemplates(i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Operator
-	err = install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
+	operatorStatuses, err := install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
 	if err != nil {
 		return nil, err
 	}
@@ -89,5 +89,9 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &install.SiteWhereInstall{}, nil
+	return &install.SiteWhereInstall{
+		CDRStatues:       crdStatues,
+		TemplatesStatues: templatesStatues,
+		OperatorStatuses: operatorStatuses,
+	}, nil
 }

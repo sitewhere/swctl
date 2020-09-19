@@ -32,6 +32,11 @@ var (
 	decUnstructured          = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme) // Decoding Unstructed
 )
 
+// SitewhereSystemNamespace returns the namespace for SiteWhere
+func SitewhereSystemNamespace() string {
+	return sitewhereSystemNamespace
+}
+
 // CreateNamespaceIfNotExists Create a Namespace in Kubernetes if it does not exists.
 func CreateNamespaceIfNotExists(namespace string, clientset kubernetes.Interface) (*v1.Namespace, error) {
 	var err error
@@ -76,5 +81,5 @@ func DeleteNamespaceIfExists(namespace string, clientset kubernetes.Interface) e
 
 // DeleteSiteWhereNamespaceIfExists Delete a Namespace in Kubernetes if it does exists.
 func DeleteSiteWhereNamespaceIfExists(clientset kubernetes.Interface) error {
-	return DeleteNamespaceIfExists(sitewhereSystemNamespace, clientset)
+	return DeleteNamespaceIfExists(SitewhereSystemNamespace(), clientset)
 }

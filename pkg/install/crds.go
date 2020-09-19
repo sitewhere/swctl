@@ -33,13 +33,19 @@ import (
 func SiteWhereCRDs(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) error {
+	config *rest.Config) ([]SiteWhereCRDStatus, error) {
 	var err error
+	var result []SiteWhereCRDStatus
 	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
 		err = resources.InstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
 		if err != nil && !errors.IsAlreadyExists(err) {
-			return err
+			return nil, err
 		}
+		var crdStatus = SiteWhereCRDStatus{
+			Name:   crdFile,
+			Status: Installed,
+		}
+		result = append(result, crdStatus)
 	}
-	return nil
+	return result, nil
 }
