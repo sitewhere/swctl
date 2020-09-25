@@ -17,8 +17,10 @@
 package cmd
 
 import (
+	"github.com/gosuri/uitable"
 	"io"
 
+	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -84,5 +86,8 @@ func (s deleteInstancePrinter) WriteYAML(out io.Writer) error {
 }
 
 func (s deleteInstancePrinter) WriteTable(out io.Writer) error {
-	return nil
+	table := uitable.New()
+	table.AddRow("INSTANCE", "STATUS")
+	table.AddRow(s.instance.InstanceName, color.Info.Render("Deleted"))
+	return output.EncodeTable(out, table)
 }

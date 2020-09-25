@@ -88,7 +88,10 @@ func (i *DeleteInstance) Run() (*instance.DeleteSiteWhereInstance, error) {
 			return nil, err
 		}
 	}
-	return &instance.DeleteSiteWhereInstance{}, nil
+	return &instance.DeleteSiteWhereInstance{
+		InstanceName: i.InstanceName,
+		Namespace:    i.InstanceName,
+	}, nil
 }
 
 // ExtractInstanceName returns the name of the instance that should be used.

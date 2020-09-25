@@ -18,4 +18,8 @@ package instance
 
 // DeleteSiteWhereInstance destribe the creating of a SiteWhere Instance.
 type DeleteSiteWhereInstance struct {
+	// Name of the instance
+	InstanceName string `json:"instanceName"`
+	// Namespace to use
+	Namespace string `json:"namespace"`
 }
