@@ -19,17 +19,27 @@ package instance
 // CreateSiteWhereInstance destribe the creating of a SiteWhere Instance.
 type CreateSiteWhereInstance struct {
 	// Name of the instance
-	InstanceName string
+	InstanceName string `json:"instanceName"`
 	// Namespace to use
-	Namespace string
+	Namespace string `json:"namespace"`
+	// Docker Image Tag
+	Tag string `json:"tag"`
+	// Number of replicas
+	Replicas int64
+	// Use debug mode
+	Debug bool
+	// Configuration Template
+	ConfigurationTemplate string
+	// Dataset template
+	DatasetTemplate string
 	// Service Account created
-	ServiceAccountName string
+	ServiceAccountName string `json:"serviceAccountName"`
 	// Custer Role created
-	ClusterRoleName string
+	ClusterRoleName string `json:"clusterRoleName"`
 	// Cluster Role Binding created
-	ClusterRoleBindingName string
+	ClusterRoleBindingName string `json:"clusterRoleBindingName"`
 	// LoadBalancer Service created
-	LoadBalanceServiceName string
+	LoadBalanceServiceName string `json:"loadBalanceServiceName"`
 	// Instance Custom Resources Name
-	InstanceCustomResourcesName string
+	InstanceCustomResourceName string `json:"instanceCustomResourceName"`
 }

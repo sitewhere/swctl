@@ -132,13 +132,18 @@ func (i *CreateInstance) createSiteWhereInstance(profile alpha3.SiteWhereProfile
 		return nil, err
 	}
 	return &instance.CreateSiteWhereInstance{
-		InstanceName:                i.InstanceName,
-		Namespace:                   nsr.Namespace,
-		ServiceAccountName:          nsr.ServiceAccountName,
-		ClusterRoleName:             nsr.ClusterRoleName,
-		ClusterRoleBindingName:      nsr.ClusterRoleBindingName,
-		LoadBalanceServiceName:      nsr.LoadBalanceServiceName,
-		InstanceCustomResourcesName: inr.CRName,
+		InstanceName:               i.InstanceName,
+		Namespace:                  nsr.Namespace,
+		Tag:                        i.Tag,
+		Replicas:                   i.Replicas,
+		Debug:                      i.Debug,
+		ConfigurationTemplate:      i.ConfigurationTemplate,
+		DatasetTemplate:            i.DatasetTemplate,
+		ServiceAccountName:         nsr.ServiceAccountName,
+		ClusterRoleName:            nsr.ClusterRoleName,
+		ClusterRoleBindingName:     nsr.ClusterRoleBindingName,
+		LoadBalanceServiceName:     nsr.LoadBalanceServiceName,
+		InstanceCustomResourceName: inr.CRName,
 	}, nil
 }
 
