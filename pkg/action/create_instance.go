@@ -46,6 +46,8 @@ type CreateInstance struct {
 	Namespace string
 	// Use minimal profile. Initialize only essential microservices.
 	Minimal bool
+	// Number of replicas
+	Replicas int64
 	// Docker image tag
 	Tag string
 	// Use debug mode
@@ -72,6 +74,7 @@ func NewCreateInstance(cfg *Configuration) *CreateInstance {
 		InstanceName:          "",
 		Namespace:             "",
 		Minimal:               false,
+		Replicas:              1,
 		Tag:                   dockerImageDefaultTag,
 		Debug:                 false,
 		ConfigurationTemplate: defaultConfigurationTemplate,
@@ -113,6 +116,7 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 		Namespace:             i.Namespace,
 		Tag:                   i.Tag,
 		Debug:                 i.Debug,
+		Replicas:              i.Replicas,
 		ConfigurationTemplate: i.ConfigurationTemplate,
 		DatasetTemplate:       i.DatasetTemplate,
 		Profile:               profile}
@@ -594,7 +598,7 @@ func createCRSiteWhereInstanceManagementIfNotExists(instance *alpha3.SiteWhereIn
 					},
 				},
 				"spec": map[string]interface{}{
-					"replicas":    1, // TODO from parameter
+					"replicas":    instance.Replicas,
 					"name":        "Instance Management",
 					"description": "Handles APIs for managing global aspects of an instance",
 					"icon":        "language",

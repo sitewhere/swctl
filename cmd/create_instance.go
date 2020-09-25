@@ -74,6 +74,7 @@ func addCreateInstanceFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action
 	f.BoolVarP(&client.Minimal, "minimal", "m", client.Minimal, "Minimal installation.")
 	f.StringVarP(&client.Tag, "tag", "t", client.Tag, "Docker image tag.")
 	f.BoolVarP(&client.Debug, "debug", "d", client.Debug, "Debug mode.")
+	f.Int64VarP(&client.Replicas, "replicas", "r", client.Replicas, "Number of replicas")
 	f.StringVarP(&client.ConfigurationTemplate, "config-template", "c", client.ConfigurationTemplate, "Configuration template.")
 	f.StringVarP(&client.DatasetTemplate, "dateset-template", "x", client.DatasetTemplate, "Dataset template.")
 }

@@ -113,6 +113,7 @@ const (
 type SiteWhereInstance struct {
 	Name                  string                          `json:"name"`
 	Namespace             string                          `json:"namespace"`
+	Replicas              int64                           `json:"replicas"`
 	Tag                   string                          `json:"tag"`
 	Debug                 bool                            `json:"debug"`
 	ConfigurationTemplate string                          `json:"configurationTemaplate"`
