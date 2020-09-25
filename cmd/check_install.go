@@ -35,7 +35,7 @@ Use this command to check the install of SiteWhere 3.0 on a Kubernetes Cluster.
 
 func newCheckInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewCheckInstall(cfg)
-	var outfmt output.Format
+	var outFmt output.Format
 
 	cmd := &cobra.Command{
 		Use:     "check-install",
@@ -49,11 +49,11 @@ func newCheckInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command
 			if err != nil {
 				return err
 			}
-			return outfmt.Write(out, newCheckInstallWriter(results))
+			return outFmt.Write(out, newCheckInstallWriter(results))
 		},
 	}
 
-	bindOutputFlag(cmd, &outfmt)
+	bindOutputFlag(cmd, &outFmt)
 
 	return cmd
 }

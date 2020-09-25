@@ -34,7 +34,7 @@ Use this command to list SiteWhere Intances.
 
 func newInstancesCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewInstances(cfg)
-	var outfmt output.Format
+	var outFmt output.Format
 
 	cmd := &cobra.Command{
 		Use:               "instances",
@@ -47,10 +47,10 @@ func newInstancesCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return outfmt.Write(out, newInstancesWriter(results))
+			return outFmt.Write(out, newInstancesWriter(results))
 		},
 	}
-	bindOutputFlag(cmd, &outfmt)
+	bindOutputFlag(cmd, &outFmt)
 	return cmd
 }
 

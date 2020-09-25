@@ -41,7 +41,7 @@ This command will install:
 
 func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewInstall(cfg)
-	var outfmt output.Format
+	var outFmt output.Format
 
 	cmd := &cobra.Command{
 		Use:               "install",
@@ -54,7 +54,7 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return outfmt.Write(out, newInstallWriter(results))
+			return outFmt.Write(out, newInstallWriter(results))
 		},
 	}
 
@@ -62,7 +62,7 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 
 	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal installation.")
 	f.BoolVarP(&client.WaitReady, "wait", "w", false, "Wait for components to be ready before return control.")
-	bindOutputFlag(cmd, &outfmt)
+	bindOutputFlag(cmd, &outFmt)
 
 	return cmd
 }

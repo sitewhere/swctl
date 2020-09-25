@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package action
+package grv
 
 import "k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -33,3 +33,13 @@ var (
 		Resource: "microservices",
 	}
 )
+
+// SiteWhereInstanceGRV SiteWhere Intance Group Version Resource
+func SiteWhereInstanceGRV() schema.GroupVersionResource {
+	return sitewhereInstanceGVR
+}
+
+// SiteWhereMicroserviceGRV SiteWhere Micrservice Group Version Resource
+func SiteWhereMicroserviceGRV() schema.GroupVersionResource {
+	return sitewhereMicroserviceGVR
+}

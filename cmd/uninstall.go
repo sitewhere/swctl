@@ -41,7 +41,7 @@ This command will uninstall:
 
 func newUninstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewUninstall(cfg)
-	var outfmt output.Format
+	var outFmt output.Format
 
 	cmd := &cobra.Command{
 		Use:               "uninstall",
@@ -54,7 +54,7 @@ func newUninstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return outfmt.Write(out, newUninstallWriter(results))
+			return outFmt.Write(out, newUninstallWriter(results))
 		},
 	}
 
@@ -63,7 +63,7 @@ func newUninstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal uninstallation.")
 	f.BoolVarP(&client.Purge, "purge", "p", false, "Purge data.")
 
-	bindOutputFlag(cmd, &outfmt)
+	bindOutputFlag(cmd, &outFmt)
 
 	return cmd
 }

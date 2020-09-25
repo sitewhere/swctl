@@ -57,11 +57,11 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	if err = i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	clientset, err := i.cfg.KubernetesClientSet()
+	clientSet, err := i.cfg.KubernetesClientSet()
 	if err != nil {
 		return nil, err
 	}
-	apiextensionsClientset, err := i.cfg.KubernetesAPIExtensionClientSet()
+	extensionsClients, err := i.cfg.KubernetesAPIExtensionClientSet()
 	if err != nil {
 		return nil, err
 	}
@@ -70,22 +70,22 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		return nil, err
 	}
 	// Install Custom Resource Definitions
-	crdStatues, err := install.SiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
+	crdStatues, err := install.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Templates
-	templatesStatues, err := install.SiteWhereTemplates(i.StatikFS, clientset, apiextensionsClientset, config)
+	templatesStatues, err := install.SiteWhereTemplates(i.StatikFS, clientSet, extensionsClients, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Operator
-	operatorStatuses, err := install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
+	operatorStatuses, err := install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
 	if err != nil {
 		return nil, err
 	}
 	// Install Infrastructure
-	err = install.SiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientset, apiextensionsClientset, config)
+	err = install.SiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
 	if err != nil {
 		return nil, err
 	}

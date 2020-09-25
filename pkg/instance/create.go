@@ -18,4 +18,18 @@ package instance
 
 // CreateSiteWhereInstance destribe the creating of a SiteWhere Instance.
 type CreateSiteWhereInstance struct {
+	// Name of the instance
+	InstanceName string
+	// Namespace to use
+	Namespace string
+	// Service Account created
+	ServiceAccountName string
+	// Custer Role created
+	ClusterRoleName string
+	// Cluster Role Binding created
+	ClusterRoleBindingName string
+	// LoadBalancer Service created
+	LoadBalanceServiceName string
+	// Instance Custom Resources Name
+	InstanceCustomResourcesName string
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/sitewhere/swctl/pkg/instance"
 	"github.com/sitewhere/swctl/pkg/resources"
+	"github.com/sitewhere/swctl/pkg/resources/grv"
 )
 
 // DeleteInstance is the action for creating a SiteWhere instance
@@ -99,7 +100,7 @@ func (i *DeleteInstance) ExtractInstanceName(args []string) (string, error) {
 }
 
 func deleteSiteWhereMicroservicesResources(instance *alpha3.SiteWhereInstance, client dynamic.Interface) error {
-
+	sitewhereMicroserviceGVR := grv.SiteWhereMicroserviceGRV()
 	res := client.Resource(sitewhereMicroserviceGVR).Namespace(instance.Namespace)
 
 	microservices, err := res.List(context.TODO(), metav1.ListOptions{})
@@ -149,7 +150,7 @@ func deleteSiteWhereMicroservicesResources(instance *alpha3.SiteWhereInstance, c
 }
 
 func deleteSiteWhereResources(instance *alpha3.SiteWhereInstance, client dynamic.Interface) error {
-
+	sitewhereInstanceGVR := grv.SiteWhereInstanceGRV()
 	res := client.Resource(sitewhereInstanceGVR)
 
 	_, err := res.Get(context.TODO(), instance.Name, metav1.GetOptions{})

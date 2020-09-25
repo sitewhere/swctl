@@ -17,8 +17,10 @@
 package cmd
 
 import (
+	"github.com/gosuri/uitable"
 	"io"
 
+	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -41,7 +43,7 @@ To create an instance with the minimal profile use:
 
 func newCreateInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewCreateInstance(cfg)
-	var outfmt output.Format
+	var outFmt output.Format
 
 	cmd := &cobra.Command{
 		Use:               "instance [NAME]",
@@ -59,12 +61,12 @@ func newCreateInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Comma
 			if err != nil {
 				return err
 			}
-			return outfmt.Write(out, newCreateInstanceWriter(results))
+			return outFmt.Write(out, newCreateInstanceWriter(results))
 		},
 	}
 
 	addCreateInstanceFlags(cmd, cmd.Flags(), client)
-	bindOutputFlag(cmd, &outfmt)
+	bindOutputFlag(cmd, &outFmt)
 
 	return cmd
 }
@@ -96,5 +98,8 @@ func (s createInstancePrinter) WriteYAML(out io.Writer) error {
 }
 
 func (s createInstancePrinter) WriteTable(out io.Writer) error {
-	return nil
+	table := uitable.New()
+	table.AddRow("INSTANCE", "STATUS")
+	table.AddRow(s.instance.InstanceName, color.Info.Render("Installed"))
+	return output.EncodeTable(out, table)
 }

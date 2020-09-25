@@ -35,7 +35,7 @@ Use can use purge flag to remove the namespace of the instance.
 
 func newDeleteInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewDeleteInstance(cfg)
-	var outfmt output.Format
+	var outFmt output.Format
 
 	cmd := &cobra.Command{
 		Use:               "instance [NAME]",
@@ -53,12 +53,12 @@ func newDeleteInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Comma
 			if err != nil {
 				return err
 			}
-			return outfmt.Write(out, newDeleteInstanceWriter(results))
+			return outFmt.Write(out, newDeleteInstanceWriter(results))
 		},
 	}
 
 	addDeleteInstanceFlags(cmd, cmd.Flags(), client)
-	bindOutputFlag(cmd, &outfmt)
+	bindOutputFlag(cmd, &outFmt)
 
 	return cmd
 }
