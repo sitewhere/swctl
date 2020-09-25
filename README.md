@@ -60,6 +60,8 @@ This comamnd will do the following for you:
 - Install SiteWhere Operator.
 - Install SiteWhere Infrastructure.
 
+![](demo.gif)
+
 ### Listing SiteWhere Instances
 
 ```console
@@ -87,7 +89,7 @@ Configuration:
   Infrastructure:
     Namespace                      : sitewhere-system
     gRPC:
-      Backoff Multiplier           : 1.50  
+      Backoff Multiplier           : 1.50
       Initial Backoff (sec)        : 10
       Max Backoff (sec)            : 600
       Max Retry                    : 6
