@@ -1,97 +1,95 @@
-/*
-Copyright (c) SiteWhere, LLC. All rights reserved. http://www.sitewhere.com
-
-The software in this package is published under the terms of the CPAL v1.0
-license, a copy of which has been included with this distribution in the
-LICENSE file.
-*/
+/**
+ * Copyright © 2014-2020 The SiteWhere Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package cmd
 
 import (
-	"fmt"
+	"io"
 
 	"github.com/gookit/color"
-	"github.com/rakyll/statik/fs"
+	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
-	"github.com/sitewhere/swctl/internal"
-	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
+	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/pkg/action"
+	"github.com/sitewhere/swctl/pkg/cli/output"
+	"github.com/sitewhere/swctl/pkg/install"
 )
 
-// installCmd represents the install command
-var (
-	minimalInstall = false // Use minimal install profile. Initialize only essential microservices.
-	verboseInstall = false // Use verbose installation
-	installCmd     = &cobra.Command{
-		Use:   "install",
-		Short: "Install SiteWhere CRD and Operator",
-		Long: `Use this command to install SiteWhere 3.0 on a Kubernetes Cluster.
+var installHelp = `
+Use this command to install SiteWhere 3.0 on a Kubernetes Cluster.
 This command will install:
  - SiteWhere System Namespace: sitewhere-system (default)
  - SiteWhere Custom Resources Definition.
  - SiteWhere Templates.
  - SiteWhere Operator.
- - SiteWhere Infrastructure.`,
-		Run: installSiteWhereCommand,
-	}
-)
+ - SiteWhere Infrastructure.
+`
 
-func init() {
-	installCmd.Flags().BoolVarP(&minimalInstall, "minimal", "m", false, "Minimal installation.")
-	installCmd.Flags().BoolVarP(&verboseInstall, "verbose", "v", false, "Verbose installation.")
-	rootCmd.AddCommand(installCmd)
+func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+	client := action.NewInstall(cfg)
+	var outFmt output.Format
+
+	cmd := &cobra.Command{
+		Use:               "install",
+		Short:             "Install SiteWhere CRD and Operators",
+		Long:              installHelp,
+		Args:              require.NoArgs,
+		ValidArgsFunction: noCompletions,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			results, err := client.Run()
+			if err != nil {
+				return err
+			}
+			return outFmt.Write(out, newInstallWriter(results))
+		},
+	}
+
+	f := cmd.Flags()
+
+	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal installation.")
+	f.BoolVarP(&client.WaitReady, "wait", "w", false, "Wait for components to be ready before return control.")
+	bindOutputFlag(cmd, &outFmt)
+
+	return cmd
 }
 
-func installSiteWhereCommand(cmd *cobra.Command, args []string) {
-	var err error
+type installWriter struct {
+	Results *install.SiteWhereInstall `json:"results"`
+}
 
-	config, err := internal.GetKubeConfigFromKubeconfig()
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-		return
-	}
+func newInstallWriter(results *install.SiteWhereInstall) *installWriter {
+	return &installWriter{Results: results}
+}
 
-	statikFS, err := fs.New()
-	if err != nil {
-		fmt.Printf("Error Reading Resources: %v\n", err)
-		return
-	}
+func (i *installWriter) WriteTable(out io.Writer) error {
+	table := uitable.New()
+	table.AddRow("COMPONENT", "STATUS")
+	table.AddRow("Custom Resource Definitions", color.Info.Render("Installed"))
+	table.AddRow("Templates", color.Info.Render("Installed"))
+	table.AddRow("Operator", color.Info.Render("Installed"))
+	table.AddRow("Infrastructure", color.Info.Render("Installed"))
+	table.AddRow(color.Style{color.FgGreen, color.OpBold}.Render("SiteWhere 3.0 Installed"))
+	return output.EncodeTable(out, table)
+}
 
-	var sitewhereConfig internal.SiteWhereConfiguration = &internal.SiteWhereInstallConfiguration{
-		Minimal:          minimalInstall,
-		Verbose:          verboseInstall,
-		KubernetesConfig: config,
-		StatikFS:         statikFS,
-	}
+func (i *installWriter) WriteJSON(out io.Writer) error {
+	return output.EncodeJSON(out, i)
+}
 
-	// Install Custom Resource Definitions
-	err = internal.InstallSiteWhereCRDs(sitewhereConfig)
-	if err != nil {
-		fmt.Printf("Error Installing SiteWhere CRDs: %v\n", err)
-		return
-	}
-
-	// Install Templates
-	err = internal.InstallSiteWhereTemplates(sitewhereConfig)
-	if err != nil {
-		fmt.Printf("Error Installing SiteWhere Templates: %v\n", err)
-		return
-	}
-
-	// Install Operator
-	err = internal.InstallSiteWhereOperator(sitewhereConfig)
-	if err != nil {
-		fmt.Printf("Error Installing SiteWhere Operator: %v\n", err)
-		return
-	}
-
-	// Install Infrastructure
-	err = internal.InstallSiteWhereInfrastructure(sitewhereConfig)
-	if err != nil {
-		fmt.Printf("Error Installing SiteWhere Infrastucture: %v\n", err)
-		return
-	}
-
-	color.Style{color.FgGreen, color.OpBold}.Println("\nSiteWhere 3.0 Installed")
+func (i *installWriter) WriteYAML(out io.Writer) error {
+	return output.EncodeYAML(out, i)
 }

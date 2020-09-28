@@ -1,97 +1,96 @@
-/*
-Copyright (c) SiteWhere, LLC. All rights reserved. http://www.sitewhere.com
-
-The software in this package is published under the terms of the CPAL v1.0
-license, a copy of which has been included with this distribution in the
-LICENSE file.
-*/
+/**
+ * Copyright © 2014-2020 The SiteWhere Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package cmd
 
 import (
-	"fmt"
+	"io"
 
 	"github.com/gookit/color"
-	"github.com/rakyll/statik/fs"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/sitewhere/swctl/internal"
-	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
+	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
+
+	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/pkg/action"
+	"github.com/sitewhere/swctl/pkg/cli/output"
+	"github.com/sitewhere/swctl/pkg/uninstall"
 )
 
-// uninstallCmd represents the uninstall command
-var (
-	minimalUninstall = false // Use minimal uninstall profile.
-	verboseUninstall = false // Use verbose uninstallation
-	purge            = false // Purge data
-	uninstallCmd     = &cobra.Command{
-		Use:   "uninstall",
-		Short: "Uninstall SiteWhere from your Kubernetes Cluster",
-		Long: `Uninstall SiteWhere from your Kubernetes Cluster.
+var uninstallHelp = `
+Uninstall SiteWhere from your Kubernetes Cluster.
 This command will uninstall:
  - SiteWhere System Namespace: sitewhere-system (default)
  - SiteWhere Custom Resources Definition.
  - SiteWhere Templates.
  - SiteWhere Operator.
- - SiteWhere Infrastructure.`,
-		Run: uninstallSiteWhereCommand,
-	}
-)
+ - SiteWhere Infrastructure.
+`
 
-func init() {
-	uninstallCmd.Flags().BoolVarP(&minimalUninstall, "minimal", "m", false, "Minimal uninstallation.")
-	uninstallCmd.Flags().BoolVarP(&verboseUninstall, "verbose", "v", false, "Verbose uninstallation.")
-	uninstallCmd.Flags().BoolVarP(&purge, "purge", "p", false, "Purge data.")
-	rootCmd.AddCommand(uninstallCmd)
+func newUninstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+	client := action.NewUninstall(cfg)
+	var outFmt output.Format
+
+	cmd := &cobra.Command{
+		Use:               "uninstall",
+		Short:             "uninstall SiteWhere CRD and Operators",
+		Long:              uninstallHelp,
+		Args:              require.NoArgs,
+		ValidArgsFunction: noCompletions,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			results, err := client.Run()
+			if err != nil {
+				return err
+			}
+			return outFmt.Write(out, newUninstallWriter(results))
+		},
+	}
+
+	f := cmd.Flags()
+
+	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal uninstallation.")
+	f.BoolVarP(&client.Purge, "purge", "p", false, "Purge data.")
+
+	bindOutputFlag(cmd, &outFmt)
+
+	return cmd
 }
 
-// uninstallSiteWhereCommand Performs the steps necessary to uninstall SiteWhere
-func uninstallSiteWhereCommand(_ *cobra.Command, _ []string) {
-	config, err := internal.GetKubeConfigFromKubeconfig()
-	if err != nil {
-		fmt.Printf("Error getting Kubernetes Config: %v\n", err)
-		return
-	}
+type uninstallWriter struct {
+	Results *uninstall.SiteWhereUninstall `json:"results"`
+}
 
-	statikFS, err := fs.New()
-	if err != nil {
-		fmt.Printf("Error Reading Resources: %v\n", err)
-		return
-	}
+func newUninstallWriter(results *uninstall.SiteWhereUninstall) *uninstallWriter {
+	return &uninstallWriter{Results: results}
+}
 
-	var sitewhereConfig = internal.SiteWhereInstallConfiguration{
-		Minimal:          minimalUninstall,
-		Verbose:          verboseUninstall,
-		KubernetesConfig: config,
-		StatikFS:         statikFS,
-	}
+func (i *uninstallWriter) WriteTable(out io.Writer) error {
+	table := uitable.New()
+	table.AddRow("COMPONENT", "STATUS")
+	table.AddRow("Custom Resource Definitions", color.Info.Render("Uninstalled"))
+	table.AddRow("Templates", color.Info.Render("Uninstalled"))
+	table.AddRow("Operator", color.Info.Render("Uninstalled"))
+	table.AddRow("Infrastructure", color.Info.Render("Uninstalled"))
+	table.AddRow(color.Style{color.FgGreen, color.OpBold}.Render("SiteWhere 3.0 Uninstalled"))
+	return output.EncodeTable(out, table)
+}
 
-	// Uninstall Infrastructure
-	err = internal.UninstallSiteWhereInfrastructure(&sitewhereConfig)
-	if err != nil {
-		fmt.Printf("Error Uninstalling SiteWhere Infrastucture: %v\n", err)
-		return
-	}
+func (i *uninstallWriter) WriteJSON(out io.Writer) error {
+	return output.EncodeJSON(out, i)
+}
 
-	// Uninstall Operator
-	err = internal.UninstallSiteWhereOperator(&sitewhereConfig)
-	if err != nil {
-		fmt.Printf("Error Uninstalling SiteWhere Operator: %v\n", err)
-		return
-	}
-
-	// Uninstall Custom Resource Definitions
-	internal.UninstallSiteWhereCRDs(&sitewhereConfig)
-
-	if purge {
-		err = internal.DeleteSiteWhereNamespaceIfExists(sitewhereConfig.GetClientset())
-		if err != nil && !errors.IsNotFound(err) {
-			fmt.Printf("Error Uninstalling SiteWhere Namespace: %v\n", err)
-			return
-		}
-	}
-
-	color.Style{color.FgGreen, color.OpBold}.Println("\nSiteWhere 3.0 Uninstalled")
+func (i *uninstallWriter) WriteYAML(out io.Writer) error {
+	return output.EncodeYAML(out, i)
 }

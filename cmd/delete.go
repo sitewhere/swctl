@@ -1,29 +1,47 @@
-/*
-Copyright (c) SiteWhere, LLC. All rights reserved. http://www.sitewhere.com
-
-The software in this package is published under the terms of the CPAL v1.0
-license, a copy of which has been included with this distribution in the
-LICENSE file.
-*/
+/**
+ * Copyright © 2014-2020 The SiteWhere Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package cmd
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
+
+	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/pkg/action"
 )
 
-// deleteCmd represents the delete command
-var deleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var deleteHelp = `
+Delete a SiteWhere resource from a file or from stdin.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-}
+You can delete a SiteWhere instance by using:
+  - swctl delete instance sitewhere
+`
 
-func init() {
-	rootCmd.AddCommand(deleteCmd)
+func newDeleteCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "delete",
+		Short:             "delete a SiteWhere resource from a file or from stdin.",
+		Long:              deleteHelp,
+		Args:              require.NoArgs,
+		ValidArgsFunction: noCompletions, // Disable file completion
+	}
+
+	cmd.AddCommand(newDeleteInstanceCmd(cfg, out))
+
+	return cmd
 }

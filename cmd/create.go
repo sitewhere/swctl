@@ -1,30 +1,47 @@
-/*
-Copyright (c) SiteWhere, LLC. All rights reserved. http://www.sitewhere.com
-
-The software in this package is published under the terms of the CPAL v1.0
-license, a copy of which has been included with this distribution in the
-LICENSE file.
-*/
+/**
+ * Copyright © 2014-2020 The SiteWhere Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package cmd
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
+
+	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/pkg/action"
 )
 
-// createCmd represents the create command
-var createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a SiteWhere resource from a file or from stdin.",
-	Long: `Create a SiteWhere resource from a file or from stdin.
+var createHelp = `
+Create a SiteWhere resource from a file or from stdin.
 
-A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+You can create a SiteWhere instance by using:
+  - swctl create instance sitewhere
+`
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`}
+func newCreateCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "create",
+		Short:             "create a SiteWhere resource from a file or from stdin.",
+		Long:              createHelp,
+		Args:              require.NoArgs,
+		ValidArgsFunction: noCompletions, // Disable file completion
+	}
 
-func init() {
-	rootCmd.AddCommand(createCmd)
+	cmd.AddCommand(newCreateInstanceCmd(cfg, out))
+
+	return cmd
 }
