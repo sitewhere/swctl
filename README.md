@@ -11,7 +11,7 @@
 For building it requires go 1.14+.
 
 ```console
-go build
+make build
 ```
 
 ## Install swctl
@@ -19,7 +19,7 @@ go build
 ### From source code
 
 ```console
-go install
+make install
 ```
 
 ### Install binary with curl on Linux

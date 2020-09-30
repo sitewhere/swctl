@@ -19,5 +19,10 @@ package main
 import "testing"
 
 func TestUninstallCommand(t *testing.T) {
-	// uninstallSiteWhereCommand(nil, nil)
+	// tests := []cmdTestCase{{
+	// 	name:   "default",
+	// 	cmd:    "uninstall",
+	// 	golden: "output/uninstall.txt",
+	// }}
+	// runTestCmd(t, tests)
 }

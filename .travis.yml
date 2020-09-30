@@ -43,14 +43,14 @@ deploy:
     secure: AHupKcXqXgblqVLVYZ/C1Z5H9po4vpP6aAmWIxlWcHqE+b4TPmHzQSqjA5BsZehBi/8/WSmWnS7kJ0xNYtdjUe9W3y7CM6s42OCxEGSDM1w/TbTsioz4AeN34zkUhpMSGlHElyKoUFZalr2dvWBROkzZhB1eDyO2XsyWUZnaC0HeFI7f2MyC9ULmN/bss9xXVr+h6ag6IezCgwYZ6aigj+f9Acjk4sjQZKUmGU0fO1FljmebpbgrrVA0uRam9bhY8iONqGEuwKZvOaBeNGV9GCoocfF1blnZjU1nuvdVmas938ADIc1B+HKroKOMvIk/HEM6XccTghipur/hGVSH2knd7U17WbqqDWAELp22zv9gStUk4KYjyrEqzxGum8RDCLvRcMgvZ+BWxqoIrHpm5tjmT1hcwKYF3hgESkG9siOyIdTz/lIlChrrSMTRWtdwtZofrE5DUR/dKhPLmSsglWc6ru6lJWdtl0AzmTHmgrfSfatm5/7DdUyRST80sr5151WhgWsq7EMAMmBM8ft/9x4+HjP2ZErwiOht3DywiPONs7ysE4EZ04dnEjuV0t0+58ptXKZFCkfvRFMxddzSQE9+o/mjZv9RaOPBXp7lDCmP3RPlP4g7vfMtduORfZXsJIU+hfOsAzK1YgWZoSLaMw9tiS1bxb2JMqt1jvqSxUM=
   file:
     # The names of the binaries to output, based on the -output template passed to gox.
-    - /_dist/swctl.darwin.amd64
-    - /_dist/swctl.linux.386
-    - /_dist/swctl.linux.amd64
-    - /_dist/swctl.linux.arm
-    - /_dist/swctl.linux.arm64
-    - /_dist/swctl.linux.ppc64le
-    - /_dist/swctl.linux.s390x
-    - /_dist/swctl.windows.amd64.exe
+    - ./_dist/swctl.darwin.amd64
+    - ./_dist/swctl.linux.386
+    - ./_dist/swctl.linux.amd64
+    - ./_dist/swctl.linux.arm
+    - ./_dist/swctl.linux.arm64
+    - ./_dist/swctl.linux.ppc64le
+    - ./_dist/swctl.linux.s390x
+    - ./_dist/swctl.windows.amd64.exe
 
   on:
     # What to repository to build
