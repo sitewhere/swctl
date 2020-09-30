@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cmd
+package main
 
 import (
 	"io"
@@ -26,8 +26,8 @@ import (
 
 var globalUsage = `SiteWhere Control allow you to manage SiteWhere CE Instances.`
 
-// NewRootCmd creates a new root command.
-func NewRootCmd(actionConfig *action.Configuration, out io.Writer, args []string) (*cobra.Command, error) {
+// newRootCmd creates a new root command.
+func newRootCmd(actionConfig *action.Configuration, out io.Writer, args []string) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:          "swctl",
 		Short:        "SiteWhere Control CLI.",

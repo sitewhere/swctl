@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cmd
+package main
 
 import (
 	"io"
@@ -22,7 +22,7 @@ import (
 	// "github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
-	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/cmd/swctl/require"
 
 	"github.com/sitewhere/swctl/pkg/action"
 	"github.com/sitewhere/swctl/pkg/cli/output"

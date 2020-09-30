@@ -10,10 +10,10 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-swctl
-swctl.*
 .vscode/
 .idea/
+/bin/
+/_dist/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
