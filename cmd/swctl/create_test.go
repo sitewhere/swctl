@@ -14,10 +14,26 @@
  * limitations under the License.
  */
 
-package cmd
+package main
 
 import "testing"
 
-func TestUninstallCommand(t *testing.T) {
-	// uninstallSiteWhereCommand(nil, nil)
+func TestInit(t *testing.T) {
+	// result := rootCmd.Commands()
+	// if result == nil {
+	// 	t.Error("Expected no nil list")
+	// }
+
+	// var found = false
+
+	// for _, cmd := range result {
+	// 	if "create" == cmd.Name() {
+	// 		found = true
+	// 		break
+	// 	}
+	// }
+
+	// if !found {
+	// 	t.Error("Command create not found")
+	// }
 }

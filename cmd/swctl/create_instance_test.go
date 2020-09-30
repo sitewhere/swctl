@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package cmd
+package main
 
 import "testing"
 
-func TestDeleteInit(t *testing.T) {
+func TestCreateInstanceInit(t *testing.T) {
 
-	// result := deleteCmd.Commands()
+	// result := createCmd.Commands()
 	// if result == nil {
 	// 	t.Error("Expected no nil list")
 	// }

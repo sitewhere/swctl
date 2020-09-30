@@ -30,9 +30,6 @@ var (
 	// Increment major number for new feature additions and behavioral changes.
 	// Increment minor number for bug fixes and performance enhancements.
 	version = "v0.1"
-
-	// compilation Date
-	date = ""
 	// metadata is extra build time data
 	metadata = ""
 	// gitCommit is the git sha1
@@ -45,8 +42,6 @@ var (
 type BuildInfo struct {
 	// Version is the current semver.
 	Version string `json:"version,omitempty"`
-	// CompilationDate is the date of compilation.
-	CompilationDate string `json:"compilation_version,omitempty"`
 	// GitCommit is the git sha1.
 	GitCommit string `json:"git_commit,omitempty"`
 	// GitTreeState is the state of the git tree.
@@ -71,11 +66,10 @@ func GetUserAgent() string {
 // Get returns build info
 func Get() BuildInfo {
 	v := BuildInfo{
-		Version:         GetVersion(),
-		CompilationDate: date,
-		GitCommit:       gitCommit,
-		GitTreeState:    gitTreeState,
-		GoVersion:       runtime.Version(),
+		Version:      GetVersion(),
+		GitCommit:    gitCommit,
+		GitTreeState: gitTreeState,
+		GoVersion:    runtime.Version(),
 	}
 
 	// HACK(bacongobbler): strip out GoVersion during a test run for consistent test output

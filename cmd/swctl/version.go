@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package cmd
+package main
 
 import (
 	"fmt"
 	"io"
 	"text/template"
 
-	"github.com/sitewhere/swctl/cmd/require"
+	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/internal/version"
 
 	"github.com/spf13/cobra"

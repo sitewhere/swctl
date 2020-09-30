@@ -1,0 +1,1 @@
+version.BuildInfo{Version:"v0.1", GitCommit:"", GitTreeState:"", GoVersion:""}
