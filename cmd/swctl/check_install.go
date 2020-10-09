@@ -25,8 +25,8 @@ import (
 	"github.com/sitewhere/swctl/cmd/swctl/require"
 
 	"github.com/sitewhere/swctl/pkg/action"
+	"github.com/sitewhere/swctl/pkg/check"
 	"github.com/sitewhere/swctl/pkg/cli/output"
-	"github.com/sitewhere/swctl/pkg/install"
 )
 
 var checkInstallHelp = `
@@ -61,7 +61,7 @@ func newCheckInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command
 type checkInstallWriter struct {
 }
 
-func newCheckInstallWriter(install *install.SiteWhereInstall) *checkInstallWriter {
+func newCheckInstallWriter(install *check.SiteWhereInstall) *checkInstallWriter {
 	return &checkInstallWriter{}
 }
 

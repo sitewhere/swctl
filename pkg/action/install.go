@@ -30,8 +30,15 @@ type Install struct {
 	cfg *Configuration
 
 	StatikFS http.FileSystem
-
-	// Minimal installation only install escential SiteWhere components.
+	// CRD indicates if we need to install SiteWhere Custom Resource Definitions
+	CRD bool
+	// Template indicates if we need to install SiteWhere templates
+	Template bool
+	// Operator indicates if we need to install SiteWhere Operator
+	Operator bool
+	// Infrastructure indicates if we need to install SiteWhere Infrastructure
+	Infrastructure bool
+	// Minimal installation only install escential SiteWhere components
 	Minimal bool
 	// Wait for components to be ready before return control.
 	WaitReady bool
@@ -43,11 +50,15 @@ type Install struct {
 func NewInstall(cfg *Configuration) *Install {
 	statikFS, _ := fs.New()
 	return &Install{
-		cfg:       cfg,
-		StatikFS:  statikFS,
-		Minimal:   false,
-		WaitReady: false,
-		Verbose:   false,
+		cfg:            cfg,
+		StatikFS:       statikFS,
+		CRD:            true,
+		Template:       true,
+		Operator:       true,
+		Infrastructure: true,
+		Minimal:        false,
+		WaitReady:      false,
+		Verbose:        false,
 	}
 }
 
@@ -69,25 +80,36 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Install Custom Resource Definitions
-	crdStatues, err := install.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
-	if err != nil {
-		return nil, err
+	var crdStatues []install.SiteWhereCRDStatus
+	if i.CRD {
+		// Install Custom Resource Definitions
+		crdStatues, err = install.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
+		if err != nil {
+			return nil, err
+		}
 	}
-	// Install Templates
-	templatesStatues, err := install.SiteWhereTemplates(i.StatikFS, clientSet, extensionsClients, config)
-	if err != nil {
-		return nil, err
+	var templatesStatues []install.SiteWhereTemplateStatus
+	if i.Template {
+		// Install Templates
+		templatesStatues, err = install.SiteWhereTemplates(i.StatikFS, clientSet, extensionsClients, config)
+		if err != nil {
+			return nil, err
+		}
 	}
-	// Install Operator
-	operatorStatuses, err := install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
-	if err != nil {
-		return nil, err
+	var operatorStatuses []install.SiteWhereOperatorStatus
+	if i.Operator {
+		// Install Operator
+		operatorStatuses, err = install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
+		if err != nil {
+			return nil, err
+		}
 	}
-	// Install Infrastructure
-	err = install.SiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
-	if err != nil {
-		return nil, err
+	if i.Infrastructure {
+		// Install Infrastructure
+		err = install.SiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &install.SiteWhereInstall{
 		CDRStatues:       crdStatues,
