@@ -48,6 +48,7 @@ spec:
           properties:
             configuration:
               description: Configuration is the configuration for the tenant
+              nullable: true
               type: object
           type: object
         status:

@@ -5,4 +5,4 @@ metadata:
   labels:
     sitewhere.io/functional-area: streaming-media
 spec:
-  configuration: notImplemented
+  configuration:
