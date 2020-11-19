@@ -1,0 +1,119 @@
+# Source: sitewhere-infrastructure/charts/nifi/charts/zookeeper/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sitewhere-infrastructure-zookeeper
+  labels:
+    app: zookeeper
+    chart: zookeeper-2.1.1
+    release: sitewhere-infrastructure
+    heritage: Tiller
+    component: server
+spec:
+  serviceName: sitewhere-infrastructure-zookeeper-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zookeeper
+      release: sitewhere-infrastructure
+      component: server
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+        release: sitewhere-infrastructure
+        component: server
+    spec:
+      terminationGracePeriodSeconds: 20
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+        - name: zookeeper
+          image: "zookeeper:3.5.5"
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/bin/bash"
+            - "-xec"
+            - "/config-scripts/run"
+          ports:
+            - name: client
+              containerPort: 2181
+              protocol: TCP
+            - name: election
+              containerPort: 3888
+              protocol: TCP
+            - name: server
+              containerPort: 2888
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - /config-scripts/ok
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 2
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - /config-scripts/ready
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 2
+            successThreshold: 1
+          env:
+            - name: ZK_REPLICAS
+              value: "1"
+            - name: JMXAUTH
+              value: "false"
+            - name: JMXDISABLE
+              value: "false"
+            - name: JMXPORT
+              value: "1099"
+            - name: JMXSSL
+              value: "false"
+            - name: ZK_SYNC_LIMIT
+              value: "10"
+            - name: ZK_TICK_TIME
+              value: "2000"
+            - name: ZOO_AUTOPURGE_PURGEINTERVAL
+              value: "0"
+            - name: ZOO_AUTOPURGE_SNAPRETAINCOUNT
+              value: "3"
+            - name: ZOO_INIT_LIMIT
+              value: "5"
+            - name: ZOO_MAX_CLIENT_CNXNS
+              value: "60"
+            - name: ZOO_PORT
+              value: "2181"
+            - name: ZOO_STANDALONE_ENABLED
+              value: "false"
+            - name: ZOO_TICK_TIME
+              value: "2000"
+          resources: {}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /config-scripts
+      volumes:
+        - name: config
+          configMap:
+            name: sitewhere-infrastructure-zookeeper
+            defaultMode: 0555
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "5Gi"

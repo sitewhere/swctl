@@ -1,0 +1,17 @@
+# Source: sitewhere-infrastructure/charts/mosquitto/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sitewhere-infrastructure-mosquitto
+  labels:
+    app: mosquitto
+    chart: mosquitto-0.1.6
+    release: sitewhere-infrastructure
+    heritage: Tiller
+spec:
+  type: LoadBalancer
+  ports:
+  - name: headless
+    port: 1883
+  selector:
+    app: sitewhere-infrastructure-mosquitto

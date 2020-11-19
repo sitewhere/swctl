@@ -1,0 +1,13 @@
+# Source: sitewhere-infrastructure/templates/Secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: syncope
+  labels:
+    app: sitewhere
+    chart: sitewhere
+    release: "sitewhere-infrastructure"
+    heritage: "Tiller"
+type: Opaque
+data:
+  postgresql-password: c3luY29wZQ==

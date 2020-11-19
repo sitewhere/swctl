@@ -24,8 +24,7 @@ import (
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
-
-	"github.com/sitewhere/swctl/pkg/resources"
+	//"github.com/sitewhere/swctl/pkg/resources"
 )
 
 // infraTemplateResource template for resources files
@@ -143,87 +142,14 @@ func InstallSiteWhereInfrastructureDefault(waitReady bool,
 		if tpl.Enabled {
 			for i := 1; i <= tpl.FileCount; i++ {
 				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
-				err = resources.InstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
+				_ = infraResource
+				//err = resources.InstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
 				if err != nil && !errors.IsAlreadyExists(err) {
 					return err
 				}
 			}
 		}
 	}
-
-	// if waitReady {
-	// 	err = waitForDeploymentAvailable(clientset, "sitewhere-infrastructure-mosquitto", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Deployment sitewhere-infrastructure-mosquitto: ")
-	// 	// 	color.Info.Println("Available")
-	// 	// }
-
-	// 	err = waitForDeploymentAvailable(clientset, "sitewhere-syncope", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Deployment sitewhere-syncope: ")
-	// 	// 	color.Info.Println("Available")
-	// 	// }
-
-	// 	for i := 0; i < 3; i++ {
-	// 		podName := fmt.Sprintf("sitewhere-kafka-zookeeper-%d", i)
-	// 		err = waitForPodContainersRunning(clientset, podName, resources.SitewhereSystemNamespace() )
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		// if config.IsVerbose() {
-	// 		// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
-	// 		// 	color.Info.Println("Ready")
-	// 		// }
-	// 	}
-
-	// 	for i := 0; i < 3; i++ {
-	// 		podName := fmt.Sprintf("sitewhere-kafka-kafka-%d", i)
-	// 		err = waitForPodContainersRunning(clientset, podName, resources.SitewhereSystemNamespace() )
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		// if config.IsVerbose() {
-	// 		// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
-	// 		// 	color.Info.Println("Ready")
-	// 		// }
-	// 	}
-
-	// 	err = waitForPodContainersRunning(clientset, "sitewhere-postgresql-0", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Pod sitewhere-postgresql-0: ")
-	// 	// 	color.Info.Println("Ready")
-	// 	// }
-
-	// 	for i := 0; i < 3; i++ {
-	// 		podName := fmt.Sprintf("sitewhere-infrastructure-redis-ha-server-%d", i)
-	// 		err = waitForPodContainersRunning(clientset, podName, resources.SitewhereSystemNamespace() )
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		// if config.IsVerbose() {
-	// 		// 	fmt.Print(fmt.Sprintf("Pod %s: ", podName))
-	// 		// 	color.Info.Println("Ready")
-	// 		// }
-	// 	}
-
-	// 	// err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-warp10-0", resources.SitewhereSystemNamespace() )
-	// 	// if err != nil {
-	// 	// 	return err
-	// 	// }
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Pod sitewhere-infrastructure-warp10-0: ")
-	// 	// 	color.Info.Println("Ready")
-	// 	// }
-	// }
 	return err
 }
 
@@ -240,79 +166,15 @@ func InstallSiteWhereInfrastructureMinimal(waitReady bool,
 		if tpl.Enabled {
 			for i := 1; i <= tpl.FileCount; i++ {
 				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
-				err = resources.InstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
+				_ = infraResource
+
+				//err = resources.InstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
 				if err != nil && !errors.IsAlreadyExists(err) {
 					return err
 				}
 			}
 		}
 	}
-
-	// if waitReady {
-	// 	err = waitForDeploymentAvailable(clientset, "sitewhere-infrastructure-mosquitto", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Deployment sitewhere-infrastructure-mosquitto: ")
-	// 	// 	color.Info.Println("Available")
-	// 	// }
-
-	// 	err = waitForDeploymentAvailable(clientset, "sitewhere-kafka-entity-operator", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Deployment sitewhere-kafka-entity-operator: ")
-	// 	// 	color.Info.Println("Available")
-	// 	// }
-
-	// 	err = waitForDeploymentAvailable(clientset, "sitewhere-syncope", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Deployment sitewhere-syncope: ")
-	// 	// 	color.Info.Println("Available")
-	// 	// }
-
-	// 	err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-zookeeper-0", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Pod sitewhere-infrastructure-zookeeper-0: ")
-	// 	// 	color.Info.Println("Ready")
-	// 	// }
-	// 	// TODO if not minimal, wait for -1 and -2
-
-	// 	err = waitForPodContainersRunning(clientset, "sitewhere-kafka-kafka-0", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Pod sitewhere-kafka-kafka-0: ")
-	// 	// 	color.Info.Println("Ready")
-	// 	// }
-
-	// 	err = waitForPodContainersRunning(clientset, "sitewhere-postgresql-0", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Pod sitewhere-postgresql-0: ")
-	// 	// 	color.Info.Println("Ready")
-	// 	// }
-
-	// 	err = waitForPodContainersRunning(clientset, "sitewhere-infrastructure-redis-ha-server-0", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// if config.IsVerbose() {
-	// 	// 	fmt.Print("Pod sitewhere-infrastructure-redis-ha-server-0: ")
-	// 	// 	color.Info.Println("Ready")
-	// 	// }
-	// }
 	return nil
 }
 
@@ -327,7 +189,9 @@ func UninstallSiteWhereInfrastructureMinimal(statikFS http.FileSystem,
 		if tpl.Enabled {
 			for i := 1; i <= tpl.FileCount; i++ {
 				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
-				err = resources.UninstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
+				_ = infraResource
+
+				//err = resources.UninstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
 				if err != nil && !errors.IsNotFound(err) {
 					return err
 				}
@@ -348,7 +212,8 @@ func UninstallSiteWhereInfrastructureDefault(statikFS http.FileSystem,
 		if tpl.Enabled {
 			for i := 1; i <= tpl.FileCount; i++ {
 				var infraResource = fmt.Sprintf(tpl.FileTemplate, i)
-				err = resources.UninstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
+				_ = infraResource
+				//err = resources.UninstallResourceFromFile(infraResource, statikFS, clientset, apiextensionsClientset, config)
 				if err != nil && !errors.IsNotFound(err) {
 					return err
 				}

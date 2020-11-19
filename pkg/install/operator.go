@@ -20,7 +20,7 @@ import (
 	"net/http"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	errors "k8s.io/apimachinery/pkg/api/errors"
+	//errors "k8s.io/apimachinery/pkg/api/errors"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 
@@ -43,10 +43,10 @@ func SiteWhereOperator(waitReady bool,
 	}
 
 	for _, operatorFile := range operator.GetSiteWhereOperatorFiles() {
-		err = resources.InstallResourceFromFile(operatorFile, statikFS, clientset, apiextensionsClientset, config)
-		if err != nil && !errors.IsAlreadyExists(err) {
-			return nil, err
-		}
+		// err = resources.InstallResourceFromFile(operatorFile, statikFS, clientset, apiextensionsClientset, config)
+		// if err != nil && !errors.IsAlreadyExists(err) {
+		// 	return nil, err
+		// }
 		var operStatus = SiteWhereOperatorStatus{
 			Name:   operatorFile,
 			Status: Installed,

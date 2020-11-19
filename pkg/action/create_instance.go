@@ -367,7 +367,6 @@ func (i *CreateInstance) buildCRSiteWhereInstace() *unstructured.Unstructured {
 				"name": i.InstanceName,
 			},
 			"spec": map[string]interface{}{
-				"instanceNamespace":     i.Namespace,
 				"configurationTemplate": i.ConfigurationTemplate,
 				"datasetTemplate":       i.DatasetTemplate,
 			},

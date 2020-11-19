@@ -1,0 +1,12 @@
+# Source: sitewhere-infrastructure/templates/syncope-enduser-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: "sitewhere-syncope-enduser"
+spec:
+  type: "ClusterIP"
+  selector:
+    name: "sitewhere-syncope-enduser"
+  ports:
+  - port: 8080
+    name: http-api

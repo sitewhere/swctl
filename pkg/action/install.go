@@ -68,48 +68,48 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	if err = i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	clientSet, err := i.cfg.KubernetesClientSet()
-	if err != nil {
-		return nil, err
-	}
-	extensionsClients, err := i.cfg.KubernetesAPIExtensionClientSet()
-	if err != nil {
-		return nil, err
-	}
-	config, err := i.cfg.RESTClientGetter.ToRESTConfig()
-	if err != nil {
-		return nil, err
-	}
+	//clientSet, err := i.cfg.KubernetesClientSet()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// extensionsClients, err := i.cfg.KubernetesAPIExtensionClientSet()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// config, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	// if err != nil {
+	// 	return nil, err
+	// }
 	var crdStatues []install.SiteWhereCRDStatus
 	if i.CRD {
 		// Install Custom Resource Definitions
-		crdStatues, err = install.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
-		if err != nil {
-			return nil, err
-		}
+		// crdStatues, err = install.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 	var templatesStatues []install.SiteWhereTemplateStatus
 	if i.Template {
 		// Install Templates
-		templatesStatues, err = install.SiteWhereTemplates(i.StatikFS, clientSet, extensionsClients, config)
-		if err != nil {
-			return nil, err
-		}
+		// templatesStatues, err = install.SiteWhereTemplates(i.StatikFS, clientSet, extensionsClients, config)
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 	var operatorStatuses []install.SiteWhereOperatorStatus
 	if i.Operator {
 		// Install Operator
-		operatorStatuses, err = install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
-		if err != nil {
-			return nil, err
-		}
+		// operatorStatuses, err = install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 	if i.Infrastructure {
 		// Install Infrastructure
-		err = install.SiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
-		if err != nil {
-			return nil, err
-		}
+		// err = install.SiteWhereInfrastructure(i.Minimal, i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 	return &install.SiteWhereInstall{
 		CDRStatues:       crdStatues,

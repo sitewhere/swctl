@@ -22,9 +22,8 @@ import (
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
-
-	"github.com/sitewhere/swctl/internal/crds"
-	"github.com/sitewhere/swctl/pkg/resources"
+	//"github.com/sitewhere/swctl/internal/crds"
+	//"github.com/sitewhere/swctl/pkg/resources"
 )
 
 // SiteWhereCRDs Uninstall SiteWhere Custom Resource Definitions
@@ -32,13 +31,13 @@ func SiteWhereCRDs(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
-	var err error
-	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
-		resources.UninstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
-		if err != nil {
-			return err
-		}
-	}
+	// var err error
+	// for _, crdFile := range crds.GetSiteWhereCRDFiles() {
+	// resources.UninstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
+	// if err != nil {
+	// 	return err
+	// }
+	//	}
 	// if config.IsVerbose() {
 	// 	fmt.Print("SiteWhere Custom Resources Definition: ")
 	// 	color.Info.Println("Uninstalled")

@@ -20,12 +20,11 @@ import (
 	"net/http"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	errors "k8s.io/apimachinery/pkg/api/errors"
+	//	errors "k8s.io/apimachinery/pkg/api/errors"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
-
-	"github.com/sitewhere/swctl/internal/operator"
-	"github.com/sitewhere/swctl/pkg/resources"
+	// "github.com/sitewhere/swctl/internal/operator"
+	// "github.com/sitewhere/swctl/pkg/resources"
 )
 
 // SiteWhereOperator Uninstall SiteWhere Operator resource file in the cluster
@@ -33,15 +32,13 @@ func SiteWhereOperator(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
-	var err error
-
-	for _, operatorFile := range operator.GetSiteWhereOperatorFiles() {
-		err = resources.UninstallResourceFromFile(operatorFile, statikFS, clientset, apiextensionsClientset, config)
-		if err != nil && !errors.IsNotFound(err) {
-			return err
-		}
-	}
-
+	//	var err error
+	// for _, operatorFile := range operator.GetSiteWhereOperatorFiles() {
+	// 	err = resources.UninstallResourceFromFile(operatorFile, statikFS, clientset, apiextensionsClientset, config)
+	// 	if err != nil && !errors.IsNotFound(err) {
+	// 		return err
+	// 	}
+	// }
 	// if config.Verbose {
 	// 	fmt.Print("SiteWhere Operator: ")
 	// 	color.Info.Println("Uninstalled")

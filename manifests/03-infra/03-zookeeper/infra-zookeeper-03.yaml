@@ -1,0 +1,18 @@
+# Source: sitewhere-infrastructure/charts/nifi/charts/zookeeper/templates/poddisruptionbudget.yaml
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: sitewhere-infrastructure-zookeeper
+  labels:
+    app: zookeeper
+    chart: zookeeper-2.1.1
+    release: sitewhere-infrastructure
+    heritage: Tiller
+    component: server
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+      release: sitewhere-infrastructure
+      component: server
+  maxUnavailable: 1

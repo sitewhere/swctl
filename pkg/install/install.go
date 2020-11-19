@@ -16,6 +16,20 @@
 
 package install
 
+import (
+	"log"
+	"net/http"
+	"os"
+
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/api/errors"
+	kubernetes "k8s.io/client-go/kubernetes"
+	rest "k8s.io/client-go/rest"
+
+	"github.com/sitewhere/swctl/pkg/resources"
+	"github.com/sitewhere/swctl/pkg/status"
+)
+
 // Status Status of a installable item.
 type Status string
 
@@ -60,4 +74,57 @@ type SiteWhereInstall struct {
 	TemplatesStatues []SiteWhereTemplateStatus `json:"templatesStatues,omitempty"`
 	// Status of SiteWhere Operator
 	OperatorStatuses []SiteWhereOperatorStatus `json:"operatorStatuses,omitempty"`
+}
+
+func installFiles(statikFS http.FileSystem,
+	parentPath string,
+	fi os.FileInfo,
+	clientset kubernetes.Interface,
+	apiextensionsClientset apiextensionsclientset.Interface,
+	config *rest.Config) ([]status.SiteWhereStatus, error) {
+
+	var result []status.SiteWhereStatus
+
+	if fi.IsDir() {
+		dirName := parentPath + string(os.PathSeparator) + fi.Name()
+		log.Printf("Installing Resources from %s", dirName)
+		r, err := statikFS.Open(dirName)
+		if err != nil {
+			return nil, err
+		}
+		files, err := r.Readdir(-1)
+		if err != nil {
+			return nil, err
+		}
+		for _, fileInfo := range files {
+			installResult, err := installFiles(statikFS, dirName, fileInfo, clientset, apiextensionsClientset, config)
+			if err != nil && !errors.IsAlreadyExists(err) {
+				return nil, err
+			}
+			result = append(result, installResult...)
+		}
+	} else {
+		var fileName = parentPath + string(os.PathSeparator) + fi.Name()
+		log.Printf("Installing Resources %s", fileName)
+		deployFile, err := statikFS.Open(fileName)
+		if err != nil {
+			return nil, err
+		}
+		createObject, err := resources.InstallResourceFromFile(deployFile, fileName, statikFS, clientset, apiextensionsClientset, config)
+		if err != nil && !errors.IsAlreadyExists(err) {
+			var deployStatus = status.SiteWhereStatus{
+				Name:   fileName,
+				Status: status.Unknown,
+			}
+			result = append(result, deployStatus)
+		} else {
+			var deployStatus = status.SiteWhereStatus{
+				Name:       fileName,
+				Status:     status.Installed,
+				ObjectMeta: createObject,
+			}
+			result = append(result, deployStatus)
+		}
+	}
+	return result, nil
 }

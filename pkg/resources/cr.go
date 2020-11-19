@@ -115,12 +115,10 @@ func extractSiteWhereInstanceMetadata(metadata map[string]interface{}, instance 
 }
 
 func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *alpha3.SiteWhereInstance) {
-	instanceNamespace := spec["instanceNamespace"]
 	configurationTemplate := spec["configurationTemplate"]
 	datasetTemplate := spec["datasetTemplate"]
 	configuration := spec["configuration"]
 	sitewhereConfiguration := extractSiteWhereInstanceConfiguration(configuration)
-	instance.Namespace = fmt.Sprintf("%v", instanceNamespace)
 	instance.ConfigurationTemplate = fmt.Sprintf("%v", configurationTemplate)
 	instance.DatasetTemplate = fmt.Sprintf("%v", datasetTemplate)
 	instance.Configuration = sitewhereConfiguration

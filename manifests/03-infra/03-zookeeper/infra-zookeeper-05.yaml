@@ -1,0 +1,21 @@
+# Source: sitewhere-infrastructure/charts/nifi/charts/zookeeper/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sitewhere-infrastructure-zookeeper
+  labels:
+    app: zookeeper
+    chart: zookeeper-2.1.1
+    release: sitewhere-infrastructure
+    heritage: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - name: client
+      port: 2181
+      protocol: TCP
+      targetPort: client
+      
+  selector:
+    app: zookeeper
+    release: sitewhere-infrastructure

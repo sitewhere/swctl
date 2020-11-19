@@ -1,0 +1,28 @@
+# Source: sitewhere-infrastructure/charts/nifi/charts/zookeeper/templates/service-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sitewhere-infrastructure-zookeeper-headless
+  labels:
+    app: zookeeper
+    chart: zookeeper-2.1.1
+    release: sitewhere-infrastructure
+    heritage: Tiller
+spec:
+  clusterIP: None
+  ports:
+    - name: client
+      port: 2181
+      targetPort: client
+      protocol: TCP
+    - name: election
+      port: 3888
+      targetPort: election
+      protocol: TCP
+    - name: server
+      port: 2888
+      targetPort: server
+      protocol: TCP
+  selector:
+    app: zookeeper
+    release: sitewhere-infrastructure

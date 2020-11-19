@@ -1,0 +1,12 @@
+# Source: sitewhere-infrastructure/charts/warp10/templates/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "sitewhere-infrastructure-warp10"
+  labels:
+    app.kubernetes.io/name: warp10
+    helm.sh/chart: "warp10-0.2.1"
+    app.kubernetes.io/instance: "sitewhere-infrastructure"
+    app.kubernetes.io/managed-by: "Tiller"
+data:
+  warp10.conf: |+

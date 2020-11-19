@@ -1,0 +1,48 @@
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: instances.sitewhere.io
+  labels:
+    app: sitewhere
+spec:
+  group: sitewhere.io
+  names:
+    kind: SiteWhereInstance
+    listKind: SiteWhereInstanceList
+    plural: instances
+    singular: instance
+    shortNames:
+    - swi
+    categories:
+    - sitewhere-io
+    - core-sitewhere-io
+  scope: Cluster
+  subresources:
+    status: {}
+  versions:
+    - name: v1alpha3
+      served: true
+      storage: true
+  validation:
+    openAPIV3Schema:
+      type: object
+      properties:
+        spec:
+          type: object
+          properties:
+            instanceNamespace:
+              type: string
+            configurationTemplate:
+              type: string
+            datasetTemplate:
+              type: string
+            configuration:
+              type: object
+        status:
+          type: object
+          properties:
+            tenantManagementBootstrapState:
+              type: string
+            userManagementBootstrapState:
+              type: string

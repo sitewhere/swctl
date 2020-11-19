@@ -1,0 +1,137 @@
+# Source: sitewhere-infrastructure/charts/redis-ha/templates/redis-ha-statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sitewhere-infrastructure-redis-ha-server
+  namespace: sitewhere-system
+  labels:
+    sitewhere-infrastructure-redis-ha: replica
+    app: redis-ha
+    heritage: "Tiller"
+    release: "sitewhere-infrastructure"
+    chart: redis-ha-4.4.4
+spec:
+  selector:
+    matchLabels:
+      release: sitewhere-infrastructure
+      app: redis-ha
+  serviceName: sitewhere-infrastructure-redis-ha
+  replicas: 3
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/init-config: 45527c3ab729ef23fb33175fdad027f92af5a88a1523f965f91c4539e59be993
+      labels:
+        release: sitewhere-infrastructure
+        app: redis-ha
+        sitewhere-infrastructure-redis-ha: replica
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: redis-ha
+                  release: sitewhere-infrastructure
+                  sitewhere-infrastructure-redis-ha: replica
+              topologyKey: kubernetes.io/hostname
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app:  redis-ha
+                    release: sitewhere-infrastructure
+                    sitewhere-infrastructure-redis-ha: replica
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        
+      serviceAccountName: sitewhere-infrastructure-redis-ha
+      initContainers:
+      - name: config-init
+        image: redis:5.0.6-alpine
+        imagePullPolicy: IfNotPresent
+        resources:
+          {}
+          
+        command:
+        - sh
+        args:
+        - /readonly-config/init.sh
+        env:
+        - name: SENTINEL_ID_0
+          value: 711371ebb3be1812245981309f708c7bbb22645c
+
+        - name: SENTINEL_ID_1
+          value: 17ef946ff179737533f45fc61e9f3c079374ac2d
+
+        - name: SENTINEL_ID_2
+          value: 45629970160a200ad83918c30ca2463ca71a8f45
+
+        volumeMounts:
+        - name: config
+          mountPath: /readonly-config
+          readOnly: true
+        - name: data
+          mountPath: /data
+      containers:
+      - name: redis
+        image: redis:5.0.6-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - redis-server
+        args:
+        - /data/conf/redis.conf
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 15
+        resources:
+          {}
+          
+        ports:
+        - name: redis
+          containerPort: 6379
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      - name: sentinel
+        image: redis:5.0.6-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+          - redis-sentinel
+        args:
+          - /data/conf/sentinel.conf
+        livenessProbe:
+          tcpSocket:
+            port: 26379
+          initialDelaySeconds: 15
+        resources:
+          {}
+          
+        ports:
+          - name: sentinel
+            containerPort: 26379
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      volumes:
+      - name: config
+        configMap:
+          name: sitewhere-infrastructure-redis-ha-configmap
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      annotations:
+    spec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: "500Mi"

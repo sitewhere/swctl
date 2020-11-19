@@ -1,0 +1,29 @@
+# Source: sitewhere-infrastructure/charts/redis-ha/templates/redis-ha-announce-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sitewhere-infrastructure-redis-ha-announce-2
+  namespace: sitewhere-system
+  labels:
+    app: redis-ha
+    heritage: "Tiller"
+    release: "sitewhere-infrastructure"
+    chart: redis-ha-4.4.4
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  publishNotReadyAddresses: true
+  type: ClusterIP
+  ports:
+  - name: server
+    port: 6379
+    protocol: TCP
+    targetPort: redis
+  - name: sentinel
+    port: 26379
+    protocol: TCP
+    targetPort: sentinel
+  selector:
+    release: sitewhere-infrastructure
+    app: redis-ha
+    "statefulset.kubernetes.io/pod-name": sitewhere-infrastructure-redis-ha-server-2

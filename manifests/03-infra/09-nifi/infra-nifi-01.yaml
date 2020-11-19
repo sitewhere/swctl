@@ -1,0 +1,935 @@
+# Source: sitewhere-infrastructure/charts/nifi/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sitewhere-infrastructure-nifi-config
+  labels:
+    app: "nifi"
+    chart: "nifi-0.3.2"
+    release: "sitewhere-infrastructure"
+    heritage: "Tiller"
+data:
+  authorizers-empty.xml: |
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <!--
+      Licensed to the Apache Software Foundation (ASF) under one or more
+      contributor license agreements.  See the NOTICE file distributed with
+      this work for additional information regarding copyright ownership.
+      The ASF licenses this file to You under the Apache License, Version 2.0
+      (the "License"); you may not use this file except in compliance with
+      the License.  You may obtain a copy of the License at
+          http://www.apache.org/licenses/LICENSE-2.0
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+    -->
+    <!--
+        This file lists the userGroupProviders, accessPolicyProviders, and authorizers to use when running securely. In order
+        to use a specific authorizer it must be configured here and it's identifier must be specified in the nifi.properties file.
+        If the authorizer is a managedAuthorizer, it may need to be configured with an accessPolicyProvider and an userGroupProvider.
+        This file allows for configuration of them, but they must be configured in order:
+        ...
+        all userGroupProviders
+        all accessPolicyProviders
+        all Authorizers
+        ...
+    -->
+    <authorizers>
+        <!--
+            The FileUserGroupProvider will provide support for managing users and groups which is backed by a file
+            on the local file system.
+            - Users File - The file where the FileUserGroupProvider will store users and groups.
+            - Legacy Authorized Users File - The full path to an existing authorized-users.xml that will be automatically
+                be used to load the users and groups into the Users File.
+            - Initial User Identity [unique key] - The identity of a users and systems to seed the Users File. The name of
+                each property must be unique, for example: "Initial User Identity A", "Initial User Identity B",
+                "Initial User Identity C" or "Initial User Identity 1", "Initial User Identity 2", "Initial User Identity 3"
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the user identities,
+                so the values should be the unmapped identities (i.e. full DN from a certificate).
+        -->
+        <userGroupProvider>
+            <identifier>file-user-group-provider</identifier>
+            <class>org.apache.nifi.authorization.FileUserGroupProvider</class>
+            <property name="Users File">../data/users.xml</property>
+            <property name="Legacy Authorized Users File"></property>
+        </userGroupProvider>
+        <!--
+            The LdapUserGroupProvider will retrieve users and groups from an LDAP server. The users and groups
+            are not configurable.
+            'Authentication Strategy' - How the connection to the LDAP server is authenticated. Possible
+                values are ANONYMOUS, SIMPLE, LDAPS, or START_TLS.
+            'Manager DN' - The DN of the manager that is used to bind to the LDAP server to search for users.
+            'Manager Password' - The password of the manager that is used to bind to the LDAP server to
+                search for users.
+            'TLS - Keystore' - Path to the Keystore that is used when connecting to LDAP using LDAPS or START_TLS.
+            'TLS - Keystore Password' - Password for the Keystore that is used when connecting to LDAP
+                using LDAPS or START_TLS.
+            'TLS - Keystore Type' - Type of the Keystore that is used when connecting to LDAP using
+                LDAPS or START_TLS (i.e. JKS or PKCS12).
+            'TLS - Truststore' - Path to the Truststore that is used when connecting to LDAP using LDAPS or START_TLS.
+            'TLS - Truststore Password' - Password for the Truststore that is used when connecting to
+                LDAP using LDAPS or START_TLS.
+            'TLS - Truststore Type' - Type of the Truststore that is used when connecting to LDAP using
+                LDAPS or START_TLS (i.e. JKS or PKCS12).
+            'TLS - Client Auth' - Client authentication policy when connecting to LDAP using LDAPS or START_TLS.
+                Possible values are REQUIRED, WANT, NONE.
+            'TLS - Protocol' - Protocol to use when connecting to LDAP using LDAPS or START_TLS. (i.e. TLS,
+                TLSv1.1, TLSv1.2, etc).
+            'TLS - Shutdown Gracefully' - Specifies whether the TLS should be shut down gracefully
+                before the target context is closed. Defaults to false.
+            'Referral Strategy' - Strategy for handling referrals. Possible values are FOLLOW, IGNORE, THROW.
+            'Connect Timeout' - Duration of connect timeout. (i.e. 10 secs).
+            'Read Timeout' - Duration of read timeout. (i.e. 10 secs).
+            'Url' - Space-separated list of URLs of the LDAP servers (i.e. ldap://<hostname>:<port>).
+            'Page Size' - Sets the page size when retrieving users and groups. If not specified, no paging is performed.
+            'Sync Interval' - Duration of time between syncing users and groups (i.e. 30 mins). Minimum allowable value is 10 secs.
+            'User Search Base' - Base DN for searching for users (i.e. ou=users,o=nifi). Required to search users.
+            'User Object Class' - Object class for identifying users (i.e. person). Required if searching users.
+            'User Search Scope' - Search scope for searching users (ONE_LEVEL, OBJECT, or SUBTREE). Required if searching users.
+            'User Search Filter' - Filter for searching for users against the 'User Search Base' (i.e. (memberof=cn=team1,ou=groups,o=nifi) ). Optional.
+            'User Identity Attribute' - Attribute to use to extract user identity (i.e. cn). Optional. If not set, the entire DN is used.
+            'User Group Name Attribute' - Attribute to use to define group membership (i.e. memberof). Optional. If not set
+                group membership will not be calculated through the users. Will rely on group membership being defined
+                through 'Group Member Attribute' if set. The value of this property is the name of the attribute in the user ldap entry that
+                associates them with a group. The value of that user attribute could be a dn or group name for instance. What value is expected
+                is configured in the 'User Group Name Attribute - Referenced Group Attribute'.
+            'User Group Name Attribute - Referenced Group Attribute' - If blank, the value of the attribute defined in 'User Group Name Attribute'
+                is expected to be the full dn of the group. If not blank, this property will define the attribute of the group ldap entry that
+                the value of the attribute defined in 'User Group Name Attribute' is referencing (i.e. name). Use of this property requires that
+                'Group Search Base' is also configured.
+            'Group Search Base' - Base DN for searching for groups (i.e. ou=groups,o=nifi). Required to search groups.
+            'Group Object Class' - Object class for identifying groups (i.e. groupOfNames). Required if searching groups.
+            'Group Search Scope' - Search scope for searching groups (ONE_LEVEL, OBJECT, or SUBTREE). Required if searching groups.
+            'Group Search Filter' - Filter for searching for groups against the 'Group Search Base'. Optional.
+            'Group Name Attribute' - Attribute to use to extract group name (i.e. cn). Optional. If not set, the entire DN is used.
+            'Group Member Attribute' - Attribute to use to define group membership (i.e. member). Optional. If not set
+                group membership will not be calculated through the groups. Will rely on group membership being defined
+                through 'User Group Name Attribute' if set. The value of this property is the name of the attribute in the group ldap entry that
+                associates them with a user. The value of that group attribute could be a dn or memberUid for instance. What value is expected
+                is configured in the 'Group Member Attribute - Referenced User Attribute'. (i.e. member: cn=User 1,ou=users,o=nifi vs. memberUid: user1)
+            'Group Member Attribute - Referenced User Attribute' - If blank, the value of the attribute defined in 'Group Member Attribute'
+                is expected to be the full dn of the user. If not blank, this property will define the attribute of the user ldap entry that
+                the value of the attribute defined in 'Group Member Attribute' is referencing (i.e. uid). Use of this property requires that
+                'User Search Base' is also configured. (i.e. member: cn=User 1,ou=users,o=nifi vs. memberUid: user1)
+            NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the user identities.
+                Group names are not mapped.
+        -->
+        <!-- To enable the ldap-user-group-provider remove 2 lines. This is 1 of 2.
+        <userGroupProvider>
+            <identifier>ldap-user-group-provider</identifier>
+            <class>org.apache.nifi.ldap.tenants.LdapUserGroupProvider</class>
+            <property name="Authentication Strategy">START_TLS</property>
+            <property name="Manager DN"></property>
+            <property name="Manager Password"></property>
+            <property name="TLS - Keystore"></property>
+            <property name="TLS - Keystore Password"></property>
+            <property name="TLS - Keystore Type"></property>
+            <property name="TLS - Truststore"></property>
+            <property name="TLS - Truststore Password"></property>
+            <property name="TLS - Truststore Type"></property>
+            <property name="TLS - Client Auth"></property>
+            <property name="TLS - Protocol"></property>
+            <property name="TLS - Shutdown Gracefully"></property>
+            <property name="Referral Strategy">FOLLOW</property>
+            <property name="Connect Timeout">10 secs</property>
+            <property name="Read Timeout">10 secs</property>
+            <property name="Url"></property>
+            <property name="Page Size"></property>
+            <property name="Sync Interval">30 mins</property>
+            <property name="User Search Base"></property>
+            <property name="User Object Class">person</property>
+            <property name="User Search Scope">ONE_LEVEL</property>
+            <property name="User Search Filter"></property>
+            <property name="User Identity Attribute"></property>
+            <property name="User Group Name Attribute"></property>
+            <property name="User Group Name Attribute - Referenced Group Attribute"></property>
+            <property name="Group Search Base"></property>
+            <property name="Group Object Class">group</property>
+            <property name="Group Search Scope">ONE_LEVEL</property>
+            <property name="Group Search Filter"></property>
+            <property name="Group Name Attribute"></property>
+            <property name="Group Member Attribute"></property>
+            <property name="Group Member Attribute - Referenced User Attribute"></property>
+        </userGroupProvider>
+        To enable the ldap-user-group-provider remove 2 lines. This is 2 of 2. -->
+  
+        <!--
+            The CompositeUserGroupProvider will provide support for retrieving users and groups from multiple sources.
+            - User Group Provider [unique key] - The identifier of user group providers to load from. The name of
+                each property must be unique, for example: "User Group Provider A", "User Group Provider B",
+                "User Group Provider C" or "User Group Provider 1", "User Group Provider 2", "User Group Provider 3"
+                NOTE: Any identity mapping rules specified in nifi.properties are not applied in this implementation. This behavior
+                would need to be applied by the base implementation.
+        -->
+        <!-- To enable the composite-user-group-provider remove 2 lines. This is 1 of 2.
+        <userGroupProvider>
+            <identifier>composite-user-group-provider</identifier>
+            <class>org.apache.nifi.authorization.CompositeUserGroupProvider</class>
+            <property name="User Group Provider 1"></property>
+        </userGroupProvider>
+        To enable the composite-user-group-provider remove 2 lines. This is 2 of 2. -->
+  
+        <!--
+            The CompositeConfigurableUserGroupProvider will provide support for retrieving users and groups from multiple sources.
+            Additionally, a single configurable user group provider is required. Users from the configurable user group provider
+            are configurable, however users loaded from one of the User Group Provider [unique key] will not be.
+            - Configurable User Group Provider - A configurable user group provider.
+            - User Group Provider [unique key] - The identifier of user group providers to load from. The name of
+                each property must be unique, for example: "User Group Provider A", "User Group Provider B",
+                "User Group Provider C" or "User Group Provider 1", "User Group Provider 2", "User Group Provider 3"
+                NOTE: Any identity mapping rules specified in nifi.properties are not applied in this implementation. This behavior
+                would need to be applied by the base implementation.
+        -->
+        <!-- To enable the composite-configurable-user-group-provider remove 2 lines. This is 1 of 2.
+        <userGroupProvider>
+            <identifier>composite-configurable-user-group-provider</identifier>
+            <class>org.apache.nifi.authorization.CompositeConfigurableUserGroupProvider</class>
+            <property name="Configurable User Group Provider">file-user-group-provider</property>
+            <property name="User Group Provider 1"></property>
+        </userGroupProvider>
+        To enable the composite-configurable-user-group-provider remove 2 lines. This is 2 of 2. -->
+  
+        <!--
+            The FileAccessPolicyProvider will provide support for managing access policies which is backed by a file
+            on the local file system.
+            - User Group Provider - The identifier for an User Group Provider defined above that will be used to access
+                users and groups for use in the managed access policies.
+            - Authorizations File - The file where the FileAccessPolicyProvider will store policies.
+            - Initial Admin Identity - The identity of an initial admin user that will be granted access to the UI and
+                given the ability to create additional users, groups, and policies. The value of this property could be
+                a DN when using certificates or LDAP, or a Kerberos principal. This property will only be used when there
+                are no other policies defined. If this property is specified then a Legacy Authorized Users File can not be specified.
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the initial admin identity,
+                so the value should be the unmapped identity. This identity must be found in the configured User Group Provider.
+            - Legacy Authorized Users File - The full path to an existing authorized-users.xml that will be automatically
+                converted to the new authorizations model. If this property is specified then an Initial Admin Identity can
+                not be specified, and this property will only be used when there are no other users, groups, and policies defined.
+                NOTE: Any users in the legacy users file must be found in the configured User Group Provider.
+            - Node Identity [unique key] - The identity of a NiFi cluster node. When clustered, a property for each node
+                should be defined, so that every node knows about every other node. If not clustered these properties can be ignored.
+                The name of each property must be unique, for example for a three node cluster:
+                "Node Identity A", "Node Identity B", "Node Identity C" or "Node Identity 1", "Node Identity 2", "Node Identity 3"
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the node identities,
+                so the values should be the unmapped identities (i.e. full DN from a certificate). This identity must be found
+                in the configured User Group Provider.
+        -->
+        <accessPolicyProvider>
+            <identifier>file-access-policy-provider</identifier>
+            <class>org.apache.nifi.authorization.FileAccessPolicyProvider</class>
+            <property name="User Group Provider">file-user-group-provider</property>
+            <property name="Authorizations File">../data/authorizations.xml</property>
+        </accessPolicyProvider>
+        <!--
+            The StandardManagedAuthorizer. This authorizer implementation must be configured with the
+            Access Policy Provider which it will use to access and manage users, groups, and policies.
+            These users, groups, and policies will be used to make all access decisions during authorization
+            requests.
+            - Access Policy Provider - The identifier for an Access Policy Provider defined above.
+        -->
+        <authorizer>
+            <identifier>managed-authorizer</identifier>
+            <class>org.apache.nifi.authorization.StandardManagedAuthorizer</class>
+            <property name="Access Policy Provider">file-access-policy-provider</property>
+        </authorizer>
+        <!--
+            NOTE: This Authorizer has been replaced with the more granular approach configured above with the Standard
+            Managed Authorizer. However, it is still available for backwards compatibility reasons.
+            The FileAuthorizer is NiFi's provided authorizer and has the following properties:
+            - Authorizations File - The file where the FileAuthorizer will store policies.
+            - Users File - The file where the FileAuthorizer will store users and groups.
+            - Initial Admin Identity - The identity of an initial admin user that will be granted access to the UI and
+                given the ability to create additional users, groups, and policies. The value of this property could be
+                a DN when using certificates or LDAP, or a Kerberos principal. This property will only be used when there
+                are no other users, groups, and policies defined. If this property is specified then a Legacy Authorized
+                Users File can not be specified.
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the initial admin identity,
+                so the value should be the unmapped identity.
+            - Legacy Authorized Users File - The full path to an existing authorized-users.xml that will be automatically
+                converted to the new authorizations model. If this property is specified then an Initial Admin Identity can
+                not be specified, and this property will only be used when there are no other users, groups, and policies defined.
+            - Node Identity [unique key] - The identity of a NiFi cluster node. When clustered, a property for each node
+                should be defined, so that every node knows about every other node. If not clustered these properties can be ignored.
+                The name of each property must be unique, for example for a three node cluster:
+                "Node Identity A", "Node Identity B", "Node Identity C" or "Node Identity 1", "Node Identity 2", "Node Identity 3"
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the node identities,
+                so the values should be the unmapped identities (i.e. full DN from a certificate).
+        -->
+        <!-- <authorizer>
+            <identifier>file-provider</identifier>
+            <class>org.apache.nifi.authorization.FileAuthorizer</class>
+            <property name="Authorizations File">./conf/authorizations.xml</property>
+            <property name="Users File">./conf/users.xml</property>
+            <property name="Initial Admin Identity"></property>
+            <property name="Legacy Authorized Users File"></property>
+            <property name="Node Identity 1"></property>
+        </authorizer>
+        -->
+    </authorizers>
+  authorizers.xml: |
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <!--
+      Licensed to the Apache Software Foundation (ASF) under one or more
+      contributor license agreements.  See the NOTICE file distributed with
+      this work for additional information regarding copyright ownership.
+      The ASF licenses this file to You under the Apache License, Version 2.0
+      (the "License"); you may not use this file except in compliance with
+      the License.  You may obtain a copy of the License at
+          http://www.apache.org/licenses/LICENSE-2.0
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+    -->
+    <!--
+        This file lists the userGroupProviders, accessPolicyProviders, and authorizers to use when running securely. In order
+        to use a specific authorizer it must be configured here and it's identifier must be specified in the nifi.properties file.
+        If the authorizer is a managedAuthorizer, it may need to be configured with an accessPolicyProvider and an userGroupProvider.
+        This file allows for configuration of them, but they must be configured in order:
+        ...
+        all userGroupProviders
+        all accessPolicyProviders
+        all Authorizers
+        ...
+    -->
+    <authorizers>
+        <!--
+            The FileUserGroupProvider will provide support for managing users and groups which is backed by a file
+            on the local file system.
+            - Users File - The file where the FileUserGroupProvider will store users and groups.
+            - Legacy Authorized Users File - The full path to an existing authorized-users.xml that will be automatically
+                be used to load the users and groups into the Users File.
+            - Initial User Identity [unique key] - The identity of a users and systems to seed the Users File. The name of
+                each property must be unique, for example: "Initial User Identity A", "Initial User Identity B",
+                "Initial User Identity C" or "Initial User Identity 1", "Initial User Identity 2", "Initial User Identity 3"
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the user identities,
+                so the values should be the unmapped identities (i.e. full DN from a certificate).
+        -->
+        <userGroupProvider>
+            <identifier>file-user-group-provider</identifier>
+            <class>org.apache.nifi.authorization.FileUserGroupProvider</class>
+            <property name="Users File">./conf/users.xml</property>
+            <property name="Legacy Authorized Users File"></property>
+            <property name="Initial User Identity 0">CN=sitewhere-infrastructure-nifi-0.sitewhere-infrastructure-nifi-headless.sitewhere-system.svc.cluster.local, OU=NIFI</property>
+            <property name="Initial User Identity admin">CN=admin, OU=NIFI</property>
+        </userGroupProvider>
+        <!--
+            The LdapUserGroupProvider will retrieve users and groups from an LDAP server. The users and groups
+            are not configurable.
+            'Authentication Strategy' - How the connection to the LDAP server is authenticated. Possible
+                values are ANONYMOUS, SIMPLE, LDAPS, or START_TLS.
+            'Manager DN' - The DN of the manager that is used to bind to the LDAP server to search for users.
+            'Manager Password' - The password of the manager that is used to bind to the LDAP server to
+                search for users.
+            'TLS - Keystore' - Path to the Keystore that is used when connecting to LDAP using LDAPS or START_TLS.
+            'TLS - Keystore Password' - Password for the Keystore that is used when connecting to LDAP
+                using LDAPS or START_TLS.
+            'TLS - Keystore Type' - Type of the Keystore that is used when connecting to LDAP using
+                LDAPS or START_TLS (i.e. JKS or PKCS12).
+            'TLS - Truststore' - Path to the Truststore that is used when connecting to LDAP using LDAPS or START_TLS.
+            'TLS - Truststore Password' - Password for the Truststore that is used when connecting to
+                LDAP using LDAPS or START_TLS.
+            'TLS - Truststore Type' - Type of the Truststore that is used when connecting to LDAP using
+                LDAPS or START_TLS (i.e. JKS or PKCS12).
+            'TLS - Client Auth' - Client authentication policy when connecting to LDAP using LDAPS or START_TLS.
+                Possible values are REQUIRED, WANT, NONE.
+            'TLS - Protocol' - Protocol to use when connecting to LDAP using LDAPS or START_TLS. (i.e. TLS,
+                TLSv1.1, TLSv1.2, etc).
+            'TLS - Shutdown Gracefully' - Specifies whether the TLS should be shut down gracefully
+                before the target context is closed. Defaults to false.
+            'Referral Strategy' - Strategy for handling referrals. Possible values are FOLLOW, IGNORE, THROW.
+            'Connect Timeout' - Duration of connect timeout. (i.e. 10 secs).
+            'Read Timeout' - Duration of read timeout. (i.e. 10 secs).
+            'Url' - Space-separated list of URLs of the LDAP servers (i.e. ldap://<hostname>:<port>).
+            'Page Size' - Sets the page size when retrieving users and groups. If not specified, no paging is performed.
+            'Sync Interval' - Duration of time between syncing users and groups (i.e. 30 mins). Minimum allowable value is 10 secs.
+            'User Search Base' - Base DN for searching for users (i.e. ou=users,o=nifi). Required to search users.
+            'User Object Class' - Object class for identifying users (i.e. person). Required if searching users.
+            'User Search Scope' - Search scope for searching users (ONE_LEVEL, OBJECT, or SUBTREE). Required if searching users.
+            'User Search Filter' - Filter for searching for users against the 'User Search Base' (i.e. (memberof=cn=team1,ou=groups,o=nifi) ). Optional.
+            'User Identity Attribute' - Attribute to use to extract user identity (i.e. cn). Optional. If not set, the entire DN is used.
+            'User Group Name Attribute' - Attribute to use to define group membership (i.e. memberof). Optional. If not set
+                group membership will not be calculated through the users. Will rely on group membership being defined
+                through 'Group Member Attribute' if set. The value of this property is the name of the attribute in the user ldap entry that
+                associates them with a group. The value of that user attribute could be a dn or group name for instance. What value is expected
+                is configured in the 'User Group Name Attribute - Referenced Group Attribute'.
+            'User Group Name Attribute - Referenced Group Attribute' - If blank, the value of the attribute defined in 'User Group Name Attribute'
+                is expected to be the full dn of the group. If not blank, this property will define the attribute of the group ldap entry that
+                the value of the attribute defined in 'User Group Name Attribute' is referencing (i.e. name). Use of this property requires that
+                'Group Search Base' is also configured.
+            'Group Search Base' - Base DN for searching for groups (i.e. ou=groups,o=nifi). Required to search groups.
+            'Group Object Class' - Object class for identifying groups (i.e. groupOfNames). Required if searching groups.
+            'Group Search Scope' - Search scope for searching groups (ONE_LEVEL, OBJECT, or SUBTREE). Required if searching groups.
+            'Group Search Filter' - Filter for searching for groups against the 'Group Search Base'. Optional.
+            'Group Name Attribute' - Attribute to use to extract group name (i.e. cn). Optional. If not set, the entire DN is used.
+            'Group Member Attribute' - Attribute to use to define group membership (i.e. member). Optional. If not set
+                group membership will not be calculated through the groups. Will rely on group membership being defined
+                through 'User Group Name Attribute' if set. The value of this property is the name of the attribute in the group ldap entry that
+                associates them with a user. The value of that group attribute could be a dn or memberUid for instance. What value is expected
+                is configured in the 'Group Member Attribute - Referenced User Attribute'. (i.e. member: cn=User 1,ou=users,o=nifi vs. memberUid: user1)
+            'Group Member Attribute - Referenced User Attribute' - If blank, the value of the attribute defined in 'Group Member Attribute'
+                is expected to be the full dn of the user. If not blank, this property will define the attribute of the user ldap entry that
+                the value of the attribute defined in 'Group Member Attribute' is referencing (i.e. uid). Use of this property requires that
+                'User Search Base' is also configured. (i.e. member: cn=User 1,ou=users,o=nifi vs. memberUid: user1)
+            NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the user identities.
+                Group names are not mapped.
+        -->
+        <!-- To enable the ldap-user-group-provider remove 2 lines. This is 1 of 2.
+        <userGroupProvider>
+            <identifier>ldap-user-group-provider</identifier>
+            <class>org.apache.nifi.ldap.tenants.LdapUserGroupProvider</class>
+            <property name="Authentication Strategy">START_TLS</property>
+            <property name="Manager DN"></property>
+            <property name="Manager Password"></property>
+            <property name="TLS - Keystore"></property>
+            <property name="TLS - Keystore Password"></property>
+            <property name="TLS - Keystore Type"></property>
+            <property name="TLS - Truststore"></property>
+            <property name="TLS - Truststore Password"></property>
+            <property name="TLS - Truststore Type"></property>
+            <property name="TLS - Client Auth"></property>
+            <property name="TLS - Protocol"></property>
+            <property name="TLS - Shutdown Gracefully"></property>
+            <property name="Referral Strategy">FOLLOW</property>
+            <property name="Connect Timeout">10 secs</property>
+            <property name="Read Timeout">10 secs</property>
+            <property name="Url"></property>
+            <property name="Page Size"></property>
+            <property name="Sync Interval">30 mins</property>
+            <property name="User Search Base"></property>
+            <property name="User Object Class">person</property>
+            <property name="User Search Scope">ONE_LEVEL</property>
+            <property name="User Search Filter"></property>
+            <property name="User Identity Attribute"></property>
+            <property name="User Group Name Attribute"></property>
+            <property name="User Group Name Attribute - Referenced Group Attribute"></property>
+            <property name="Group Search Base"></property>
+            <property name="Group Object Class">group</property>
+            <property name="Group Search Scope">ONE_LEVEL</property>
+            <property name="Group Search Filter"></property>
+            <property name="Group Name Attribute"></property>
+            <property name="Group Member Attribute"></property>
+            <property name="Group Member Attribute - Referenced User Attribute"></property>
+        </userGroupProvider>
+        To enable the ldap-user-group-provider remove 2 lines. This is 2 of 2. -->
+  
+        <!--
+            The CompositeUserGroupProvider will provide support for retrieving users and groups from multiple sources.
+            - User Group Provider [unique key] - The identifier of user group providers to load from. The name of
+                each property must be unique, for example: "User Group Provider A", "User Group Provider B",
+                "User Group Provider C" or "User Group Provider 1", "User Group Provider 2", "User Group Provider 3"
+                NOTE: Any identity mapping rules specified in nifi.properties are not applied in this implementation. This behavior
+                would need to be applied by the base implementation.
+        -->
+        <!-- To enable the composite-user-group-provider remove 2 lines. This is 1 of 2.
+        <userGroupProvider>
+            <identifier>composite-user-group-provider</identifier>
+            <class>org.apache.nifi.authorization.CompositeUserGroupProvider</class>
+            <property name="User Group Provider 1"></property>
+        </userGroupProvider>
+        To enable the composite-user-group-provider remove 2 lines. This is 2 of 2. -->
+  
+        <!--
+            The CompositeConfigurableUserGroupProvider will provide support for retrieving users and groups from multiple sources.
+            Additionally, a single configurable user group provider is required. Users from the configurable user group provider
+            are configurable, however users loaded from one of the User Group Provider [unique key] will not be.
+            - Configurable User Group Provider - A configurable user group provider.
+            - User Group Provider [unique key] - The identifier of user group providers to load from. The name of
+                each property must be unique, for example: "User Group Provider A", "User Group Provider B",
+                "User Group Provider C" or "User Group Provider 1", "User Group Provider 2", "User Group Provider 3"
+                NOTE: Any identity mapping rules specified in nifi.properties are not applied in this implementation. This behavior
+                would need to be applied by the base implementation.
+        -->
+        <!-- To enable the composite-configurable-user-group-provider remove 2 lines. This is 1 of 2.
+        <userGroupProvider>
+            <identifier>composite-configurable-user-group-provider</identifier>
+            <class>org.apache.nifi.authorization.CompositeConfigurableUserGroupProvider</class>
+            <property name="Configurable User Group Provider">file-user-group-provider</property>
+            <property name="User Group Provider 1"></property>
+        </userGroupProvider>
+        To enable the composite-configurable-user-group-provider remove 2 lines. This is 2 of 2. -->
+  
+        <!--
+            The FileAccessPolicyProvider will provide support for managing access policies which is backed by a file
+            on the local file system.
+            - User Group Provider - The identifier for an User Group Provider defined above that will be used to access
+                users and groups for use in the managed access policies.
+            - Authorizations File - The file where the FileAccessPolicyProvider will store policies.
+            - Initial Admin Identity - The identity of an initial admin user that will be granted access to the UI and
+                given the ability to create additional users, groups, and policies. The value of this property could be
+                a DN when using certificates or LDAP, or a Kerberos principal. This property will only be used when there
+                are no other policies defined. If this property is specified then a Legacy Authorized Users File can not be specified.
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the initial admin identity,
+                so the value should be the unmapped identity. This identity must be found in the configured User Group Provider.
+            - Legacy Authorized Users File - The full path to an existing authorized-users.xml that will be automatically
+                converted to the new authorizations model. If this property is specified then an Initial Admin Identity can
+                not be specified, and this property will only be used when there are no other users, groups, and policies defined.
+                NOTE: Any users in the legacy users file must be found in the configured User Group Provider.
+            - Node Identity [unique key] - The identity of a NiFi cluster node. When clustered, a property for each node
+                should be defined, so that every node knows about every other node. If not clustered these properties can be ignored.
+                The name of each property must be unique, for example for a three node cluster:
+                "Node Identity A", "Node Identity B", "Node Identity C" or "Node Identity 1", "Node Identity 2", "Node Identity 3"
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the node identities,
+                so the values should be the unmapped identities (i.e. full DN from a certificate). This identity must be found
+                in the configured User Group Provider.
+        -->
+        <accessPolicyProvider>
+            <identifier>file-access-policy-provider</identifier>
+            <class>org.apache.nifi.authorization.FileAccessPolicyProvider</class>
+            <property name="User Group Provider">file-user-group-provider</property>
+            <property name="Authorizations File">./conf/authorizations.xml</property>
+            <property name="Initial Admin Identity">CN=admin, OU=NIFI</property>
+            <property name="Legacy Authorized Users File"></property>
+            <property name="Node Identity 0">CN=sitewhere-infrastructure-nifi-0.sitewhere-infrastructure-nifi-headless.sitewhere-system.svc.cluster.local, OU=NIFI</property>
+        </accessPolicyProvider>
+         <!--
+            The StandardManagedAuthorizer. This authorizer implementation must be configured with the
+            Access Policy Provider which it will use to access and manage users, groups, and policies.
+            These users, groups, and policies will be used to make all access decisions during authorization
+            requests.
+            - Access Policy Provider - The identifier for an Access Policy Provider defined above.
+        -->
+        <authorizer>
+            <identifier>managed-authorizer</identifier>
+            <class>org.apache.nifi.authorization.StandardManagedAuthorizer</class>
+            <property name="Access Policy Provider">file-access-policy-provider</property>
+        </authorizer>
+        <!--
+            NOTE: This Authorizer has been replaced with the more granular approach configured above with the Standard
+            Managed Authorizer. However, it is still available for backwards compatibility reasons.
+            The FileAuthorizer is NiFi's provided authorizer and has the following properties:
+            - Authorizations File - The file where the FileAuthorizer will store policies.
+            - Users File - The file where the FileAuthorizer will store users and groups.
+            - Initial Admin Identity - The identity of an initial admin user that will be granted access to the UI and
+                given the ability to create additional users, groups, and policies. The value of this property could be
+                a DN when using certificates or LDAP, or a Kerberos principal. This property will only be used when there
+                are no other users, groups, and policies defined. If this property is specified then a Legacy Authorized
+                Users File can not be specified.
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the initial admin identity,
+                so the value should be the unmapped identity.
+            - Legacy Authorized Users File - The full path to an existing authorized-users.xml that will be automatically
+                converted to the new authorizations model. If this property is specified then an Initial Admin Identity can
+                not be specified, and this property will only be used when there are no other users, groups, and policies defined.
+            - Node Identity [unique key] - The identity of a NiFi cluster node. When clustered, a property for each node
+                should be defined, so that every node knows about every other node. If not clustered these properties can be ignored.
+                The name of each property must be unique, for example for a three node cluster:
+                "Node Identity A", "Node Identity B", "Node Identity C" or "Node Identity 1", "Node Identity 2", "Node Identity 3"
+                NOTE: Any identity mapping rules specified in nifi.properties will also be applied to the node identities,
+                so the values should be the unmapped identities (i.e. full DN from a certificate).
+        -->
+        <!-- <authorizer>
+            <identifier>file-provider</identifier>
+            <class>org.apache.nifi.authorization.FileAuthorizer</class>
+            <property name="Authorizations File">./conf/authorizations.xml</property>
+            <property name="Users File">./conf/users.xml</property>
+            <property name="Initial Admin Identity"></property>
+            <property name="Legacy Authorized Users File"></property>
+            <property name="Node Identity 1"></property>
+        </authorizer>
+        -->
+    </authorizers>
+  bootstrap-notification-services.xml: "<?xml version=\"1.0\"?>\n<!--\n  Licensed to
+    the Apache Software Foundation (ASF) under one or more\n  contributor license agreements.
+    \ See the NOTICE file distributed with\n  this work for additional information regarding
+    copyright ownership.\n  The ASF licenses this file to You under the Apache License,
+    Version 2.0\n  (the \"License\"); you may not use this file except in compliance
+    with\n  the License.  You may obtain a copy of the License at\n      http://www.apache.org/licenses/LICENSE-2.0\n
+    \ Unless required by applicable law or agreed to in writing, software\n  distributed
+    under the License is distributed on an \"AS IS\" BASIS,\n  WITHOUT WARRANTIES OR
+    CONDITIONS OF ANY KIND, either express or implied.\n  See the License for the specific
+    language governing permissions and\n  limitations under the License.\n-->\n<services>\n
+    \   <!-- This file is used to define how interested parties are notified when events
+    in NiFi's lifecycle occur. -->\n    <!-- The format of this file is:\n        <services>\n
+    \           <service>\n                <id>service-identifier</id>\n                <class>org.apache.nifi.notifications.DesiredNotificationService</class>\n
+    \               <property name=\"property name\">property value</property>\n                <property
+    name=\"another property\">another property value</property>\n            </service>\n
+    \       </services>\n        \n        This file can contain 0 to many different
+    service definitions.\n        The id can then be referenced from the bootstrap.conf
+    file in order to configure the notification service\n        to be used when particular
+    lifecycle events occur.\n    -->\n    \n<!--\n     <service>\n        <id>email-notification</id>\n
+    \       <class>org.apache.nifi.bootstrap.notification.email.EmailNotificationService</class>\n
+    \       <property name=\"SMTP Hostname\"></property>\n        <property name=\"SMTP
+    Port\"></property>\n        <property name=\"SMTP Username\"></property>\n        <property
+    name=\"SMTP Password\"></property>\n        <property name=\"SMTP TLS\"></property>\n
+    \       <property name=\"From\"></property>\n        <property name=\"To\"></property>\n
+    \    </service>\n-->\n<!--\n     <service>\n        <id>http-notification</id>\n
+    \       <class>org.apache.nifi.bootstrap.notification.http.HttpNotificationService</class>\n
+    \       <property name=\"URL\"></property>\n     </service>\n-->\n</services>\n"
+  bootstrap.conf: |+
+    #
+    # Licensed to the Apache Software Foundation (ASF) under one or more
+    # contributor license agreements.  See the NOTICE file distributed with
+    # this work for additional information regarding copyright ownership.
+    # The ASF licenses this file to You under the Apache License, Version 2.0
+    # (the "License"); you may not use this file except in compliance with
+    # the License.  You may obtain a copy of the License at
+    #
+    #   http://www.apache.org/licenses/LICENSE-2.0
+    #
+    # Unless required by applicable law or agreed to in writing, software
+    # distributed under the License is distributed on an "AS IS" BASIS,
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    # See the License for the specific language governing permissions and
+    # limitations under the License.
+    #
+  
+    # Java command to use when running NiFi
+    java=java
+  
+    # Username to use when running NiFi. This value will be ignored on Windows.
+    run.as=
+  
+    # Configure where NiFi's lib and conf directories live
+    lib.dir=./lib
+    conf.dir=./conf
+  
+    # How long to wait after telling NiFi to shutdown before explicitly killing the Process
+    graceful.shutdown.seconds=20
+  
+    # Disable JSR 199 so that we can use JSP's without running a JDK
+    java.arg.1=-Dorg.apache.jasper.compiler.disablejsr199=true
+  
+    # JVM memory settings
+    java.arg.2=-Xms2g
+    java.arg.3=-Xmx2g
+  
+    # Enable Remote Debugging
+    #java.arg.debug=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
+  
+    java.arg.4=-Djava.net.preferIPv4Stack=true
+  
+    # allowRestrictedHeaders is required for Cluster/Node communications to work properly
+    java.arg.5=-Dsun.net.http.allowRestrictedHeaders=true
+    java.arg.6=-Djava.protocol.handler.pkgs=sun.net.www.protocol
+  
+    # The G1GC is still considered experimental but has proven to be very advantageous in providing great
+    # performance without significant "stop-the-world" delays.
+    #java.arg.13=-XX:+UseG1GC
+  
+    #Set headless mode by default
+    java.arg.14=-Djava.awt.headless=true
+  
+    # Master key in hexadecimal format for encrypted sensitive configuration values
+    nifi.bootstrap.sensitive.key=
+  
+    # Sets the provider of SecureRandom to /dev/urandom to prevent blocking on VMs
+    java.arg.15=-Djava.security.egd=file:/dev/urandom
+  
+    ###
+    # Notification Services for notifying interested parties when NiFi is stopped, started, dies
+    ###
+  
+    # XML File that contains the definitions of the notification services
+    notification.services.file=./conf/bootstrap-notification-services.xml
+  
+    # In the case that we are unable to send a notification for an event, how many times should we retry?
+    notification.max.attempts=5
+  
+    # Comma-separated list of identifiers that are present in the notification.services.file; which services should be used to notify when NiFi is started?
+    #nifi.start.notification.services=email-notification
+  
+    # Comma-separated list of identifiers that are present in the notification.services.file; which services should be used to notify when NiFi is stopped?
+    #nifi.stop.notification.services=email-notification
+  
+    # Comma-separated list of identifiers that are present in the notification.services.file; which services should be used to notify when NiFi dies?
+    #nifi.dead.notification.services=email-notification
+  
+  
+  logback.xml: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!--\n  Licensed to the
+    Apache Software Foundation (ASF) under one or more\n  contributor license agreements.
+    \ See the NOTICE file distributed with\n  this work for additional information regarding
+    copyright ownership.\n  The ASF licenses this file to You under the Apache License,
+    Version 2.0\n  (the \"License\"); you may not use this file except in compliance
+    with\n  the License.  You may obtain a copy of the License at\n      http://www.apache.org/licenses/LICENSE-2.0\n
+    \ Unless required by applicable law or agreed to in writing, software\n  distributed
+    under the License is distributed on an \"AS IS\" BASIS,\n  WITHOUT WARRANTIES OR
+    CONDITIONS OF ANY KIND, either express or implied.\n  See the License for the specific
+    language governing permissions and\n  limitations under the License.\n-->\n<configuration
+    scan=\"true\" scanPeriod=\"30 seconds\">\n    <contextListener class=\"ch.qos.logback.classic.jul.LevelChangePropagator\">\n
+    \       <resetJUL>true</resetJUL>\n    </contextListener>\n    \n    <appender name=\"APP_FILE\"
+    class=\"ch.qos.logback.core.rolling.RollingFileAppender\">\n        <file>${org.apache.nifi.bootstrap.config.log.dir}/nifi-app.log</file>\n
+    \       <rollingPolicy class=\"ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy\">\n
+    \           <!--\n              For daily rollover, use 'app_%d.log'.\n              For
+    hourly rollover, use 'app_%d{yyyy-MM-dd_HH}.log'.\n              To GZIP rolled
+    files, replace '.log' with '.log.gz'.\n              To ZIP rolled files, replace
+    '.log' with '.log.zip'.\n            -->\n            <fileNamePattern>${org.apache.nifi.bootstrap.config.log.dir}/nifi-app_%d{yyyy-MM-dd_HH}.%i.log</fileNamePattern>\n
+    \           <maxFileSize>100MB</maxFileSize>\n            <!-- keep 30 log files
+    worth of history -->\n            <maxHistory>30</maxHistory>\n        </rollingPolicy>\n
+    \       <immediateFlush>true</immediateFlush>\n        <encoder class=\"ch.qos.logback.classic.encoder.PatternLayoutEncoder\">\n
+    \           <pattern>%date %level [%thread] %logger{40} %msg%n</pattern>\n        </encoder>\n
+    \   </appender>\n    \n    <appender name=\"USER_FILE\" class=\"ch.qos.logback.core.rolling.RollingFileAppender\">\n
+    \       <file>${org.apache.nifi.bootstrap.config.log.dir}/nifi-user.log</file>\n
+    \       <rollingPolicy class=\"ch.qos.logback.core.rolling.TimeBasedRollingPolicy\">\n
+    \           <!--\n              For daily rollover, use 'user_%d.log'.\n              For
+    hourly rollover, use 'user_%d{yyyy-MM-dd_HH}.log'.\n              To GZIP rolled
+    files, replace '.log' with '.log.gz'.\n              To ZIP rolled files, replace
+    '.log' with '.log.zip'.\n            -->\n            <fileNamePattern>${org.apache.nifi.bootstrap.config.log.dir}/nifi-user_%d.log</fileNamePattern>\n
+    \           <!-- keep 30 log files worth of history -->\n            <maxHistory>30</maxHistory>\n
+    \       </rollingPolicy>\n        <encoder class=\"ch.qos.logback.classic.encoder.PatternLayoutEncoder\">\n
+    \           <pattern>%date %level [%thread] %logger{40} %msg%n</pattern>\n        </encoder>\n
+    \   </appender>\n\n    <appender name=\"BOOTSTRAP_FILE\" class=\"ch.qos.logback.core.rolling.RollingFileAppender\">\n
+    \       <file>${org.apache.nifi.bootstrap.config.log.dir}/nifi-bootstrap.log</file>\n
+    \       <rollingPolicy class=\"ch.qos.logback.core.rolling.TimeBasedRollingPolicy\">\n
+    \           <!--\n              For daily rollover, use 'user_%d.log'.\n              For
+    hourly rollover, use 'user_%d{yyyy-MM-dd_HH}.log'.\n              To GZIP rolled
+    files, replace '.log' with '.log.gz'.\n              To ZIP rolled files, replace
+    '.log' with '.log.zip'.\n            -->\n            <fileNamePattern>${org.apache.nifi.bootstrap.config.log.dir}/nifi-bootstrap_%d.log</fileNamePattern>\n
+    \           <!-- keep 5 log files worth of history -->\n            <maxHistory>5</maxHistory>\n
+    \       </rollingPolicy>\n        <encoder class=\"ch.qos.logback.classic.encoder.PatternLayoutEncoder\">\n
+    \           <pattern>%date %level [%thread] %logger{40} %msg%n</pattern>\n        </encoder>\n
+    \   </appender>\n\t\n    <appender name=\"CONSOLE\" class=\"ch.qos.logback.core.ConsoleAppender\">\n
+    \       <encoder class=\"ch.qos.logback.classic.encoder.PatternLayoutEncoder\">\n
+    \           <pattern>%date %level [%thread] %logger{40} %msg%n</pattern>\n        </encoder>\n
+    \   </appender>\n    \n    <!-- valid logging levels: TRACE, DEBUG, INFO, WARN,
+    ERROR -->\n    \n    <logger name=\"org.apache.nifi\" level=\"INFO\"/>\n    <logger
+    name=\"org.apache.nifi.processors\" level=\"WARN\"/>\n    <logger name=\"org.apache.nifi.processors.standard.LogAttribute\"
+    level=\"INFO\"/>\n    <logger name=\"org.apache.nifi.processors.standard.LogMessage\"
+    level=\"INFO\"/>\n    <logger name=\"org.apache.nifi.controller.repository.StandardProcessSession\"
+    level=\"WARN\" />\n    \n    \n    <logger name=\"org.apache.zookeeper.ClientCnxn\"
+    level=\"ERROR\" />\n    <logger name=\"org.apache.zookeeper.server.NIOServerCnxn\"
+    level=\"ERROR\" />\n    <logger name=\"org.apache.zookeeper.server.NIOServerCnxnFactory\"
+    level=\"ERROR\" />\n    <logger name=\"org.apache.zookeeper.server.quorum\" level=\"ERROR\"
+    />\n    <logger name=\"org.apache.zookeeper.ZooKeeper\" level=\"ERROR\" />\n    <logger
+    name=\"org.apache.zookeeper.server.PrepRequestProcessor\" level=\"ERROR\" />\n\n
+    \   <logger name=\"org.apache.calcite.runtime.CalciteException\" level=\"OFF\" />\n\n
+    \   <logger name=\"org.apache.curator.framework.recipes.leader.LeaderSelector\"
+    level=\"OFF\" />\n    <logger name=\"org.apache.curator.ConnectionState\" level=\"OFF\"
+    />\n    \n    <!-- Logger for managing logging statements for nifi clusters. -->\n
+    \   <logger name=\"org.apache.nifi.cluster\" level=\"INFO\"/>\n\n    <!-- Logger
+    for logging HTTP requests received by the web server. -->\n    <logger name=\"org.apache.nifi.server.JettyServer\"
+    level=\"INFO\"/>\n\n    <!-- Logger for managing logging statements for jetty -->\n
+    \   <logger name=\"org.eclipse.jetty\" level=\"INFO\"/>\n\n    <!-- Suppress non-error
+    messages due to excessive logging by class or library -->\n    <logger name=\"org.springframework\"
+    level=\"ERROR\"/>\n    \n    <!-- Suppress non-error messages due to known warning
+    about redundant path annotation (NIFI-574) -->\n    <logger name=\"org.glassfish.jersey.internal.Errors\"
+    level=\"ERROR\"/>\n\n    <!--\n        Logger for capturing user events. We do not
+    want to propagate these\n        log events to the root logger. These messages are
+    only sent to the\n        user-log appender.\n    -->\n    <logger name=\"org.apache.nifi.web.security\"
+    level=\"INFO\" additivity=\"false\">\n        <appender-ref ref=\"USER_FILE\"/>\n
+    \   </logger>\n    <logger name=\"org.apache.nifi.web.api.config\" level=\"INFO\"
+    additivity=\"false\">\n        <appender-ref ref=\"USER_FILE\"/>\n    </logger>\n
+    \   <logger name=\"org.apache.nifi.authorization\" level=\"INFO\" additivity=\"false\">\n
+    \       <appender-ref ref=\"USER_FILE\"/>\n    </logger>\n    <logger name=\"org.apache.nifi.cluster.authorization\"
+    level=\"INFO\" additivity=\"false\">\n        <appender-ref ref=\"USER_FILE\"/>\n
+    \   </logger>\n    <logger name=\"org.apache.nifi.web.filter.RequestLogger\" level=\"INFO\"
+    additivity=\"false\">\n        <appender-ref ref=\"USER_FILE\"/>\n    </logger>\n\n\n
+    \   <!--\n        Logger for capturing Bootstrap logs and NiFi's standard error
+    and standard out. \n    -->\n    <logger name=\"org.apache.nifi.bootstrap\" level=\"INFO\"
+    additivity=\"false\">\n        <appender-ref ref=\"BOOTSTRAP_FILE\" />\n    </logger>\n
+    \   <logger name=\"org.apache.nifi.bootstrap.Command\" level=\"INFO\" additivity=\"false\">\n
+    \       <appender-ref ref=\"CONSOLE\" />\n        <appender-ref ref=\"BOOTSTRAP_FILE\"
+    />\n    </logger>\n\n    <!-- Everything written to NiFi's Standard Out will be
+    logged with the logger org.apache.nifi.StdOut at INFO level -->\n    <logger name=\"org.apache.nifi.StdOut\"
+    level=\"INFO\" additivity=\"false\">\n        <appender-ref ref=\"BOOTSTRAP_FILE\"
+    />\n    </logger>\n    \n    <!-- Everything written to NiFi's Standard Error will
+    be logged with the logger org.apache.nifi.StdErr at ERROR level -->\n    <logger
+    name=\"org.apache.nifi.StdErr\" level=\"ERROR\" additivity=\"false\">\n        <appender-ref
+    ref=\"BOOTSTRAP_FILE\" />\n    </logger>\n\n\n    <root level=\"INFO\">\n        <appender-ref
+    ref=\"APP_FILE\"/>\n    </root>\n    \n</configuration>\n"
+  login-identity-providers.xml: "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<!--\n
+    \ Licensed to the Apache Software Foundation (ASF) under one or more\n  contributor
+    license agreements.  See the NOTICE file distributed with\n  this work for additional
+    information regarding copyright ownership.\n  The ASF licenses this file to You
+    under the Apache License, Version 2.0\n  (the \"License\"); you may not use this
+    file except in compliance with\n  the License.  You may obtain a copy of the License
+    at\n      http://www.apache.org/licenses/LICENSE-2.0\n  Unless required by applicable
+    law or agreed to in writing, software\n  distributed under the License is distributed
+    on an \"AS IS\" BASIS,\n  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+    or implied.\n  See the License for the specific language governing permissions and\n
+    \ limitations under the License.\n-->\n<!--\n    This file lists the login identity
+    providers to use when running securely. In order\n    to use a specific provider
+    it must be configured here and it's identifier\n    must be specified in the nifi.properties
+    file.\n-->\n<loginIdentityProviders>\n    <!--\n        Identity Provider for users
+    logging in with username/password against an LDAP server.\n        \n        'Authentication
+    Strategy' - How the connection to the LDAP server is authenticated. Possible\n            values
+    are ANONYMOUS, SIMPLE, LDAPS, or START_TLS.\n        \n        'Manager DN' - The
+    DN of the manager that is used to bind to the LDAP server to search for users.\n
+    \       'Manager Password' - The password of the manager that is used to bind to
+    the LDAP server to\n            search for users.\n            \n        'TLS -
+    Keystore' - Path to the Keystore that is used when connecting to LDAP using LDAPS
+    or START_TLS.\n        'TLS - Keystore Password' - Password for the Keystore that
+    is used when connecting to LDAP\n            using LDAPS or START_TLS.\n        'TLS
+    - Keystore Type' - Type of the Keystore that is used when connecting to LDAP using\n
+    \           LDAPS or START_TLS (i.e. JKS or PKCS12).\n        'TLS - Truststore'
+    - Path to the Truststore that is used when connecting to LDAP using LDAPS or START_TLS.\n
+    \       'TLS - Truststore Password' - Password for the Truststore that is used when
+    connecting to\n            LDAP using LDAPS or START_TLS.\n        'TLS - Truststore
+    Type' - Type of the Truststore that is used when connecting to LDAP using\n            LDAPS
+    or START_TLS (i.e. JKS or PKCS12).\n        'TLS - Client Auth' - Client authentication
+    policy when connecting to LDAP using LDAPS or START_TLS.\n            Possible values
+    are REQUIRED, WANT, NONE.\n        'TLS - Protocol' - Protocol to use when connecting
+    to LDAP using LDAPS or START_TLS. (i.e. TLS,\n            TLSv1.1, TLSv1.2, etc).\n
+    \       'TLS - Shutdown Gracefully' - Specifies whether the TLS should be shut down
+    gracefully \n            before the target context is closed. Defaults to false.\n
+    \           \n        'Referral Strategy' - Strategy for handling referrals. Possible
+    values are FOLLOW, IGNORE, THROW.\n        'Connect Timeout' - Duration of connect
+    timeout. (i.e. 10 secs).\n        'Read Timeout' - Duration of read timeout. (i.e.
+    10 secs).\n       \n        'Url' - Space-separated list of URLs of the LDAP servers
+    (i.e. ldap://<hostname>:<port>).\n        'User Search Base' - Base DN for searching
+    for users (i.e. CN=Users,DC=example,DC=com).\n        'User Search Filter' - Filter
+    for searching for users against the 'User Search Base'.\n            (i.e. sAMAccountName={0}).
+    The user specified name is inserted into '{0}'.\n        'Identity Strategy' - Strategy
+    to identify users. Possible values are USE_DN and USE_USERNAME.\n            The
+    default functionality if this property is missing is USE_DN in order to retain\n
+    \           backward compatibility. USE_DN will use the full DN of the user entry
+    if possible.\n            USE_USERNAME will use the username the user logged in
+    with.\n        'Authentication Expiration' - The duration of how long the user authentication
+    is valid\n            for. If the user never logs out, they will be required to
+    log back in following\n            this duration.\n    -->\n    \n
+    \   <!--\n        Identity Provider for users logging in with username/password
+    against a Kerberos KDC server.\n        'Default Realm' - Default realm to provide
+    when user enters incomplete user principal (i.e. NIFI.APACHE.ORG).\n        'Authentication
+    Expiration' - The duration of how long the user authentication is valid for. If
+    the user never logs out, they will be required to log back in following this duration.\n
+    \   -->\n    <!-- To enable the kerberos-provider remove 2 lines. This is 1 of 2.\n
+    \   <provider>\n        <identifier>kerberos-provider</identifier>\n        <class>org.apache.nifi.kerberos.KerberosProvider</class>\n
+    \       <property name=\"Default Realm\">NIFI.APACHE.ORG</property>\n        <property
+    name=\"Authentication Expiration\">12 hours</property>\n    </provider>\n    To
+    enable the kerberos-provider remove 2 lines. This is 2 of 2. -->\n</loginIdentityProviders>\n"
+  nifi.properties: "# Licensed to the Apache Software Foundation (ASF) under one or
+    more\n# contributor license agreements.  See the NOTICE file distributed with\n#
+    this work for additional information regarding copyright ownership.\n# The ASF licenses
+    this file to You under the Apache License, Version 2.0\n# (the \"License\"); you
+    may not use this file except in compliance with\n# the License.  You may obtain
+    a copy of the License at\n#\n#     http://www.apache.org/licenses/LICENSE-2.0\n#\n#
+    Unless required by applicable law or agreed to in writing, software\n# distributed
+    under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR
+    CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific
+    language governing permissions and\n# limitations under the License.\n\n# Core Properties
+    #\nnifi.flow.configuration.file=../data/flow.xml.gz\nnifi.flow.configuration.archive.enabled=true\nnifi.flow.configuration.archive.dir=../data/archive/\nnifi.flow.configuration.archive.max.time=30
+    days\nnifi.flow.configuration.archive.max.storage=500 MB\nnifi.flow.configuration.archive.max.count=\nnifi.flowcontroller.autoResumeState=true\nnifi.flowcontroller.graceful.shutdown.period=10
+    sec\nnifi.flowservice.writedelay.interval=500 ms\nnifi.administrative.yield.duration=30
+    sec\n# If a component has no work to do (is \"bored\"), how long should we wait
+    before checking again for work?\nnifi.bored.yield.duration=10 millis\n\nnifi.authorizer.configuration.file=./conf/authorizers.xml\nnifi.login.identity.provider.configuration.file=./conf/login-identity-providers.xml\nnifi.templates.directory=../data/templates\nnifi.ui.banner.text=\nnifi.ui.autorefresh.interval=30
+    sec\nnifi.nar.library.directory=./lib\nnifi.nar.working.directory=./work/nar/\nnifi.documentation.working.directory=./work/docs/components\n\n####################\n#
+    State Management #\n####################\nnifi.state.management.configuration.file=./conf/state-management.xml\n#
+    The ID of the local state provider\nnifi.state.management.provider.local=local-provider\n#
+    The ID of the cluster-wide state provider. This will be ignored if NiFi is not clustered
+    but must be populated if running in a cluster.\nnifi.state.management.provider.cluster=zk-provider\n#
+    Specifies whether or not this instance of NiFi should run an embedded ZooKeeper
+    server\nnifi.state.management.embedded.zookeeper.start=false\n# Properties file
+    that provides the ZooKeeper properties to use if <nifi.state.management.embedded.zookeeper.start>
+    is set to true\nnifi.state.management.embedded.zookeeper.properties=./conf/zookeeper.properties\n\n\n#
+    H2 Settings\nnifi.database.directory=../data/database_repository\nnifi.h2.url.append=;LOCK_TIMEOUT=25000;WRITE_DELAY=0;AUTO_SERVER=FALSE\n\n#
+    FlowFile Repository\nnifi.flowfile.repository.implementation=org.apache.nifi.controller.repository.WriteAheadFlowFileRepository\nnifi.flowfile.repository.directory=../flowfile_repository\nnifi.flowfile.repository.partitions=256\nnifi.flowfile.repository.checkpoint.interval=2
+    mins\nnifi.flowfile.repository.always.sync=false\n\nnifi.swap.manager.implementation=org.apache.nifi.controller.FileSystemSwapManager\nnifi.queue.swap.threshold=20000\nnifi.swap.in.period=5
+    sec\nnifi.swap.in.threads=1\nnifi.swap.out.period=5 sec\nnifi.swap.out.threads=4\n\n#
+    Content Repository\nnifi.content.repository.implementation=org.apache.nifi.controller.repository.FileSystemRepository\nnifi.content.claim.max.appendable.size=1
+    MB\nnifi.content.claim.max.flow.files=100\nnifi.content.repository.directory.default=../content_repository\nnifi.content.repository.archive.max.retention.period=3
+    days\nnifi.content.repository.archive.max.usage.percentage=85%\nnifi.content.repository.archive.enabled=true\nnifi.content.repository.always.sync=false\nnifi.content.viewer.url=/nifi-content-viewer/\n\n#
+    Provenance Repository Properties\nnifi.provenance.repository.implementation=org.apache.nifi.provenance.WriteAheadProvenanceRepository\nnifi.provenance.repository.debug.frequency=1_000_000\nnifi.provenance.repository.encryption.key.provider.implementation=\nnifi.provenance.repository.encryption.key.provider.location=\nnifi.provenance.repository.encryption.key.id=\nnifi.provenance.repository.encryption.key=\n\n#
+    Persistent Provenance Repository Properties\nnifi.provenance.repository.directory.default=../provenance_repository\nnifi.provenance.repository.max.storage.time=10
+    days\nnifi.provenance.repository.max.storage.size=8 GB\nnifi.provenance.repository.rollover.time=30
+    secs\nnifi.provenance.repository.rollover.size=100 MB\nnifi.provenance.repository.query.threads=2\nnifi.provenance.repository.index.threads=2\nnifi.provenance.repository.compress.on.rollover=true\nnifi.provenance.repository.always.sync=false\nnifi.provenance.repository.journal.count=16\n#
+    Comma-separated list of fields. Fields that are not indexed will not be searchable.
+    Valid fields are: \n# EventType, FlowFileUUID, Filename, TransitURI, ProcessorID,
+    AlternateIdentifierURI, Relationship, Details\nnifi.provenance.repository.indexed.fields=EventType,
+    FlowFileUUID, Filename, ProcessorID, Relationship\n# FlowFile Attributes that should
+    be indexed and made searchable.  Some examples to consider are filename, uuid, mime.type\nnifi.provenance.repository.indexed.attributes=\n#
+    Large values for the shard size will result in more Java heap usage when searching
+    the Provenance Repository\n# but should provide better performance\nnifi.provenance.repository.index.shard.size=500
+    MB\n# Indicates the maximum length that a FlowFile attribute can be when retrieving
+    a Provenance Event from\n# the repository. If the length of any attribute exceeds
+    this value, it will be truncated when the event is retrieved.\nnifi.provenance.repository.max.attribute.length=65536\n\n#
+    Volatile Provenance Respository Properties\nnifi.provenance.repository.buffer.size=100000\n\n#
+    Component Status Repository\nnifi.components.status.repository.implementation=org.apache.nifi.controller.status.history.VolatileComponentStatusRepository\nnifi.components.status.repository.buffer.size=1440\nnifi.components.status.snapshot.frequency=1
+    min\n\n# Site to Site properties\nnifi.remote.input.host=\nnifi.remote.input.secure=false\nnifi.remote.input.socket.port=10000\nnifi.remote.input.http.enabled=true\nnifi.remote.input.http.transaction.ttl=30
+    sec\n\n# web properties #\nnifi.web.war.directory=./lib\nnifi.web.proxy.host=\nnifi.web.http.host=\nnifi.web.http.port=8080\nnifi.web.http.network.interface.default=\nnifi.web.https.host=\nnifi.web.https.port=\nnifi.web.https.network.interface.default=\nnifi.web.jetty.working.directory=./work/jetty\nnifi.web.jetty.threads=200\n\n#
+    security properties #\nnifi.sensitive.props.key=\nnifi.sensitive.props.key.protected=\nnifi.sensitive.props.algorithm=PBEWITHMD5AND256BITAES-CBC-OPENSSL\nnifi.sensitive.props.provider=BC\nnifi.sensitive.props.additional.keys=\n\nnifi.security.keystore=\nnifi.security.keystoreType=jks\nnifi.security.keystorePasswd=\nnifi.security.keyPasswd=\nnifi.security.truststore=\nnifi.security.truststoreType=jks\nnifi.security.truststorePasswd=\nnifi.security.needClientAuth=false\nnifi.security.user.authorizer=managed-authorizer\n
+    \   \nnifi.security.user.login.identity.provider=\n    \nnifi.security.ocsp.responder.url=\nnifi.security.ocsp.responder.certificate=\n\n#
+    OpenId Connect SSO Properties #\nnifi.security.user.oidc.discovery.url=\nnifi.security.user.oidc.connect.timeout=5
+    secs\nnifi.security.user.oidc.read.timeout=5 secs\nnifi.security.user.oidc.client.id=\nnifi.security.user.oidc.client.secret=\nnifi.security.user.oidc.preferred.jwsalgorithm=\n\n#
+    Apache Knox SSO Properties #\nnifi.security.user.knox.url=\nnifi.security.user.knox.publicKey=\nnifi.security.user.knox.cookieName=hadoop-jwt\nnifi.security.user.knox.audiences=\n\n#
+    Identity Mapping Properties #\n# These properties allow normalizing user identities
+    such that identities coming from different identity providers\n# (certificates,
+    LDAP, Kerberos) can be treated the same internally in NiFi. The following example
+    demonstrates normalizing\n# DNs from certificates and principals from Kerberos into
+    a common identity string:\n#\n# nifi.security.identity.mapping.pattern.dn=^CN=(.*?),
+    OU=(.*?), O=(.*?), L=(.*?), ST=(.*?), C=(.*?)$\n# nifi.security.identity.mapping.value.dn=$1@$2\n#
+    nifi.security.identity.mapping.pattern.kerb=^(.*?)/instance@(.*?)$\n# nifi.security.identity.mapping.value.kerb=$1@$2\n\n#
+    cluster common properties (all nodes must have same values) #\nnifi.cluster.protocol.heartbeat.interval=5
+    sec\nnifi.cluster.protocol.is.secure=false\n\n# cluster
+    node properties (only configure for cluster nodes) #\nnifi.cluster.is.node=true\nnifi.cluster.node.address=\nnifi.cluster.node.protocol.port=6007\nnifi.cluster.node.protocol.threads=10\nnifi.cluster.node.protocol.max.threads=50\nnifi.cluster.node.event.history.size=25\nnifi.cluster.node.connection.timeout=5
+    sec\nnifi.cluster.node.read.timeout=5 sec\nnifi.cluster.node.max.concurrent.requests=100\nnifi.cluster.firewall.file=\nnifi.cluster.flow.election.max.wait.time=1
+    mins\nnifi.cluster.flow.election.max.candidates=\n\n# zookeeper properties, used
+    for cluster management #\nnifi.zookeeper.connect.string=\nnifi.zookeeper.connect.timeout=3
+    secs\nnifi.zookeeper.session.timeout=3 secs\nnifi.zookeeper.root.node=/nifi\n\n#
+    Zookeeper properties for the authentication scheme used when creating acls on znodes
+    used for cluster management\n# Values supported for nifi.zookeeper.auth.type are
+    \"default\", which will apply world/anyone rights on znodes\n# and \"sasl\" which
+    will give rights to the sasl/kerberos identity used to authenticate the nifi node\n#
+    The identity is determined using the value in nifi.kerberos.service.principal and
+    the removeHostFromPrincipal\n# and removeRealmFromPrincipal values (which should
+    align with the kerberos.removeHostFromPrincipal and kerberos.removeRealmFromPrincipal\n#
+    values configured on the zookeeper server).\nnifi.zookeeper.auth.type=\nnifi.zookeeper.kerberos.removeHostFromPrincipal=\nnifi.zookeeper.kerberos.removeRealmFromPrincipal=\n\n#
+    kerberos #\nnifi.kerberos.krb5.file=\n\n# kerberos service principal #\nnifi.kerberos.service.principal=\nnifi.kerberos.service.keytab.location=\n\n#
+    kerberos spnego principal #\nnifi.kerberos.spnego.principal=\nnifi.kerberos.spnego.keytab.location=\nnifi.kerberos.spnego.authentication.expiration=12
+    hours\n\n# external properties files for variable registry\n# supports a comma delimited
+    list of file locations\nnifi.variable.registry.properties=\n"
+  state-management.xml: |
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <stateManagement>
+        <local-provider>
+            <id>local-provider</id>
+            <class>org.apache.nifi.controller.state.providers.local.WriteAheadLocalStateProvider</class>
+            <property name="Directory">../data/state/local</property>
+            <property name="Always Sync">false</property>
+            <property name="Partitions">16</property>
+            <property name="Checkpoint Interval">2 mins</property>
+        </local-provider>
+        <cluster-provider>
+            <id>zk-provider</id>
+            <class>org.apache.nifi.controller.state.providers.zookeeper.ZooKeeperStateProvider</class>
+            <property name="Connect String">sitewhere-infrastructure-zookeeper:2181</property>
+            <property name="Root Node">/nifi</property>
+            <property name="Session Timeout">10 seconds</property>
+            <property name="Access Control">Open</property>
+        </cluster-provider>
+    </stateManagement>
+  zookeeper.properties: |+
+    #
+    #
+    # Licensed to the Apache Software Foundation (ASF) under one
+    # or more contributor license agreements.  See the NOTICE file
+    # distributed with this work for additional information
+    # regarding copyright ownership.  The ASF licenses this file
+    # to you under the Apache License, Version 2.0 (the
+    # "License"); you may not use this file except in compliance
+    # with the License.  You may obtain a copy of the License at
+    #
+    #   http://www.apache.org/licenses/LICENSE-2.0
+    #
+    # Unless required by applicable law or agreed to in writing,
+    # software distributed under the License is distributed on an
+    # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    # KIND, either express or implied.  See the License for the
+    # specific language governing permissions and limitations
+    # under the License.
+    #
+    #
+    #
+  
+    initLimit=10
+    autopurge.purgeInterval=24
+    syncLimit=5
+    tickTime=2000
+    dataDir=./state/zookeeper
+    autopurge.snapRetainCount=30
+  
+    #
+    # Specifies the servers that are part of this zookeeper ensemble. For
+    # every NiFi instance running an embedded zookeeper, there needs to be
+    # a server entry below. For instance:
+    #
+    # server.1=nifi-node1-hostname:2888:3888;2181
+    # server.2=nifi-node2-hostname:2888:3888;2181
+    # server.3=nifi-node3-hostname:2888:3888;2181
+    #
+    # The index of the server corresponds to the myid file that gets created
+    # in the dataDir of each node running an embedded zookeeper. See the
+    # administration guide for more details.
+    #
+  
+    server.1=

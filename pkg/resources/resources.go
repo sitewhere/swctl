@@ -51,19 +51,17 @@ const (
 )
 
 // InstallResourceFromFile Install a resource from a file name
-func InstallResourceFromFile(fileName string,
+func InstallResourceFromFile(file http.File,
+	fileName string,
 	statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) error {
-	r, err := statikFS.Open(fileName)
+	config *rest.Config) (*metav1.ObjectMeta, error) {
+
+	defer file.Close()
+	contents, err := ioutil.ReadAll(file)
 	if err != nil {
-		return err
-	}
-	defer r.Close()
-	contents, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	sch := runtime.NewScheme()
@@ -85,59 +83,118 @@ func InstallResourceFromFile(fileName string,
 	// and match each type-case
 	switch o := obj.(type) {
 	case *v1.Pod:
-		_, err = CreatePodIfNotExists(o, clientset, SitewhereSystemNamespace())
+		pod, err := CreatePodIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &pod.ObjectMeta, err
 	case *v1.ConfigMap:
-		_, err = CreateConfigMapIfNotExists(o, clientset, SitewhereSystemNamespace())
+		configMap, err := CreateConfigMapIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &configMap.ObjectMeta, err
 	case *v1.Secret:
-		_, err = CreateSecretIfNotExists(o, clientset, SitewhereSystemNamespace())
+		secret, err := CreateSecretIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &secret.ObjectMeta, err
 	case *v1.ServiceAccount:
-		_, err = CreateServiceAccountIfNotExists(o, clientset, SitewhereSystemNamespace())
+		sa, err := CreateServiceAccountIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &sa.ObjectMeta, err
 	case *v1.PersistentVolumeClaim:
-		_, err = CreatePersistentVolumeClaimIfNotExists(o, clientset, SitewhereSystemNamespace())
+		pvc, err := CreatePersistentVolumeClaimIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &pvc.ObjectMeta, err
 	case *v1.Service:
-		_, err = CreateServiceIfNotExists(o, clientset, SitewhereSystemNamespace())
+		svc, err := CreateServiceIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &svc.ObjectMeta, err
 	case *appsv1.Deployment:
-		_, err = CreateDeploymentIfNotExists(o, clientset, SitewhereSystemNamespace())
+		deploy, err := CreateDeploymentIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &deploy.ObjectMeta, err
 	case *appsv1.StatefulSet:
-		_, err = CreateStatefulSetIfNotExists(o, clientset, SitewhereSystemNamespace())
+		ss, err := CreateStatefulSetIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &ss.ObjectMeta, err
+	case *v1.Namespace:
+		ns, err := CreateNamespaceIfNotExists(SitewhereSystemNamespace(), clientset)
+		if err != nil {
+			return nil, err
+		}
+		return &ns.ObjectMeta, err
 	case *rbacV1.ClusterRole:
-		_, err = CreateClusterRoleIfNotExists(o, clientset)
+		cr, err := CreateClusterRoleIfNotExists(o, clientset)
+		if err != nil {
+			return nil, err
+		}
+		return &cr.ObjectMeta, err
 	case *rbacV1.ClusterRoleBinding:
-		_, err = CreateClusterRoleBindingIfNotExists(o, clientset)
+		crb, err := CreateClusterRoleBindingIfNotExists(o, clientset)
+		if err != nil {
+			return nil, err
+		}
+		return &crb.ObjectMeta, err
 	case *rbacV1.Role:
-		_, err = CreateRoleIfNotExists(o, clientset, SitewhereSystemNamespace())
+		role, err := CreateRoleIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &role.ObjectMeta, err
 	case *rbacV1.RoleBinding:
-		_, err = CreateRoleBindingIfNotExists(o, clientset, SitewhereSystemNamespace())
+		rb, err := CreateRoleBindingIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &rb.ObjectMeta, err
 	case *policyV1beta1.PodDisruptionBudget:
-		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, SitewhereSystemNamespace())
+		pol, err := CreatePodDisruptionBudgetIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &pol.ObjectMeta, err
 	case *networkingv1.NetworkPolicy:
-		_, err = CreateNetworkPolicyIfNotExists(o, clientset, SitewhereSystemNamespace())
+		np, err := CreateNetworkPolicyIfNotExists(o, clientset, SitewhereSystemNamespace())
+		if err != nil {
+			return nil, err
+		}
+		return &np.ObjectMeta, err
 	case *apiextv1beta1.CustomResourceDefinition:
-		_, err = CreateCustomResourceDefinitionIfNotExists(o, apiextensionsClientset)
+		crd, err := CreateCustomResourceDefinitionIfNotExists(o, apiextensionsClientset)
+		if err != nil {
+			return nil, err
+		}
+		return &crd.ObjectMeta, err
 	default:
 		fmt.Println(fmt.Sprintf("Resource with type %v not handled.", groupVersionKind))
 		_ = o //o is unknown for us
+		return nil, fmt.Errorf("Resources not handled %v", groupVersionKind)
 	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // UninstallResourceFromFile Uninstall a resource from a file name
-func UninstallResourceFromFile(fileName string,
+func UninstallResourceFromFile(file http.File,
+	fileName string,
 	statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) error {
-	r, err := statikFS.Open(fileName)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-	contents, err := ioutil.ReadAll(r)
+
+	defer file.Close()
+	contents, err := ioutil.ReadAll(file)
 	if err != nil {
 		return err
 	}

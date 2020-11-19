@@ -19,33 +19,28 @@ package install
 import (
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/internal/crds"
-	"github.com/sitewhere/swctl/pkg/resources"
+	"github.com/sitewhere/swctl/pkg/status"
 )
+
+// Template for generating a Template Filename
+const crdPath = "/crd/"
 
 // SiteWhereCRDs Install SiteWhere Custom Resource Definitions
 func SiteWhereCRDs(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) ([]SiteWhereCRDStatus, error) {
-	var err error
-	var result []SiteWhereCRDStatus
-	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
-		err = resources.InstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
-		if err != nil && !errors.IsAlreadyExists(err) {
-			return nil, err
-		}
-		var crdStatus = SiteWhereCRDStatus{
-			Name:   crdFile,
-			Status: Installed,
-		}
-		result = append(result, crdStatus)
+	config *rest.Config) ([]status.SiteWhereStatus, error) {
+	r, err := statikFS.Open(crdPath)
+	if err != nil {
+		return nil, err
 	}
-	return result, nil
+	fi, err := r.Stat()
+	if err != nil {
+		return nil, err
+	}
+	return installFiles(statikFS, "", fi, clientset, apiextensionsClientset, config)
 }

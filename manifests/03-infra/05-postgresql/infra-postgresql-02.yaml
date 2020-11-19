@@ -1,0 +1,119 @@
+# Source: sitewhere-infrastructure/charts/postgresql/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sitewhere-postgresql
+  labels:
+    app: postgresql
+    chart: postgresql-8.6.4
+    release: "sitewhere-infrastructure"
+    heritage: "Tiller"
+spec:
+  serviceName: sitewhere-postgresql-headless
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: postgresql
+      release: "sitewhere-infrastructure"
+      role: master
+  template:
+    metadata:
+      name: sitewhere-postgresql
+      labels:
+        app: postgresql
+        chart: postgresql-8.6.4
+        release: "sitewhere-infrastructure"
+        heritage: "Tiller"
+        role: master
+      annotations:
+        sidecar.istio.io/inject: "false"
+        
+    spec:      
+      securityContext:
+        fsGroup: 1001
+      initContainers:
+        # - name: do-something
+        #   image: busybox
+        #   command: ['do', 'something']
+        
+      containers:
+        - name: sitewhere-postgresql
+          image: docker.io/bitnami/postgresql:11.7.0-debian-10-r9
+          imagePullPolicy: "IfNotPresent"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            
+          securityContext:
+            runAsUser: 1001
+          env:
+            - name: BITNAMI_DEBUG
+              value: "true"
+            - name: POSTGRESQL_PORT_NUMBER
+              value: "5432"
+            - name: POSTGRESQL_VOLUME_DIR
+              value: "/bitnami/postgresql"
+            - name: PGDATA
+              value: "/bitnami/postgresql/data"
+            - name: POSTGRES_USER
+              value: "syncope"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: syncope
+                  key: postgresql-password
+            - name: POSTGRES_DB
+              value: "syncope"
+            - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+          ports:
+            - name: tcp-postgresql
+              containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "syncope" -d "syncope" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - -e
+                - |
+                  exec pg_isready -U "syncope" -d "syncope" -h 127.0.0.1 -p 5432
+                  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            - name: data
+              mountPath: /bitnami/postgresql
+              subPath: 
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "500Mi"

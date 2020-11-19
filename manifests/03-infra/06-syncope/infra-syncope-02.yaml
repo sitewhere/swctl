@@ -1,0 +1,12 @@
+# Source: sitewhere-infrastructure/templates/syncope-console-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: "sitewhere-syncope-console"
+spec:
+  type: "ClusterIP"
+  selector:
+    name: "sitewhere-syncope-console"
+  ports:
+  - port: 8080
+    name: http-api

@@ -1,0 +1,32 @@
+# Source: sitewhere-infrastructure/templates/syncope-deployment.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: sitewhere-syncope-environment-config
+data:
+ DBMS: postgresql
+ DB_URL:  jdbc:postgresql://sitewhere-postgresql-headless:5432/syncope
+ DB_USER: syncope
+ DB_POOL_MAX: "10"
+ DB_POOL_MIN: "2"
+ OPENJPA_REMOTE_COMMIT: sjvm
+ CORE_SCHEME: "http"
+ CORE_HOST: "sitewhere-syncope"
+ CORE_PORT: "8080"
+ security.properties: |
+  conf.directory=/etc/apache-syncope
+  adminUser=synadmin
+  adminPassword=DE088591C00CC98B36F5ADAAF7DA2B004CF7F2FE7BBB45B766B6409876E2F3DB13C7905C6AA59464
+  adminPasswordAlgorithm=SSHA256
+  anonymousUser=anonymous
+  anonymousKey=anonymousKey
+  secretKey=1abcdefghilmnopqrstuvz2!
+  jwtIssuer=ApacheSyncope
+  jwsAlgorithm=HS512
+  jwsKey=ZW7pRixehFuNUtnY5Se47IemgMryTzazPPJ9CGX5LTCmsOJpOgHAQEuPQeV9A28f
+  digester.saltIterations=1
+  digester.saltSizeBytes=8
+  digester.invertPositionOfPlainSaltInEncryptionResults=true
+  digester.invertPositionOfSaltInMessageBeforeDigesting=true
+  digester.useLenientSaltSizeCheck=true
+  passwordGenerator=org.apache.syncope.core.spring.security.DefaultPasswordGenerator
