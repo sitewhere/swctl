@@ -42,38 +42,14 @@ const (
 	Unknown = "Unknown"
 )
 
-// SiteWhereCRDStatus represents that status of a CRD installation
-type SiteWhereCRDStatus struct {
-	// Name of the Custom Resource Definition
-	Name string `json:"name,omitempty"`
-	// Install Status
-	Status Status `json:"status,omitempty"`
-}
-
-// SiteWhereTemplateStatus represents that status of a CRD installation
-type SiteWhereTemplateStatus struct {
-	// Name of the Template
-	Name string `json:"name,omitempty"`
-	// Install Status
-	Status Status `json:"status,omitempty"`
-}
-
-// SiteWhereOperatorStatus represents that status of a CRD installation
-type SiteWhereOperatorStatus struct {
-	// Name of the Operator resource
-	Name string `json:"name,omitempty"`
-	// Install Status
-	Status Status `json:"status,omitempty"`
-}
-
 // SiteWhereInstall destribe the installation of SiteWhere.
 type SiteWhereInstall struct {
 	// Status of SiteWhere CDR installation
-	CDRStatues []SiteWhereCRDStatus `json:"crdStatues,omitempty"`
+	CDRStatuses []status.SiteWhereStatus `json:"crdStatues,omitempty"`
 	// Status of SiteWhere Templates installation
-	TemplatesStatues []SiteWhereTemplateStatus `json:"templatesStatues,omitempty"`
+	TemplatesStatues []status.SiteWhereStatus `json:"templatesStatues,omitempty"`
 	// Status of SiteWhere Operator
-	OperatorStatuses []SiteWhereOperatorStatus `json:"operatorStatuses,omitempty"`
+	OperatorStatuses []status.SiteWhereStatus `json:"operatorStatuses,omitempty"`
 }
 
 func installFiles(statikFS http.FileSystem,

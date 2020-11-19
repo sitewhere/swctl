@@ -13,12 +13,12 @@ spec:
     plural: scriptversions
     singular: scriptversion
     shortNames:
-    - swscrv
+      - swscrv
     categories:
-    - sitewhere-io
-    - core-sitewhere-io
+      - sitewhere-io
+      - core-sitewhere-io
   scope: Namespaced
   versions:
-    - name: v1alpha3
+    - name: v1alpha4
       served: true
       storage: true

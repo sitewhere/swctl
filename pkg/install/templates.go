@@ -17,41 +17,30 @@
 package install
 
 import (
-	"fmt"
 	"net/http"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	errors "k8s.io/apimachinery/pkg/api/errors"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/pkg/resources"
+	"github.com/sitewhere/swctl/pkg/status"
 )
 
-// Template for generating a Template Filename
-const templateFileTemplate = "/templates/template-%02d.yaml"
-
-// Number of CRD Files
-const templatesFileNumber = 37
+// path for template manifests
+const templatePath = "/templates/"
 
 // SiteWhereTemplates Install SiteWhere Templates CRD
 func SiteWhereTemplates(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) ([]SiteWhereTemplateStatus, error) {
-	var err error
-	var result []SiteWhereTemplateStatus
-	for i := 1; i <= templatesFileNumber; i++ {
-		var templateName = fmt.Sprintf(templateFileTemplate, i)
-		_, err = resources.CreateCustomResourceFromFile(templateName, statikFS, config)
-		if err != nil && !errors.IsAlreadyExists(err) {
-			return nil, err
-		}
-		var templateStatus = SiteWhereTemplateStatus{
-			Name:   templateName,
-			Status: Installed,
-		}
-		result = append(result, templateStatus)
+	config *rest.Config) ([]status.SiteWhereStatus, error) {
+	r, err := statikFS.Open(templatePath)
+	if err != nil {
+		return nil, err
 	}
-	return result, nil
+	fi, err := r.Stat()
+	if err != nil {
+		return nil, err
+	}
+	return installFiles(statikFS, "", fi, clientset, apiextensionsClientset, config)
 }

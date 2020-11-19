@@ -13,12 +13,12 @@ spec:
     plural: scripttemplates
     singular: scripttemplate
     shortNames:
-    - swscrt
+      - swscrt
     categories:
-    - sitewhere-io
-    - core-sitewhere-io
+      - sitewhere-io
+      - core-sitewhere-io
   scope: Cluster
   versions:
-    - name: v1alpha3
+    - name: v1alpha4
       served: true
       storage: true

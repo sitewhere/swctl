@@ -13,12 +13,12 @@ spec:
     plural: tenantenginedatasets
     singular: tenantenginedataset
     shortNames:
-    - tedt
+      - tedt
     categories:
-    - sitewhere-io
-    - core-sitewhere-io
+      - sitewhere-io
+      - core-sitewhere-io
   scope: Cluster
   versions:
-    - name: v1alpha3
+    - name: v1alpha4
       served: true
       storage: true

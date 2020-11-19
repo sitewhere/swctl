@@ -20,61 +20,28 @@ import (
 	"net/http"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	//errors "k8s.io/apimachinery/pkg/api/errors"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/internal/operator"
-	"github.com/sitewhere/swctl/pkg/resources"
+	"github.com/sitewhere/swctl/pkg/status"
 )
+
+// path for operator manifests
+const operatorPath = "/operator/"
 
 // SiteWhereOperator Install SiteWhere Operator resource file in the cluster
 func SiteWhereOperator(waitReady bool,
 	statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) ([]SiteWhereOperatorStatus, error) {
-	var err error
-	var result []SiteWhereOperatorStatus
-
-	_, err = resources.CreateNamespaceIfNotExists(resources.SitewhereSystemNamespace(), clientset)
+	config *rest.Config) ([]status.SiteWhereStatus, error) {
+	r, err := statikFS.Open(operatorPath)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, operatorFile := range operator.GetSiteWhereOperatorFiles() {
-		// err = resources.InstallResourceFromFile(operatorFile, statikFS, clientset, apiextensionsClientset, config)
-		// if err != nil && !errors.IsAlreadyExists(err) {
-		// 	return nil, err
-		// }
-		var operStatus = SiteWhereOperatorStatus{
-			Name:   operatorFile,
-			Status: Installed,
-		}
-		result = append(result, operStatus)
+	fi, err := r.Stat()
+	if err != nil {
+		return nil, err
 	}
-
-	// if waitReady {
-	// 	err = waitForDeploymentAvailable(clientset, "sitewhere-operator", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	err = waitForDeploymentAvailable(clientset, "strimzi-cluster-operator", resources.SitewhereSystemNamespace() )
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	// if config.IsVerbose() {
-	// 	fmt.Print("Deployment sitewhere-operator: ")
-	// 	color.Info.Println("Available")
-	// }
-	// if config.IsVerbose() {
-	// 	fmt.Print("Deployment strimzi-cluster-operator: ")
-	// 	color.Info.Println("Available")
-	// }
-	// if config.IsVerbose() {
-	// 	fmt.Print("SiteWhere Operator: ")
-	// 	color.Info.Println("Installed")
-	// }
-	return result, nil
+	return installFiles(statikFS, "", fi, clientset, apiextensionsClientset, config)
 }

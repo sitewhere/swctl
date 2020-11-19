@@ -21,7 +21,7 @@ import "k8s.io/apimachinery/pkg/runtime/schema"
 var (
 	sitewhereInstanceGVR = schema.GroupVersionResource{
 		Group:    "sitewhere.io",
-		Version:  "v1alpha3",
+		Version:  "v1alpha4",
 		Resource: "instances",
 	}
 )
@@ -29,7 +29,7 @@ var (
 var (
 	sitewhereMicroserviceGVR = schema.GroupVersionResource{
 		Group:    "sitewhere.io",
-		Version:  "v1alpha3",
+		Version:  "v1alpha4",
 		Resource: "microservices",
 	}
 )

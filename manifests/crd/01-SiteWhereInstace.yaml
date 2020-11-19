@@ -1,0 +1,108 @@
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: instances.sitewhere.io
+spec:
+  additionalPrinterColumns:
+    - JSONPath: .spec.configurationTemplate
+      name: Config
+      type: string
+    - JSONPath: .spec.datasetTemplate
+      name: Dataset
+      type: string
+    - JSONPath: .status.tenantManagementBootstrapState
+      name: Tenant Mng
+      type: string
+    - JSONPath: .status.userManagementBootstrapState
+      name: User Mng
+      type: string
+  group: sitewhere.io
+  names:
+    categories:
+      - sitewhere-io
+      - core-sitewhere-io
+    kind: SiteWhereInstance
+    listKind: SiteWhereInstanceList
+    plural: instances
+    shortNames:
+      - swi
+    singular: instance
+  scope: Cluster
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: SiteWhereInstance is the Schema for the Sitewhere Instances API
+      properties:
+        apiVersion:
+          description:
+            "APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
+          type: string
+        kind:
+          description:
+            "Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: SiteWhereInstanceSpec defines the desired state of SiteWhereInstance
+          properties:
+            configuration:
+              description: Configuration is the configuration of the microservice
+              type: object
+            configurationTemplate:
+              description:
+                ConfigurationTemplate is the name of the configuration
+                template of the instance
+              type: string
+            datasetTemplate:
+              description:
+                DatasetTemplate is the name of the dataset template of
+                the instance
+              type: string
+            dockerSpec:
+              description: DockerSpec is the
+              properties:
+                registry:
+                  description: Registry is the Docker registry
+                  type: string
+                repository:
+                  description: Repository is the Repository for docker images
+                  type: string
+                tag:
+                  description: Tag is the tag for docker images
+                  type: string
+              type: object
+          type: object
+        status:
+          description: SiteWhereInstanceStatus defines the observed state of SiteWhereInstance
+          properties:
+            tenantManagementBootstrapState:
+              description:
+                TenantManagementBootstrapState Bootstrap state of Tenant
+                Management
+              type: string
+            userManagementBootstrapState:
+              description: UserManagementBootstrapState Bootstrap state of User Management
+              type: string
+          type: object
+      type: object
+  version: v1alpha4
+  versions:
+    - name: v1alpha4
+      served: true
+      storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

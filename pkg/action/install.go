@@ -23,6 +23,7 @@ import (
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/install"
+	"github.com/sitewhere/swctl/pkg/status"
 )
 
 // Install is the action for installing SiteWhere
@@ -68,35 +69,35 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	if err = i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	//clientSet, err := i.cfg.KubernetesClientSet()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// extensionsClients, err := i.cfg.KubernetesAPIExtensionClientSet()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// config, err := i.cfg.RESTClientGetter.ToRESTConfig()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	var crdStatues []install.SiteWhereCRDStatus
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+	apiextensionsClientset, err := i.cfg.KubernetesAPIExtensionClientSet()
+	if err != nil {
+		return nil, err
+	}
+	config, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	var crdStatuses []status.SiteWhereStatus
 	if i.CRD {
 		// Install Custom Resource Definitions
-		// crdStatues, err = install.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		crdStatuses, err = install.SiteWhereCRDs(i.StatikFS, clientset, apiextensionsClientset, config)
+		if err != nil {
+			return nil, err
+		}
 	}
-	var templatesStatues []install.SiteWhereTemplateStatus
+	var templatesStatues []status.SiteWhereStatus
 	if i.Template {
 		// Install Templates
-		// templatesStatues, err = install.SiteWhereTemplates(i.StatikFS, clientSet, extensionsClients, config)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		templatesStatues, err = install.SiteWhereTemplates(i.StatikFS, clientset, apiextensionsClientset, config)
+		if err != nil {
+			return nil, err
+		}
 	}
-	var operatorStatuses []install.SiteWhereOperatorStatus
+	var operatorStatuses []status.SiteWhereStatus
 	if i.Operator {
 		// Install Operator
 		// operatorStatuses, err = install.SiteWhereOperator(i.WaitReady, i.StatikFS, clientSet, extensionsClients, config)
@@ -112,7 +113,7 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		// }
 	}
 	return &install.SiteWhereInstall{
-		CDRStatues:       crdStatues,
+		CDRStatuses:      crdStatuses,
 		TemplatesStatues: templatesStatues,
 		OperatorStatuses: operatorStatuses,
 	}, nil
