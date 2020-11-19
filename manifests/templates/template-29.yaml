@@ -5,4 +5,3 @@ metadata:
 spec:
   name: Empty
   description: Empty Tenant
-  tenantEngineTemplates:
