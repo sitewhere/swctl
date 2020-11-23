@@ -26,6 +26,7 @@ import (
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/install"
+	"github.com/sitewhere/swctl/pkg/resources"
 	"github.com/sitewhere/swctl/pkg/status"
 )
 
@@ -140,6 +141,22 @@ func (i *Install) InstallTemplates() ([]status.SiteWhereStatus, error) {
 // InstallOperator Install SiteWhere Operator resource file in the cluster
 func (i *Install) InstallOperator() ([]status.SiteWhereStatus, error) {
 	certmager, err := i.installDirFiles(certManagerPath)
+	if err != nil {
+		return nil, err
+	}
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager-cainjector", "cert-manager")
+	if err != nil {
+		return nil, err
+	}
+	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager", "cert-manager")
+	if err != nil {
+		return nil, err
+	}
+	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager-webhook", "cert-manager")
 	if err != nil {
 		return nil, err
 	}

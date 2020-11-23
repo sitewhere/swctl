@@ -305,7 +305,8 @@ func podContainersRunning(clientset kubernetes.Interface, podName string, namesp
 	return true, nil
 }
 
-func waitForDeploymentAvailable(clientset kubernetes.Interface, deploymentName string, namespace string) error {
+// WaitForDeploymentAvailable waits for a Deployment to became available
+func WaitForDeploymentAvailable(clientset kubernetes.Interface, deploymentName string, namespace string) error {
 	end := time.Now().Add(deployRunningThreshold)
 
 	for true {
