@@ -35,13 +35,14 @@ func SiteWhereOperator(waitReady bool,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
 	config *rest.Config) ([]status.SiteWhereStatus, error) {
-	r, err := statikFS.Open(operatorPath)
-	if err != nil {
-		return nil, err
-	}
-	fi, err := r.Stat()
-	if err != nil {
-		return nil, err
-	}
-	return installFiles(statikFS, "", fi, clientset, apiextensionsClientset, config)
+	// r, err := statikFS.Open(operatorPath)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fi, err := r.Stat()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//return installFiles(statikFS, "", fi, clientset, apiextensionsClientset, config)
+	return nil, nil
 }

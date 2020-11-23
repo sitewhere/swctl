@@ -21,12 +21,9 @@ import (
 	"net/http"
 	"os"
 
-	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
-	kubernetes "k8s.io/client-go/kubernetes"
-	rest "k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/pkg/resources"
+	"github.com/sitewhere/swctl/pkg/kube"
 	"github.com/sitewhere/swctl/pkg/status"
 )
 
@@ -50,14 +47,14 @@ type SiteWhereInstall struct {
 	TemplatesStatues []status.SiteWhereStatus `json:"templatesStatues,omitempty"`
 	// Status of SiteWhere Operator
 	OperatorStatuses []status.SiteWhereStatus `json:"operatorStatuses,omitempty"`
+	// Status of SiteWhere Infrastructure
+	InfrastructureStatuses []status.SiteWhereStatus `json:"infrastructureStatuses,omitempty"`
 }
 
 func installFiles(statikFS http.FileSystem,
 	parentPath string,
 	fi os.FileInfo,
-	clientset kubernetes.Interface,
-	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) ([]status.SiteWhereStatus, error) {
+	KubeClient kube.Interface) ([]status.SiteWhereStatus, error) {
 
 	var result []status.SiteWhereStatus
 
@@ -73,7 +70,7 @@ func installFiles(statikFS http.FileSystem,
 			return nil, err
 		}
 		for _, fileInfo := range files {
-			installResult, err := installFiles(statikFS, dirName, fileInfo, clientset, apiextensionsClientset, config)
+			installResult, err := installFiles(statikFS, dirName, fileInfo, KubeClient)
 			if err != nil && !errors.IsAlreadyExists(err) {
 				return nil, err
 			}
@@ -86,21 +83,31 @@ func installFiles(statikFS http.FileSystem,
 		if err != nil {
 			return nil, err
 		}
-		createObject, err := resources.InstallResourceFromFile(deployFile, fileName, statikFS, clientset, apiextensionsClientset, config)
-		if err != nil && !errors.IsAlreadyExists(err) {
-			var deployStatus = status.SiteWhereStatus{
-				Name:   fileName,
-				Status: status.Unknown,
+		// Open the resource file
+		res, err := KubeClient.Build(deployFile, false)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := KubeClient.Create(res); err != nil {
+			// If the error is Resource already exists, continue.
+			if errors.IsAlreadyExists(err) {
+				log.Printf("Resource %s is already present. Skipping.", fileName)
+			} else {
+				var deployStatus = status.SiteWhereStatus{
+					Name:   fileName,
+					Status: status.Unknown,
+				}
+				result = append(result, deployStatus)
 			}
-			result = append(result, deployStatus)
 		} else {
 			var deployStatus = status.SiteWhereStatus{
-				Name:       fileName,
-				Status:     status.Installed,
-				ObjectMeta: createObject,
+				Name:   fileName,
+				Status: status.Installed,
+				//		ObjectMeta: createObject,
 			}
 			result = append(result, deployStatus)
 		}
+
 	}
 	return result, nil
 }
