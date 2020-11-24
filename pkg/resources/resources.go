@@ -345,3 +345,40 @@ func deploymentAvailable(clientset kubernetes.Interface, deploymentName string, 
 
 	return true, nil
 }
+
+// WaitForSecretExists waits for a Secret to exists
+func WaitForSecretExists(clientset kubernetes.Interface, name string, namespace string) error {
+	end := time.Now().Add(deployRunningThreshold)
+
+	for true {
+		<-time.NewTimer(deployRunningCheckInterval).C
+
+		var err error
+		running, err := secretExists(clientset, name, namespace)
+		if running {
+			return nil
+		}
+
+		if err != nil && !errors.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s\n", err))
+		}
+
+		if time.Now().After(end) {
+			return fmt.Errorf("Failed to get Secret available")
+		}
+	}
+	return nil
+}
+
+func secretExists(clientset kubernetes.Interface, name string, namespace string) (bool, error) {
+	_, err := clientset.CoreV1().Secrets(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{})
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

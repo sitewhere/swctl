@@ -9,7 +9,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: strimzi-cluster-operator
-    namespace: default
+    namespace: sitewhere-system
 roleRef:
   kind: ClusterRole
   name: strimzi-kafka-broker

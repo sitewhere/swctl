@@ -39,8 +39,14 @@ const templatePath = "/templates/"
 // path for certificate manager
 const certManagerPath = "/cm/"
 
+// path for operator dependencies
+const operatorDepsPath = "/operator-deps/"
+
 // path for operator manifests
 const operatorPath = "/operator/"
+
+// path for infrastructure dependencies
+const infraDepsPath = "/infra-deps/"
 
 // path for operator infra
 const infraPath = "/infra/"
@@ -140,14 +146,17 @@ func (i *Install) InstallTemplates() ([]status.SiteWhereStatus, error) {
 
 // InstallOperator Install SiteWhere Operator resource file in the cluster
 func (i *Install) InstallOperator() ([]status.SiteWhereStatus, error) {
-	certmager, err := i.installDirFiles(certManagerPath)
-	if err != nil {
-		return nil, err
-	}
+	var result []status.SiteWhereStatus
 	clientset, err := i.cfg.KubernetesClientSet()
 	if err != nil {
 		return nil, err
 	}
+	certmager, err := i.installDirFiles(certManagerPath)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, certmager...)
+
 	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager-cainjector", "cert-manager")
 	if err != nil {
 		return nil, err
@@ -160,16 +169,51 @@ func (i *Install) InstallOperator() ([]status.SiteWhereStatus, error) {
 	if err != nil {
 		return nil, err
 	}
+	operatorDeps, err := i.installDirFiles(operatorDepsPath)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, operatorDeps...)
+
+	err = resources.WaitForSecretExists(clientset, "webhook-server-cert", "sitewhere-system")
+	if err != nil {
+		return nil, err
+	}
+
 	operator, err := i.installDirFiles(operatorPath)
 	if err != nil {
 		return nil, err
 	}
-	return append(certmager, operator...), nil
+	result = append(result, operator...)
+	return result, nil
 }
 
 // InstallInfrastructure Install SiteWhere infrastructure
 func (i *Install) InstallInfrastructure() ([]status.SiteWhereStatus, error) {
-	return i.installDirFiles(infraPath)
+	var result []status.SiteWhereStatus
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+
+	infraDeps, err := i.installDirFiles(infraDepsPath)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, infraDeps...)
+
+	err = resources.WaitForDeploymentAvailable(clientset, "strimzi-cluster-operator", "sitewhere-system")
+	if err != nil {
+		return nil, err
+	}
+
+	infra, err := i.installDirFiles(infraPath)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, infra...)
+
+	return result, nil
 }
 
 func (i *Install) installDirFiles(path string) ([]status.SiteWhereStatus, error) {
