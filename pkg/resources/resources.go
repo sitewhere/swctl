@@ -382,3 +382,46 @@ func secretExists(clientset kubernetes.Interface, name string, namespace string)
 
 	return true, nil
 }
+
+// WaitForCRDStablished waits for a CRD to be stablished
+func WaitForCRDStablished(apiextensionsclientset apiextensionsclientset.Interface, name string) error {
+	end := time.Now().Add(deployRunningThreshold)
+
+	for true {
+		<-time.NewTimer(deployRunningCheckInterval).C
+
+		var err error
+		running, err := crdStablished(apiextensionsclientset, name)
+		if running {
+			return nil
+		}
+
+		if err != nil && !errors.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s\n", err))
+		}
+
+		if time.Now().After(end) {
+			return fmt.Errorf("Failed to get Secret available")
+		}
+	}
+	return nil
+}
+
+func crdStablished(apiextensionsclientset apiextensionsclientset.Interface, name string) (bool, error) {
+	crds := apiextensionsclientset.ApiextensionsV1beta1().CustomResourceDefinitions()
+
+	existingCRD, err := crds.Get(context.TODO(),
+		name,
+		metav1.GetOptions{})
+
+	if err != nil {
+		return false, err
+	}
+
+	for _, cond := range existingCRD.Status.Conditions {
+		if cond.Type == apiextv1beta1.Established {
+			return true, nil
+		}
+	}
+	return false, nil
+}

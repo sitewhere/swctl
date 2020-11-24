@@ -39,6 +39,9 @@ const templatePath = "/templates/"
 // path for certificate manager
 const certManagerPath = "/cm/"
 
+// path to namespace objects
+const namespacePath = "/namespace/"
+
 // path for operator dependencies
 const operatorDepsPath = "/operator-deps/"
 
@@ -151,6 +154,13 @@ func (i *Install) InstallOperator() ([]status.SiteWhereStatus, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	ns, err := i.installDirFiles(namespacePath)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, ns...)
+
 	certmager, err := i.installDirFiles(certManagerPath)
 	if err != nil {
 		return nil, err
@@ -166,6 +176,10 @@ func (i *Install) InstallOperator() ([]status.SiteWhereStatus, error) {
 		return nil, err
 	}
 	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager-webhook", "cert-manager")
+	if err != nil {
+		return nil, err
+	}
+	err = resources.WaitForSecretExists(clientset, "cert-manager-webhook-ca", "cert-manager")
 	if err != nil {
 		return nil, err
 	}
@@ -195,12 +209,21 @@ func (i *Install) InstallInfrastructure() ([]status.SiteWhereStatus, error) {
 	if err != nil {
 		return nil, err
 	}
+	apiextensionsclientset, err := i.cfg.KubernetesAPIExtensionClientSet()
+	if err != nil {
+		return nil, err
+	}
 
 	infraDeps, err := i.installDirFiles(infraDepsPath)
 	if err != nil {
 		return nil, err
 	}
 	result = append(result, infraDeps...)
+
+	err = resources.WaitForCRDStablished(apiextensionsclientset, "kafkas.kafka.strimzi.io")
+	if err != nil {
+		return nil, err
+	}
 
 	err = resources.WaitForDeploymentAvailable(clientset, "strimzi-cluster-operator", "sitewhere-system")
 	if err != nil {
