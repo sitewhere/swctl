@@ -3,11 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sitewhere-infrastructure-mosquitto
+  namespace: sitewhere-system
   labels:
     app: mosquitto
     chart: mosquitto-0.1.6
-    release: sitewhere-infrastructure
-    heritage: Tiller
 spec:
   selector:
     matchLabels:
@@ -25,45 +24,45 @@ spec:
     spec:
       hostNetwork: false
       containers:
-      - image: smizy/mosquitto:1.4.15-alpine
-        imagePullPolicy: "IfNotPresent"
-        name: sitewhere-infrastructure-mosquitto
-        ports:
-        - containerPort: 1883
-          name: "mqtt"
-        - containerPort: 9090
-          name: "websocket"
-        volumeMounts:
-          - name: mosquitto-conf
-            mountPath: /mosquitto/config/mosquitto.conf
-            subPath: mosquitto.conf
-            readOnly: true
-          - name: mosquitto-data
-            mountPath: /mosquitto/data
-            subPath: mosquitto/data
-        livenessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 1
-          tcpSocket:
-            port: 9090
-        readinessProbe:
-          initialDelaySeconds: 3
-          periodSeconds: 3
-          tcpSocket:
-            port: 9090
-        
-        resources:
-          limits:
-            cpu: 100m
-            memory: 256Mi
-          requests:
-            cpu: 50m
-            memory: 100Mi
-          
-      volumes:
-      - name: mosquitto-conf
-        configMap:
+        - image: smizy/mosquitto:1.4.15-alpine
+          imagePullPolicy: "IfNotPresent"
           name: sitewhere-infrastructure-mosquitto
-      - name: mosquitto-data
-        persistentVolumeClaim:
-          claimName: sitewhere-infrastructure-mosquitto
+          ports:
+            - containerPort: 1883
+              name: "mqtt"
+            - containerPort: 9090
+              name: "websocket"
+          volumeMounts:
+            - name: mosquitto-conf
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+              readOnly: true
+            - name: mosquitto-data
+              mountPath: /mosquitto/data
+              subPath: mosquitto/data
+          livenessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 1
+            tcpSocket:
+              port: 9090
+          readinessProbe:
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            tcpSocket:
+              port: 9090
+
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+
+      volumes:
+        - name: mosquitto-conf
+          configMap:
+            name: sitewhere-infrastructure-mosquitto
+        - name: mosquitto-data
+          persistentVolumeClaim:
+            claimName: sitewhere-infrastructure-mosquitto

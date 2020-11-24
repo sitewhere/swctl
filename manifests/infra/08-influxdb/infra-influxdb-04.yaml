@@ -3,12 +3,9 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: sitewhere-infrastructure-influxdb
+  namespace: sitewhere-system
   labels:
-    helm.sh/chart: influxdb-4.8.1
     app.kubernetes.io/name: influxdb
-    app.kubernetes.io/instance: sitewhere-infrastructure
-    app.kubernetes.io/version: "1.8.0"
-    app.kubernetes.io/managed-by: Tiller
 spec:
   replicas: 1
   selector:

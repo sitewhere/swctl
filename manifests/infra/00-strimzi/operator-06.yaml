@@ -3,20 +3,18 @@ kind: CustomResourceDefinition
 metadata:
   name: kafkatopics.kafka.strimzi.io
   labels:
-    app: 'strimzi'
-    chart: 'strimzi-kafka-operator-0.15.0'
+    app: "strimzi"
+    chart: "strimzi-kafka-operator-0.15.0"
     component: kafkatopics.kafka.strimzi.io-crd
-    release: 'release-name'
-    heritage: 'Tiller'
 spec:
   group: kafka.strimzi.io
   versions:
-  - name: v1beta1
-    served: true
-    storage: true
-  - name: v1alpha1
-    served: true
-    storage: false
+    - name: v1beta1
+      served: true
+      storage: true
+    - name: v1alpha1
+      served: true
+      storage: false
   version: v1beta1
   scope: Namespaced
   names:
@@ -25,16 +23,16 @@ spec:
     singular: kafkatopic
     plural: kafkatopics
     shortNames:
-    - kt
+      - kt
   additionalPrinterColumns:
-  - name: Partitions
-    description: The desired number of partitions in the topic
-    JSONPath: .spec.partitions
-    type: integer
-  - name: Replication factor
-    description: The desired number of replicas of each partition
-    JSONPath: .spec.replicas
-    type: integer
+    - name: Partitions
+      description: The desired number of partitions in the topic
+      JSONPath: .spec.partitions
+      type: integer
+    - name: Replication factor
+      description: The desired number of replicas of each partition
+      JSONPath: .spec.replicas
+      type: integer
   subresources:
     status: {}
   validation:
@@ -55,8 +53,8 @@ spec:
             topicName:
               type: string
           required:
-          - partitions
-          - replicas
+            - partitions
+            - replicas
         status:
           type: object
           properties:

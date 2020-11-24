@@ -3,20 +3,18 @@ kind: CustomResourceDefinition
 metadata:
   name: kafkaconnects2is.kafka.strimzi.io
   labels:
-    app: 'strimzi'
-    chart: 'strimzi-kafka-operator-0.15.0'
+    app: "strimzi"
+    chart: "strimzi-kafka-operator-0.15.0"
     component: kafkaconnects2is.kafka.strimzi.io-crd
-    release: 'release-name'
-    heritage: 'Tiller'
 spec:
   group: kafka.strimzi.io
   versions:
-  - name: v1beta1
-    served: true
-    storage: true
-  - name: v1alpha1
-    served: true
-    storage: false
+    - name: v1beta1
+      served: true
+      storage: true
+    - name: v1alpha1
+      served: true
+      storage: false
   version: v1beta1
   scope: Namespaced
   names:
@@ -25,12 +23,12 @@ spec:
     singular: kafkaconnects2i
     plural: kafkaconnects2is
     shortNames:
-    - kcs2i
+      - kcs2i
   additionalPrinterColumns:
-  - name: Desired replicas
-    description: The desired number of Kafka Connect replicas
-    JSONPath: .spec.replicas
-    type: integer
+    - name: Desired replicas
+      description: The desired number of Kafka Connect replicas
+      JSONPath: .spec.replicas
+      type: integer
   subresources:
     status: {}
   validation:
@@ -87,10 +85,10 @@ spec:
                   type: object
                 -Xms:
                   type: string
-                  pattern: '[0-9]+[mMgG]?'
+                  pattern: "[0-9]+[mMgG]?"
                 -Xmx:
                   type: string
-                  pattern: '[0-9]+[mMgG]?'
+                  pattern: "[0-9]+[mMgG]?"
                 gcLoggingEnabled:
                   type: boolean
             affinity:
@@ -311,10 +309,10 @@ spec:
                 type:
                   type: string
                   enum:
-                  - inline
-                  - external
+                    - inline
+                    - external
               required:
-              - type
+                - type
             metrics:
               type: object
             template:
@@ -665,8 +663,8 @@ spec:
                     secretName:
                       type: string
                   required:
-                  - key
-                  - secretName
+                    - key
+                    - secretName
                 certificateAndKey:
                   type: object
                   properties:
@@ -677,9 +675,9 @@ spec:
                     secretName:
                       type: string
                   required:
-                  - certificate
-                  - key
-                  - secretName
+                    - certificate
+                    - key
+                    - secretName
                 clientId:
                   type: string
                 clientSecret:
@@ -690,8 +688,8 @@ spec:
                     secretName:
                       type: string
                   required:
-                  - key
-                  - secretName
+                    - key
+                    - secretName
                 disableTlsHostnameVerification:
                   type: boolean
                 passwordSecret:
@@ -702,8 +700,8 @@ spec:
                     secretName:
                       type: string
                   required:
-                  - password
-                  - secretName
+                    - password
+                    - secretName
                 refreshToken:
                   type: object
                   properties:
@@ -712,8 +710,8 @@ spec:
                     secretName:
                       type: string
                   required:
-                  - key
-                  - secretName
+                    - key
+                    - secretName
                 tlsTrustedCertificates:
                   type: array
                   items:
@@ -724,21 +722,21 @@ spec:
                       secretName:
                         type: string
                     required:
-                    - certificate
-                    - secretName
+                      - certificate
+                      - secretName
                 tokenEndpointUri:
                   type: string
                 type:
                   type: string
                   enum:
-                  - tls
-                  - scram-sha-512
-                  - plain
-                  - oauth
+                    - tls
+                    - scram-sha-512
+                    - plain
+                    - oauth
                 username:
                   type: string
               required:
-              - type
+                - type
             bootstrapServers:
               type: string
             config:
@@ -775,8 +773,8 @@ spec:
                               optional:
                                 type: boolean
                     required:
-                    - name
-                    - valueFrom
+                      - name
+                      - valueFrom
                 volumes:
                   type: array
                   items:
@@ -825,7 +823,7 @@ spec:
                           secretName:
                             type: string
                     required:
-                    - name
+                      - name
             insecureSourceRepository:
               type: boolean
             resources:
@@ -848,8 +846,8 @@ spec:
                       secretName:
                         type: string
                     required:
-                    - certificate
-                    - secretName
+                      - certificate
+                      - secretName
             tolerations:
               type: array
               items:
@@ -871,13 +869,13 @@ spec:
                 type:
                   type: string
                   enum:
-                  - jaeger
+                    - jaeger
               required:
-              - type
+                - type
             version:
               type: string
           required:
-          - bootstrapServers
+            - bootstrapServers
         status:
           type: object
           properties:

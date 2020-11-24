@@ -6,49 +6,47 @@ metadata:
     app: strimzi
     chart: strimzi-kafka-operator-0.15.0
     component: entity-operator-role
-    release: release-name
-    heritage: Tiller
 rules:
-- apiGroups:
-  - "kafka.strimzi.io"
-  resources:
-  - kafkatopics
-  - kafkatopics/status
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - patch
-  - update
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-- apiGroups:
-  - "kafka.strimzi.io"
-  resources:
-  - kafkausers
-  - kafkausers/status
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - patch
-  - update
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - create
-  - patch
-  - update
-  - delete
+  - apiGroups:
+      - "kafka.strimzi.io"
+    resources:
+      - kafkatopics
+      - kafkatopics/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
+      - "kafka.strimzi.io"
+    resources:
+      - kafkausers
+      - kafkausers/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - create
+      - patch
+      - update
+      - delete

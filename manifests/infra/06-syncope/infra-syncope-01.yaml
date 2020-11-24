@@ -3,11 +3,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sitewhere-syncope-console
+  namespace: sitewhere-system
 spec:
   replicas: 1
   strategy: {}
   selector:
-    matchLabels:  
+    matchLabels:
       name: "sitewhere-syncope-console"
       app.kubernetes.io/name: "sitewhere-syncope-console"
       app.kubernetes.io/instance: sitewhere-infrastructure
@@ -25,13 +26,13 @@ spec:
         sitewhere.io/name: "syncope-console"
     spec:
       containers:
-      - name: syncope-console
-        envFrom:
-        - configMapRef:
-           name: sitewhere-syncope-environment-config
-        image: "apache/syncope-console:2.1.4"
-        ports:
-        - containerPort: 8080
-        resources: {}
+        - name: syncope-console
+          envFrom:
+            - configMapRef:
+                name: sitewhere-syncope-environment-config
+          image: "apache/syncope-console:2.1.4"
+          ports:
+            - containerPort: 8080
+          resources: {}
       restartPolicy: Always
 status: {}

@@ -5,13 +5,10 @@ metadata:
   name: sitewhere-infrastructure-redis-ha
   namespace: sitewhere-system
   labels:
-    heritage: Tiller
-    release: sitewhere-infrastructure
-    chart: redis-ha-4.4.4
     app: sitewhere-infrastructure-redis-ha
 subjects:
-- kind: ServiceAccount
-  name: sitewhere-infrastructure-redis-ha
+  - kind: ServiceAccount
+    name: sitewhere-infrastructure-redis-ha
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role

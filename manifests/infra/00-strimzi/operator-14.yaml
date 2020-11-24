@@ -6,24 +6,22 @@ metadata:
     app: strimzi
     chart: strimzi-kafka-operator-0.15.0
     component: topic-operator-role
-    release: release-name
-    heritage: Tiller
 rules:
-- apiGroups:
-  - "kafka.strimzi.io"
-  resources:
-  - kafkatopics
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - patch
-  - update
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
+  - apiGroups:
+      - "kafka.strimzi.io"
+    resources:
+      - kafkatopics
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create

@@ -5,14 +5,11 @@ metadata:
   name: sitewhere-infrastructure-redis-ha
   namespace: sitewhere-system
   labels:
-    heritage: Tiller
-    release: sitewhere-infrastructure
-    chart: redis-ha-4.4.4
     app: sitewhere-infrastructure-redis-ha
 rules:
-- apiGroups:
-    - ""
-  resources:
-    - endpoints
-  verbs:
-    - get
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+    verbs:
+      - get

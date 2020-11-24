@@ -3,20 +3,18 @@ kind: CustomResourceDefinition
 metadata:
   name: kafkamirrormakers.kafka.strimzi.io
   labels:
-    app: 'strimzi'
-    chart: 'strimzi-kafka-operator-0.15.0'
+    app: "strimzi"
+    chart: "strimzi-kafka-operator-0.15.0"
     component: kafkamirrormakers.kafka.strimzi.io-crd
-    release: 'release-name'
-    heritage: 'Tiller'
 spec:
   group: kafka.strimzi.io
   versions:
-  - name: v1beta1
-    served: true
-    storage: true
-  - name: v1alpha1
-    served: true
-    storage: false
+    - name: v1beta1
+      served: true
+      storage: true
+    - name: v1alpha1
+      served: true
+      storage: false
   version: v1beta1
   scope: Namespaced
   names:
@@ -25,22 +23,22 @@ spec:
     singular: kafkamirrormaker
     plural: kafkamirrormakers
     shortNames:
-    - kmm
+      - kmm
   additionalPrinterColumns:
-  - name: Desired replicas
-    description: The desired number of Kafka Mirror Maker replicas
-    JSONPath: .spec.replicas
-    type: integer
-  - name: Consumer Bootstrap Servers
-    description: The boostrap servers for the consumer
-    JSONPath: .spec.consumer.bootstrapServers
-    type: string
-    priority: 1
-  - name: Producer Bootstrap Servers
-    description: The boostrap servers for the producer
-    JSONPath: .spec.producer.bootstrapServers
-    type: string
-    priority: 1
+    - name: Desired replicas
+      description: The desired number of Kafka Mirror Maker replicas
+      JSONPath: .spec.replicas
+      type: integer
+    - name: Consumer Bootstrap Servers
+      description: The boostrap servers for the consumer
+      JSONPath: .spec.consumer.bootstrapServers
+      type: string
+      priority: 1
+    - name: Producer Bootstrap Servers
+      description: The boostrap servers for the producer
+      JSONPath: .spec.producer.bootstrapServers
+      type: string
+      priority: 1
   subresources:
     status: {}
   validation:
@@ -79,8 +77,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - key
-                      - secretName
+                        - key
+                        - secretName
                     certificateAndKey:
                       type: object
                       properties:
@@ -91,9 +89,9 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - certificate
-                      - key
-                      - secretName
+                        - certificate
+                        - key
+                        - secretName
                     clientId:
                       type: string
                     clientSecret:
@@ -104,8 +102,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - key
-                      - secretName
+                        - key
+                        - secretName
                     disableTlsHostnameVerification:
                       type: boolean
                     passwordSecret:
@@ -116,8 +114,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - password
-                      - secretName
+                        - password
+                        - secretName
                     refreshToken:
                       type: object
                       properties:
@@ -126,8 +124,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - key
-                      - secretName
+                        - key
+                        - secretName
                     tlsTrustedCertificates:
                       type: array
                       items:
@@ -138,21 +136,21 @@ spec:
                           secretName:
                             type: string
                         required:
-                        - certificate
-                        - secretName
+                          - certificate
+                          - secretName
                     tokenEndpointUri:
                       type: string
                     type:
                       type: string
                       enum:
-                      - tls
-                      - scram-sha-512
-                      - plain
-                      - oauth
+                        - tls
+                        - scram-sha-512
+                        - plain
+                        - oauth
                     username:
                       type: string
                   required:
-                  - type
+                    - type
                 config:
                   type: object
                 tls:
@@ -168,11 +166,11 @@ spec:
                           secretName:
                             type: string
                         required:
-                        - certificate
-                        - secretName
+                          - certificate
+                          - secretName
               required:
-              - groupId
-              - bootstrapServers
+                - groupId
+                - bootstrapServers
             producer:
               type: object
               properties:
@@ -191,8 +189,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - key
-                      - secretName
+                        - key
+                        - secretName
                     certificateAndKey:
                       type: object
                       properties:
@@ -203,9 +201,9 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - certificate
-                      - key
-                      - secretName
+                        - certificate
+                        - key
+                        - secretName
                     clientId:
                       type: string
                     clientSecret:
@@ -216,8 +214,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - key
-                      - secretName
+                        - key
+                        - secretName
                     disableTlsHostnameVerification:
                       type: boolean
                     passwordSecret:
@@ -228,8 +226,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - password
-                      - secretName
+                        - password
+                        - secretName
                     refreshToken:
                       type: object
                       properties:
@@ -238,8 +236,8 @@ spec:
                         secretName:
                           type: string
                       required:
-                      - key
-                      - secretName
+                        - key
+                        - secretName
                     tlsTrustedCertificates:
                       type: array
                       items:
@@ -250,21 +248,21 @@ spec:
                           secretName:
                             type: string
                         required:
-                        - certificate
-                        - secretName
+                          - certificate
+                          - secretName
                     tokenEndpointUri:
                       type: string
                     type:
                       type: string
                       enum:
-                      - tls
-                      - scram-sha-512
-                      - plain
-                      - oauth
+                        - tls
+                        - scram-sha-512
+                        - plain
+                        - oauth
                     username:
                       type: string
                   required:
-                  - type
+                    - type
                 config:
                   type: object
                 tls:
@@ -280,10 +278,10 @@ spec:
                           secretName:
                             type: string
                         required:
-                        - certificate
-                        - secretName
+                          - certificate
+                          - secretName
               required:
-              - bootstrapServers
+                - bootstrapServers
             resources:
               type: object
               properties:
@@ -521,10 +519,10 @@ spec:
                   type: object
                 -Xms:
                   type: string
-                  pattern: '[0-9]+[mMgG]?'
+                  pattern: "[0-9]+[mMgG]?"
                 -Xmx:
                   type: string
-                  pattern: '[0-9]+[mMgG]?'
+                  pattern: "[0-9]+[mMgG]?"
                 gcLoggingEnabled:
                   type: boolean
             logging:
@@ -537,10 +535,10 @@ spec:
                 type:
                   type: string
                   enum:
-                  - inline
-                  - external
+                    - inline
+                    - external
               required:
-              - type
+                - type
             metrics:
               type: object
             tracing:
@@ -549,9 +547,9 @@ spec:
                 type:
                   type: string
                   enum:
-                  - jaeger
+                    - jaeger
               required:
-              - type
+                - type
             template:
               type: object
               properties:
@@ -912,10 +910,10 @@ spec:
             version:
               type: string
           required:
-          - replicas
-          - whitelist
-          - consumer
-          - producer
+            - replicas
+            - whitelist
+            - consumer
+            - producer
         status:
           type: object
           properties:

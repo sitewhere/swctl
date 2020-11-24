@@ -7,9 +7,6 @@ metadata:
   labels:
     sitewhere-infrastructure-redis-ha: replica
     app: redis-ha
-    heritage: "Tiller"
-    release: "sitewhere-infrastructure"
-    chart: redis-ha-4.4.4
 spec:
   selector:
     matchLabels:

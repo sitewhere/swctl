@@ -6,12 +6,10 @@ metadata:
     app: strimzi
     chart: strimzi-kafka-operator-0.15.0
     component: broker-role
-    release: release-name
-    heritage: Tiller
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - get
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get

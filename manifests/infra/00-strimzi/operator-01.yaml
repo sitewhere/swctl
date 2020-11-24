@@ -7,5 +7,3 @@ metadata:
     app: strimzi
     chart: strimzi-kafka-operator-0.15.0
     component: service-account
-    release: release-name
-    heritage: Tiller

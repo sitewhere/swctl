@@ -10,6 +10,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: zoo-entrance
+  namespace: sitewhere-system
   labels:
     app: zoo-entrance
 spec:
@@ -26,7 +27,7 @@ spec:
     spec:
       containers:
         - name: zoo-entrance
-          image: 'docker.io/scholzj/zoo-entrance:latest'
+          image: "docker.io/scholzj/zoo-entrance:latest"
           command:
             - /opt/stunnel/stunnel_run.sh
           ports:
@@ -37,13 +38,13 @@ spec:
             - name: LOG_LEVEL
               value: notice
             - name: STRIMZI_ZOOKEEPER_CONNECT
-              value: 'sitewhere-kafka-zookeeper-client:2181'
+              value: "sitewhere-kafka-zookeeper-client:2181"
           imagePullPolicy: Always
           livenessProbe:
             exec:
               command:
                 - /opt/stunnel/stunnel_healthcheck.sh
-                - '2181'
+                - "2181"
             failureThreshold: 3
             initialDelaySeconds: 15
             periodSeconds: 10
@@ -53,7 +54,7 @@ spec:
             exec:
               command:
                 - /opt/stunnel/stunnel_healthcheck.sh
-                - '2181'
+                - "2181"
             failureThreshold: 3
             initialDelaySeconds: 15
             periodSeconds: 10

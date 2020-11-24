@@ -3,11 +3,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sitewhere-infrastructure-zookeeper-headless
+  namespace: sitewhere-system
   labels:
     app: zookeeper
-    chart: zookeeper-2.1.1
-    release: sitewhere-infrastructure
-    heritage: Tiller
 spec:
   clusterIP: None
   ports:

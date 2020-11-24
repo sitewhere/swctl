@@ -3,20 +3,18 @@ kind: CustomResourceDefinition
 metadata:
   name: kafkausers.kafka.strimzi.io
   labels:
-    app: 'strimzi'
-    chart: 'strimzi-kafka-operator-0.15.0'
+    app: "strimzi"
+    chart: "strimzi-kafka-operator-0.15.0"
     component: kafkausers.kafka.strimzi.io-crd
-    release: 'release-name'
-    heritage: 'Tiller'
 spec:
   group: kafka.strimzi.io
   versions:
-  - name: v1beta1
-    served: true
-    storage: true
-  - name: v1alpha1
-    served: true
-    storage: false
+    - name: v1beta1
+      served: true
+      storage: true
+    - name: v1alpha1
+      served: true
+      storage: false
   version: v1beta1
   scope: Namespaced
   names:
@@ -25,16 +23,16 @@ spec:
     singular: kafkauser
     plural: kafkausers
     shortNames:
-    - ku
+      - ku
   additionalPrinterColumns:
-  - name: Authentication
-    description: How the user is authenticated
-    JSONPath: .spec.authentication.type
-    type: string
-  - name: Authorization
-    description: How the user is authorised
-    JSONPath: .spec.authorization.type
-    type: string
+    - name: Authentication
+      description: How the user is authenticated
+      JSONPath: .spec.authentication.type
+      type: string
+    - name: Authorization
+      description: How the user is authorised
+      JSONPath: .spec.authorization.type
+      type: string
   subresources:
     status: {}
   validation:
@@ -49,10 +47,10 @@ spec:
                 type:
                   type: string
                   enum:
-                  - tls
-                  - scram-sha-512
+                    - tls
+                    - scram-sha-512
               required:
-              - type
+                - type
             authorization:
               type: object
               properties:
@@ -66,17 +64,17 @@ spec:
                       operation:
                         type: string
                         enum:
-                        - Read
-                        - Write
-                        - Create
-                        - Delete
-                        - Alter
-                        - Describe
-                        - ClusterAction
-                        - AlterConfigs
-                        - DescribeConfigs
-                        - IdempotentWrite
-                        - All
+                          - Read
+                          - Write
+                          - Create
+                          - Delete
+                          - Alter
+                          - Describe
+                          - ClusterAction
+                          - AlterConfigs
+                          - DescribeConfigs
+                          - IdempotentWrite
+                          - All
                       resource:
                         type: object
                         properties:
@@ -85,32 +83,32 @@ spec:
                           patternType:
                             type: string
                             enum:
-                            - literal
-                            - prefix
+                              - literal
+                              - prefix
                           type:
                             type: string
                             enum:
-                            - topic
-                            - group
-                            - cluster
-                            - transactionalId
+                              - topic
+                              - group
+                              - cluster
+                              - transactionalId
                         required:
-                        - type
+                          - type
                       type:
                         type: string
                         enum:
-                        - allow
-                        - deny
+                          - allow
+                          - deny
                     required:
-                    - operation
-                    - resource
+                      - operation
+                      - resource
                 type:
                   type: string
                   enum:
-                  - simple
+                    - simple
               required:
-              - acls
-              - type
+                - acls
+                - type
         status:
           type: object
           properties:

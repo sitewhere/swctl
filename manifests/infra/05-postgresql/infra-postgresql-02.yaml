@@ -3,11 +3,9 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: sitewhere-postgresql
+  namespace: sitewhere-system
   labels:
     app: postgresql
-    chart: postgresql-8.6.4
-    release: "sitewhere-infrastructure"
-    heritage: "Tiller"
 spec:
   serviceName: sitewhere-postgresql-headless
   replicas: 1
@@ -29,15 +27,15 @@ spec:
         role: master
       annotations:
         sidecar.istio.io/inject: "false"
-        
-    spec:      
+
+    spec:
       securityContext:
         fsGroup: 1001
       initContainers:
         # - name: do-something
         #   image: busybox
         #   command: ['do', 'something']
-        
+
       containers:
         - name: sitewhere-postgresql
           image: docker.io/bitnami/postgresql:11.7.0-debian-10-r9
@@ -46,7 +44,7 @@ spec:
             requests:
               cpu: 250m
               memory: 256Mi
-            
+
           securityContext:
             runAsUser: 1001
           env:
@@ -102,7 +100,7 @@ spec:
               mountPath: /dev/shm
             - name: data
               mountPath: /bitnami/postgresql
-              subPath: 
+              subPath:
       volumes:
         - name: dshm
           emptyDir:

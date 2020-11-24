@@ -3,10 +3,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "sitewhere-syncope-enduser"
+  namespace: sitewhere-system
 spec:
   type: "ClusterIP"
   selector:
     name: "sitewhere-syncope-enduser"
   ports:
-  - port: 8080
-    name: http-api
+    - port: 8080
+      name: http-api
