@@ -290,6 +290,7 @@ func (i *Install) installFiles(parentPath string, fi os.FileInfo) ([]status.Site
 			if errors.IsAlreadyExists(err) {
 				i.cfg.Log(fmt.Sprintf("Resource %s is already present. Skipping.", fileName))
 			} else {
+				fmt.Printf("Error: %v\n", err)
 				var deployStatus = status.SiteWhereStatus{
 					Name:   fileName,
 					Status: status.Unknown,

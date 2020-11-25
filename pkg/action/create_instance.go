@@ -76,7 +76,7 @@ type instanceResourcesResult struct {
 }
 
 // SiteWhere Docker Image default tag name
-const dockerImageDefaultTag = "3.0.0.beta1"
+const dockerImageDefaultTag = "3.0.0.beta3"
 
 // Default configuration Template
 const defaultConfigurationTemplate = "default"
@@ -122,27 +122,27 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 }
 
 func (i *CreateInstance) createSiteWhereInstance(profile alpha3.SiteWhereProfile) (*instance.CreateSiteWhereInstance, error) {
-	nsr, err := i.createNamespaceAndResources()
-	if err != nil {
-		return nil, err
-	}
+	// nsr, err := i.createNamespaceAndResources()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	inr, err := i.createInstanceResources(profile)
 	if err != nil {
 		return nil, err
 	}
 	return &instance.CreateSiteWhereInstance{
-		InstanceName:               i.InstanceName,
-		Namespace:                  nsr.Namespace,
-		Tag:                        i.Tag,
-		Replicas:                   i.Replicas,
-		Debug:                      i.Debug,
-		ConfigurationTemplate:      i.ConfigurationTemplate,
-		DatasetTemplate:            i.DatasetTemplate,
-		ServiceAccountName:         nsr.ServiceAccountName,
-		ClusterRoleName:            nsr.ClusterRoleName,
-		ClusterRoleBindingName:     nsr.ClusterRoleBindingName,
-		LoadBalanceServiceName:     nsr.LoadBalanceServiceName,
+		InstanceName: i.InstanceName,
+		//		Namespace:                  nsr.Namespace,
+		Tag:                   i.Tag,
+		Replicas:              i.Replicas,
+		Debug:                 i.Debug,
+		ConfigurationTemplate: i.ConfigurationTemplate,
+		DatasetTemplate:       i.DatasetTemplate,
+		// ServiceAccountName:         nsr.ServiceAccountName,
+		// ClusterRoleName:            nsr.ClusterRoleName,
+		// ClusterRoleBindingName:     nsr.ClusterRoleBindingName,
+		// LoadBalanceServiceName:     nsr.LoadBalanceServiceName,
 		InstanceCustomResourceName: inr.CRName,
 	}, nil
 }
@@ -156,41 +156,41 @@ func (i *CreateInstance) ExtractInstanceName(args []string) (string, error) {
 }
 
 func (i *CreateInstance) createNamespaceAndResources() (*namespaceAndResourcesResult, error) {
-	var err error
-	clientset, err := i.cfg.KubernetesClientSet()
-	if err != nil {
-		return nil, err
-	}
-	ns, err := resources.CreateNamespaceIfNotExists(i.Namespace, clientset)
-	if err != nil {
-		return nil, err
-	}
-	sa, err := resources.CreateServiceAccountIfNotExists(
-		i.buildInstanceServiceAccount(), clientset, i.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	clusterRole, err := resources.CreateClusterRoleIfNotExists(
-		i.buildInstanceClusterRole(), clientset)
-	if err != nil {
-		return nil, err
-	}
-	clusterRoleBinding, err := resources.CreateClusterRoleBindingIfNotExists(
-		i.buildInstanceClusterRoleBinding(sa, clusterRole), clientset)
-	if err != nil {
-		return nil, err
-	}
-	loadBalanceService, err := resources.CreateServiceIfNotExists(
-		i.buildLoadBalancerService(), clientset, i.Namespace)
-	if err != nil {
-		return nil, err
-	}
+	//	var err error
+	// clientset, err := i.cfg.KubernetesClientSet()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// ns, err := resources.CreateNamespaceIfNotExists(i.Namespace, clientset)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// sa, err := resources.CreateServiceAccountIfNotExists(
+	// 	i.buildInstanceServiceAccount(), clientset, i.Namespace)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// clusterRole, err := resources.CreateClusterRoleIfNotExists(
+	// 	i.buildInstanceClusterRole(), clientset)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// clusterRoleBinding, err := resources.CreateClusterRoleBindingIfNotExists(
+	// 	i.buildInstanceClusterRoleBinding(sa, clusterRole), clientset)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// loadBalanceService, err := resources.CreateServiceIfNotExists(
+	// 	i.buildLoadBalancerService(), clientset, i.Namespace)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return &namespaceAndResourcesResult{
-		Namespace:              ns.ObjectMeta.Name,
-		ServiceAccountName:     sa.ObjectMeta.Name,
-		ClusterRoleName:        clusterRole.ObjectMeta.Name,
-		ClusterRoleBindingName: clusterRoleBinding.ObjectMeta.Name,
-		LoadBalanceServiceName: loadBalanceService.ObjectMeta.Name,
+		// Namespace:              ns.ObjectMeta.Name,
+		// ServiceAccountName:     sa.ObjectMeta.Name,
+		// ClusterRoleName:        clusterRole.ObjectMeta.Name,
+		// ClusterRoleBindingName: clusterRoleBinding.ObjectMeta.Name,
+		// LoadBalanceServiceName: loadBalanceService.ObjectMeta.Name,
 	}, nil
 }
 
@@ -204,25 +204,25 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 	if err != nil {
 		return nil, err
 	}
-	var microservices = alpha3.GetSiteWhereMicroservicesList()
-	var installedMicroservices []string
+	//	var microservices = alpha3.GetSiteWhereMicroservicesList()
+	// var installedMicroservices []string
 
-	for _, micrservice := range microservices {
-		var msCR *unstructured.Unstructured
-		if micrservice.ID == "instance-management" {
-			msCR = i.buildCRSiteWhereMicroserviceInstanceManagement()
-		} else if profile == alpha3.Default || profile != micrservice.Profile {
-			msCR = i.buildCRSiteWhereMicroservice(&micrservice)
-		}
-		mrc, err := resources.CreateSiteWhereMicroserviceCR(msCR, i.Namespace, dynamicClientset)
-		if err != nil {
-			return nil, err
-		}
-		installedMicroservices = append(installedMicroservices, mrc.GetName())
-	}
+	// for _, micrservice := range microservices {
+	// 	var msCR *unstructured.Unstructured
+	// 	if micrservice.ID == "instance-management" {
+	// 		msCR = i.buildCRSiteWhereMicroserviceInstanceManagement()
+	// 	} else if profile == alpha3.Default || profile != micrservice.Profile {
+	// 		msCR = i.buildCRSiteWhereMicroservice(&micrservice)
+	// 	}
+	// 	mrc, err := resources.CreateSiteWhereMicroserviceCR(msCR, i.Namespace, dynamicClientset)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	installedMicroservices = append(installedMicroservices, mrc.GetName())
+	// }
 	return &instanceResourcesResult{
-		CRName:        icr.GetName(),
-		Microservices: installedMicroservices,
+		CRName: icr.GetName(),
+		// Microservices: installedMicroservices,
 	}, nil
 }
 
