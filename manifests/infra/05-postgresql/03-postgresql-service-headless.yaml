@@ -1,11 +1,13 @@
-# Source: sitewhere-infrastructure/charts/postgresql/templates/svc-headless.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: sitewhere-postgresql-headless
   namespace: sitewhere-system
   labels:
-    app: postgresql
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-9.1.1
+    app.kubernetes.io/instance: sitewhere
+    app.kubernetes.io/managed-by: swctl
 spec:
   type: ClusterIP
   clusterIP: None
@@ -14,5 +16,5 @@ spec:
       port: 5432
       targetPort: tcp-postgresql
   selector:
-    app: postgresql
-    release: "sitewhere-infrastructure"
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: sitewhere

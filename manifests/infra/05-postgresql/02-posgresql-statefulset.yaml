@@ -1,11 +1,14 @@
-# Source: sitewhere-infrastructure/charts/postgresql/templates/statefulset.yaml
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: sitewhere-postgresql
   namespace: sitewhere-system
   labels:
-    app: postgresql
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-9.1.1
+    app.kubernetes.io/instance: sitewhere
+    app.kubernetes.io/managed-by: swctl
+  annotations:
 spec:
   serviceName: sitewhere-postgresql-headless
   replicas: 1
@@ -13,43 +16,36 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: postgresql
-      release: "sitewhere-infrastructure"
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/instance: sitewhere
       role: master
   template:
     metadata:
       name: sitewhere-postgresql
       labels:
-        app: postgresql
-        chart: postgresql-8.6.4
-        release: "sitewhere-infrastructure"
-        heritage: "Tiller"
+        app.kubernetes.io/name: postgresql
+        helm.sh/chart: postgresql-9.1.1
+        app.kubernetes.io/instance: sitewhere
+        app.kubernetes.io/managed-by: swctl
         role: master
       annotations:
         sidecar.istio.io/inject: "false"
-
     spec:
       securityContext:
         fsGroup: 1001
-      initContainers:
-        # - name: do-something
-        #   image: busybox
-        #   command: ['do', 'something']
-
       containers:
         - name: sitewhere-postgresql
-          image: docker.io/bitnami/postgresql:11.7.0-debian-10-r9
+          image: docker.io/bitnami/postgresql:11.8.0-debian-10-r61
           imagePullPolicy: "IfNotPresent"
           resources:
             requests:
               cpu: 250m
               memory: 256Mi
-
           securityContext:
             runAsUser: 1001
           env:
             - name: BITNAMI_DEBUG
-              value: "true"
+              value: "false"
             - name: POSTGRESQL_PORT_NUMBER
               value: "5432"
             - name: POSTGRESQL_VOLUME_DIR
@@ -57,15 +53,17 @@ spec:
             - name: PGDATA
               value: "/bitnami/postgresql/data"
             - name: POSTGRES_USER
-              value: "syncope"
+              value: "sitewhere"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: syncope
+                  name: sitewhere-postgresql
                   key: postgresql-password
             - name: POSTGRES_DB
-              value: "syncope"
+              value: "sitewhere"
             - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+            - name: POSTGRESQL_ENABLE_TLS
               value: "no"
           ports:
             - name: tcp-postgresql
@@ -75,7 +73,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - exec pg_isready -U "syncope" -d "syncope" -h 127.0.0.1 -p 5432
+                - exec pg_isready -U "sitewhere" -d "dbname=sitewhere" -h 127.0.0.1 -p 5432
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -88,7 +86,7 @@ spec:
                 - -c
                 - -e
                 - |
-                  exec pg_isready -U "syncope" -d "syncope" -h 127.0.0.1 -p 5432
+                  exec pg_isready -U "sitewhere" -d "dbname=sitewhere" -h 127.0.0.1 -p 5432
                   [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
             initialDelaySeconds: 5
             periodSeconds: 10
@@ -114,4 +112,4 @@ spec:
           - "ReadWriteOnce"
         resources:
           requests:
-            storage: "500Mi"
+            storage: "8Gi"

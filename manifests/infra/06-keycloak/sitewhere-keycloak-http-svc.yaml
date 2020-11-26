@@ -1,0 +1,31 @@
+# Source: sitewhere-keycloak/charts/keycloak/templates/service-http.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sitewhere-keycloak-http
+  namespace: sitewhere-system
+  labels:
+    helm.sh/chart: keycloak-9.6.1
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "11.0.2"
+    app.kubernetes.io/managed-by: swctl
+    app.kubernetes.io/component: http
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 8443
+      targetPort: https
+      protocol: TCP
+    - name: http-management
+      port: 9990
+      targetPort: http-management
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak

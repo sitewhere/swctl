@@ -17,6 +17,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/gookit/color"
@@ -27,6 +28,7 @@ import (
 	"github.com/sitewhere/swctl/pkg/action"
 	"github.com/sitewhere/swctl/pkg/cli/output"
 	"github.com/sitewhere/swctl/pkg/install"
+	"github.com/sitewhere/swctl/pkg/status"
 )
 
 var installHelp = `
@@ -77,13 +79,39 @@ func newInstallWriter(results *install.SiteWhereInstall) *installWriter {
 
 func (i *installWriter) WriteTable(out io.Writer) error {
 	table := uitable.New()
-	table.AddRow("COMPONENT", "STATUS")
-	table.AddRow("Custom Resource Definitions", color.Info.Render("Installed"))
-	table.AddRow("Templates", color.Info.Render("Installed"))
-	table.AddRow("Operator", color.Info.Render("Installed"))
-	table.AddRow("Infrastructure", color.Info.Render("Installed"))
+	table.AddRow("COMPONENT", "RESOURCES", "STATUS")
+	table.AddRow("Custom Resource Definitions", fmt.Sprintf("%d", i.countCRDs()), color.Info.Render("Installed"))
+	table.AddRow("Templates", fmt.Sprintf("%d", i.countTemplates()), color.Info.Render("Installed"))
+	table.AddRow("Operator", fmt.Sprintf("%d", i.countOperator()), color.Info.Render("Installed"))
+	table.AddRow("Infrastructure", fmt.Sprintf("%d", i.countInfrastructure()), color.Info.Render("Installed"))
 	table.AddRow(color.Style{color.FgGreen, color.OpBold}.Render("SiteWhere 3.0 Installed"))
 	return output.EncodeTable(out, table)
+}
+
+func (i *installWriter) countCRDs() int {
+	return countStatuses(i.Results.CDRStatuses)
+}
+
+func (i *installWriter) countTemplates() int {
+	return countStatuses(i.Results.TemplatesStatues)
+}
+
+func (i *installWriter) countOperator() int {
+	return countStatuses(i.Results.OperatorStatuses)
+}
+
+func (i *installWriter) countInfrastructure() int {
+	return countStatuses(i.Results.InfrastructureStatuses)
+}
+
+func countStatuses(result []status.SiteWhereStatus) int {
+	var count = 0
+	for _, crd := range result {
+		if crd.Status == status.Installed {
+			count++
+		}
+	}
+	return count
 }
 
 func (i *installWriter) WriteJSON(out io.Writer) error {
