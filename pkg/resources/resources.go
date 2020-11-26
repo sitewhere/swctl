@@ -342,8 +342,12 @@ func deploymentAvailable(clientset kubernetes.Interface, deploymentName string, 
 	if existingDeploy.Status.ReadyReplicas < existingDeploy.Status.AvailableReplicas {
 		return false, nil
 	}
-
-	return true, nil
+	for _, cond := range existingDeploy.Status.Conditions {
+		if cond.Type == appsv1.DeploymentProgressing {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // WaitForSecretExists waits for a Secret to exists
