@@ -81,7 +81,7 @@ func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
 		// Uninstall Infrastructure
 		infraStatuses, err = i.UninstallInfrastructure()
 		if err != nil {
-			return nil, err
+			fmt.Println(err)
 		}
 	}
 
@@ -90,7 +90,7 @@ func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
 		// Uninstall Operator
 		operatorStatuses, err = i.UninstallOperator()
 		if err != nil {
-			return nil, err
+			fmt.Println(err)
 		}
 	}
 
@@ -99,7 +99,7 @@ func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
 		// Uninstall Templates
 		templatesStatues, err = i.UninstallTemplates()
 		if err != nil {
-			return nil, err
+			fmt.Println(err)
 		}
 	}
 
@@ -109,7 +109,7 @@ func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
 		// Uninstall Custom Resource Definitions
 		crdDeletedStatuses, err = i.UninstallCRDs()
 		if err != nil {
-			return nil, err
+			fmt.Println(err)
 		}
 	}
 
