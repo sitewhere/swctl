@@ -23,7 +23,6 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/internal/crds"
 	"github.com/sitewhere/swctl/pkg/status"
 )
 
@@ -34,16 +33,16 @@ func SiteWhereCRDs(statikFS http.FileSystem,
 	config *rest.Config) ([]status.SiteWhereStatus, error) {
 	// var err error
 	var result []status.SiteWhereStatus
-	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
-		// err = resources.InstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
-		// if err != nil && !errors.IsAlreadyExists(err) {
-		// 	return nil, err
-		// }
-		var crdStatus = status.SiteWhereStatus{
-			Name: crdFile,
-			// Status: Installed,
-		}
-		result = append(result, crdStatus)
-	}
+	//	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
+	// err = resources.InstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
+	// if err != nil && !errors.IsAlreadyExists(err) {
+	// 	return nil, err
+	// }
+	//	var crdStatus = status.SiteWhereStatus{
+	//		Name: crdFile,
+	// Status: Installed,
+	//	}
+	//	result = append(result, crdStatus)
+	//}
 	return result, nil
 }
