@@ -369,6 +369,11 @@ func (i *CreateInstance) buildCRSiteWhereInstace() *unstructured.Unstructured {
 			"spec": map[string]interface{}{
 				"configurationTemplate": i.ConfigurationTemplate,
 				"datasetTemplate":       i.DatasetTemplate,
+				"dockerSpec": map[string]interface{}{
+					"registry":   "docker.io",
+					"repository": "sitewhere",
+					"tag":        i.Tag,
+				},
 			},
 		},
 	}
