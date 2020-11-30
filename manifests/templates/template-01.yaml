@@ -66,20 +66,14 @@ spec:
         // Create the primary admin user.
         let adminUser = userBuilder.newUser('admin', 'password', 'Admin', 'User')
         adminUser.withStatus(AccountStatus.Active)
-        addedRoles.forEach(r => adminUser.withRole(r))
+        adminUser.withRole("SystemAdministrator")
         adminUser = userBuilder.persist(adminUser)
         logger.info(`[Create User] ${adminUser.getUsername()}`)
 
-        // Create the default non-admin user.
-        let nonAdminUser = userBuilder.newUser('noadmin', 'noadmin', 'Non-Admin', 'User')
-        nonAdminUser.withStatus(AccountStatus.Active)
-        addedRoles.forEach(r => {
-        	if (r.getRole() != SiteWhereRole.VIEW_SERVER_INFO.getRoleName() &&
-        	    r.getRole() != SiteWhereRole.ADMINISTER_TENANTS.getRoleName() &&
-        	    r.getRole() != SiteWhereRole.ADMINISTER_USERS.getRoleName()) {
-        	  nonAdminUser.withRole(r)
-        	}
-        })
-        nonAdminUser = userBuilder.persist(nonAdminUser)
-        logger.info(`[Create User] ${nonAdminUser.getUsername()}`)
+        // Create the default remote user.
+        let remoteUser = userBuilder.newUser('remote', 'remote', 'Remote', 'User')
+        remoteUser.withStatus(AccountStatus.Active)
+        remoteUser.withRole("RemoteAccessOnly")
+        remoteUser = userBuilder.persist(remoteUser)
+        logger.info(`[Create User] ${remoteUser.getUsername()}`)
       }
