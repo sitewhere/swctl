@@ -8,28 +8,28 @@ metadata:
   name: instances.sitewhere.io
 spec:
   additionalPrinterColumns:
-    - JSONPath: .spec.configurationTemplate
-      name: Config
-      type: string
-    - JSONPath: .spec.datasetTemplate
-      name: Dataset
-      type: string
-    - JSONPath: .status.tenantManagementBootstrapState
-      name: Tenant Mng
-      type: string
-    - JSONPath: .status.userManagementBootstrapState
-      name: User Mng
-      type: string
+  - JSONPath: .spec.configurationTemplate
+    name: Config
+    type: string
+  - JSONPath: .spec.datasetTemplate
+    name: Dataset
+    type: string
+  - JSONPath: .status.tenantManagementBootstrapState
+    name: Tenant Mng
+    type: string
+  - JSONPath: .status.userManagementBootstrapState
+    name: User Mng
+    type: string
   group: sitewhere.io
   names:
     categories:
-      - sitewhere-io
-      - core-sitewhere-io
+    - sitewhere-io
+    - core-sitewhere-io
     kind: SiteWhereInstance
     listKind: SiteWhereInstanceList
     plural: instances
     shortNames:
-      - swi
+    - swi
     singular: instance
   scope: Cluster
   subresources:
@@ -39,16 +39,14 @@ spec:
       description: SiteWhereInstance is the Schema for the Sitewhere Instances API
       properties:
         apiVersion:
-          description:
-            "APIVersion defines the versioned schema of this representation
+          description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
-          description:
-            "Kind is a string value representing the REST resource this
+          description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -56,16 +54,14 @@ spec:
           description: SiteWhereInstanceSpec defines the desired state of SiteWhereInstance
           properties:
             configuration:
-              description: Configuration is the configuration of the microservice
+              description: Configuration is the configuration of the instance
               type: object
             configurationTemplate:
-              description:
-                ConfigurationTemplate is the name of the configuration
+              description: ConfigurationTemplate is the name of the configuration
                 template of the instance
               type: string
             datasetTemplate:
-              description:
-                DatasetTemplate is the name of the dataset template of
+              description: DatasetTemplate is the name of the dataset template of
                 the instance
               type: string
             dockerSpec:
@@ -86,8 +82,7 @@ spec:
           description: SiteWhereInstanceStatus defines the observed state of SiteWhereInstance
           properties:
             tenantManagementBootstrapState:
-              description:
-                TenantManagementBootstrapState Bootstrap state of Tenant
+              description: TenantManagementBootstrapState Bootstrap state of Tenant
                 Management
               type: string
             userManagementBootstrapState:
@@ -97,9 +92,9 @@ spec:
       type: object
   version: v1alpha4
   versions:
-    - name: v1alpha4
-      served: true
-      storage: true
+  - name: v1alpha4
+    served: true
+    storage: true
 status:
   acceptedNames:
     kind: ""
