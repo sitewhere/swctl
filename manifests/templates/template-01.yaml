@@ -13,7 +13,7 @@ spec:
         tenant = tenantBuilder.newTenant('default', 'Default Tenant', 'sitewhere1234567890',
           'https://s3.amazonaws.com/sitewhere-demo/sitewhere-small.png', 'default', 'construction')
         tenant.withAuthorizedUserId('admin' )
-        tenant.withAuthorizedUserId('noadmin')
+        tenant.withAuthorizedUserId('remote')
         tenant = tenantBuilder.persist(tenant)
 
         logger.info(`[Create Tenant] ${tenant.getToken()}`)
