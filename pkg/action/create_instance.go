@@ -24,6 +24,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	rbacV1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -150,6 +151,19 @@ func (i *CreateInstance) ExtractInstanceName(args []string) (string, error) {
 
 func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile) (*instanceResourcesResult, error) {
 	var err error
+
+	clientset, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = resources.CreateNamespaceIfNotExists(i.Namespace, clientset)
+	if err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return nil, err
+		}
+	}
+
 	dynamicClientset, err := i.cfg.KubernetesDynamicClientSet()
 	if err != nil {
 		return nil, err
