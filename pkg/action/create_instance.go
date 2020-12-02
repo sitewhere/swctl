@@ -39,6 +39,8 @@ type CreateInstance struct {
 	cfg *Configuration
 	// Name of the instance
 	InstanceName string
+	// Name of the tenant
+	TenantName string
 	// Namespace to use
 	Namespace string
 	// Use minimal profile. Initialize only essential microservices.
@@ -70,9 +72,9 @@ type namespaceAndResourcesResult struct {
 
 type instanceResourcesResult struct {
 	// Custom Resource Name of the instance
-	CRName string
-	// Microservices created
-	Microservices []string
+	InstanceName string
+	// TenantName is the name of the CR SiteWhereTenant created
+	TenantName string
 }
 
 // SiteWhere Docker Image default tag name
@@ -89,6 +91,7 @@ func NewCreateInstance(cfg *Configuration) *CreateInstance {
 	return &CreateInstance{
 		cfg:                   cfg,
 		InstanceName:          "",
+		TenantName:            "default",
 		Namespace:             "",
 		Minimal:               false,
 		Replicas:              1,
@@ -122,28 +125,18 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 }
 
 func (i *CreateInstance) createSiteWhereInstance(profile alpha3.SiteWhereProfile) (*instance.CreateSiteWhereInstance, error) {
-	// nsr, err := i.createNamespaceAndResources()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	inr, err := i.createInstanceResources(profile)
 	if err != nil {
 		return nil, err
 	}
 	return &instance.CreateSiteWhereInstance{
-		InstanceName: i.InstanceName,
-		//		Namespace:                  nsr.Namespace,
-		Tag:                   i.Tag,
-		Replicas:              i.Replicas,
-		Debug:                 i.Debug,
-		ConfigurationTemplate: i.ConfigurationTemplate,
-		DatasetTemplate:       i.DatasetTemplate,
-		// ServiceAccountName:         nsr.ServiceAccountName,
-		// ClusterRoleName:            nsr.ClusterRoleName,
-		// ClusterRoleBindingName:     nsr.ClusterRoleBindingName,
-		// LoadBalanceServiceName:     nsr.LoadBalanceServiceName,
-		InstanceCustomResourceName: inr.CRName,
+		InstanceName:               i.InstanceName,
+		Tag:                        i.Tag,
+		Replicas:                   i.Replicas,
+		Debug:                      i.Debug,
+		ConfigurationTemplate:      i.ConfigurationTemplate,
+		DatasetTemplate:            i.DatasetTemplate,
+		InstanceCustomResourceName: inr.InstanceName,
 	}, nil
 }
 
@@ -153,45 +146,6 @@ func (i *CreateInstance) ExtractInstanceName(args []string) (string, error) {
 		return args[0], errors.Errorf("expected at most one arguments, unexpected arguments: %v", strings.Join(args[1:], ", "))
 	}
 	return args[0], nil
-}
-
-func (i *CreateInstance) createNamespaceAndResources() (*namespaceAndResourcesResult, error) {
-	//	var err error
-	// clientset, err := i.cfg.KubernetesClientSet()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// ns, err := resources.CreateNamespaceIfNotExists(i.Namespace, clientset)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// sa, err := resources.CreateServiceAccountIfNotExists(
-	// 	i.buildInstanceServiceAccount(), clientset, i.Namespace)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// clusterRole, err := resources.CreateClusterRoleIfNotExists(
-	// 	i.buildInstanceClusterRole(), clientset)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// clusterRoleBinding, err := resources.CreateClusterRoleBindingIfNotExists(
-	// 	i.buildInstanceClusterRoleBinding(sa, clusterRole), clientset)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// loadBalanceService, err := resources.CreateServiceIfNotExists(
-	// 	i.buildLoadBalancerService(), clientset, i.Namespace)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return &namespaceAndResourcesResult{
-		// Namespace:              ns.ObjectMeta.Name,
-		// ServiceAccountName:     sa.ObjectMeta.Name,
-		// ClusterRoleName:        clusterRole.ObjectMeta.Name,
-		// ClusterRoleBindingName: clusterRoleBinding.ObjectMeta.Name,
-		// LoadBalanceServiceName: loadBalanceService.ObjectMeta.Name,
-	}, nil
 }
 
 func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile) (*instanceResourcesResult, error) {
@@ -204,25 +158,14 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 	if err != nil {
 		return nil, err
 	}
-	//	var microservices = alpha3.GetSiteWhereMicroservicesList()
-	// var installedMicroservices []string
+	tcr, err := resources.CreateSiteWhereTenantCR(i.buildCRSiteWhereTenant(), i.Namespace, dynamicClientset)
+	if err != nil {
+		return nil, err
+	}
 
-	// for _, micrservice := range microservices {
-	// 	var msCR *unstructured.Unstructured
-	// 	if micrservice.ID == "instance-management" {
-	// 		msCR = i.buildCRSiteWhereMicroserviceInstanceManagement()
-	// 	} else if profile == alpha3.Default || profile != micrservice.Profile {
-	// 		msCR = i.buildCRSiteWhereMicroservice(&micrservice)
-	// 	}
-	// 	mrc, err := resources.CreateSiteWhereMicroserviceCR(msCR, i.Namespace, dynamicClientset)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	installedMicroservices = append(installedMicroservices, mrc.GetName())
-	// }
 	return &instanceResourcesResult{
-		CRName: icr.GetName(),
-		// Microservices: installedMicroservices,
+		InstanceName: icr.GetName(),
+		TenantName:   tcr.GetName(),
 	}, nil
 }
 
@@ -374,6 +317,30 @@ func (i *CreateInstance) buildCRSiteWhereInstace() *unstructured.Unstructured {
 					"repository": "sitewhere",
 					"tag":        i.Tag,
 				},
+			},
+		},
+	}
+}
+
+func (i *CreateInstance) buildCRSiteWhereTenant() *unstructured.Unstructured {
+	grv := grv.SiteWhereTenantGRV()
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":       "SiteWhereTenant",
+			"apiVersion": grv.Group + "/" + grv.Version,
+			"metadata": map[string]interface{}{
+				"name":      i.TenantName,
+				"namespace": i.Namespace,
+			},
+			"spec": map[string]interface{}{
+				"name":                i.TenantName,
+				"authenticationToken": "sitewhere0123456789",
+				"authorizedUserIds": []string{
+					"admin",
+					"remote",
+				},
+				"configurationTemplate": "default",
+				"datasetTemplate":       "construction",
 			},
 		},
 	}

@@ -34,6 +34,14 @@ var (
 	}
 )
 
+var (
+	sitewhereTenantGVR = schema.GroupVersionResource{
+		Group:    "sitewhere.io",
+		Version:  "v1alpha4",
+		Resource: "tenants",
+	}
+)
+
 // SiteWhereInstanceGRV SiteWhere Intance Group Version Resource
 func SiteWhereInstanceGRV() schema.GroupVersionResource {
 	return sitewhereInstanceGVR
@@ -42,4 +50,9 @@ func SiteWhereInstanceGRV() schema.GroupVersionResource {
 // SiteWhereMicroserviceGRV SiteWhere Micrservice Group Version Resource
 func SiteWhereMicroserviceGRV() schema.GroupVersionResource {
 	return sitewhereMicroserviceGVR
+}
+
+// SiteWhereTenantGRV SiteWhere Tenant Group Version Resource
+func SiteWhereTenantGRV() schema.GroupVersionResource {
+	return sitewhereTenantGVR
 }

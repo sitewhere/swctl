@@ -63,6 +63,13 @@ func CreateSiteWhereMicroserviceCR(cr *unstructured.Unstructured, namespace stri
 	return res.Create(context.TODO(), cr, metav1.CreateOptions{})
 }
 
+// CreateSiteWhereTenantCR Creates a Custom Resource for a SiteWhere Tenant
+func CreateSiteWhereTenantCR(cr *unstructured.Unstructured, namespace string, dynamicClient dynamic.Interface) (*unstructured.Unstructured, error) {
+	sitewhereTenantGVR := grv.SiteWhereTenantGRV()
+	res := dynamicClient.Resource(sitewhereTenantGVR).Namespace(namespace)
+	return res.Create(context.TODO(), cr, metav1.CreateOptions{})
+}
+
 func extractFromResource(crSiteWhereInstace *unstructured.Unstructured, clientset kubernetes.Interface) (*alpha3.SiteWhereInstance, error) {
 	var result = alpha3.SiteWhereInstance{}
 	metadata, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "metadata")

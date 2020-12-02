@@ -20,8 +20,6 @@ package instance
 type CreateSiteWhereInstance struct {
 	// Name of the instance
 	InstanceName string `json:"instanceName"`
-	// Namespace to use
-	Namespace string `json:"namespace"`
 	// Docker Image Tag
 	Tag string `json:"tag"`
 	// Number of replicas
@@ -32,14 +30,6 @@ type CreateSiteWhereInstance struct {
 	ConfigurationTemplate string
 	// Dataset template
 	DatasetTemplate string
-	// Service Account created
-	ServiceAccountName string `json:"serviceAccountName"`
-	// Custer Role created
-	ClusterRoleName string `json:"clusterRoleName"`
-	// Cluster Role Binding created
-	ClusterRoleBindingName string `json:"clusterRoleBindingName"`
-	// LoadBalancer Service created
-	LoadBalanceServiceName string `json:"loadBalanceServiceName"`
 	// Instance Custom Resources Name
 	InstanceCustomResourceName string `json:"instanceCustomResourceName"`
 }
