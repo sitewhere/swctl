@@ -74,8 +74,6 @@ type namespaceAndResourcesResult struct {
 type instanceResourcesResult struct {
 	// Custom Resource Name of the instance
 	InstanceName string
-	// TenantName is the name of the CR SiteWhereTenant created
-	TenantName string
 }
 
 // SiteWhere Docker Image default tag name
@@ -172,14 +170,8 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 	if err != nil {
 		return nil, err
 	}
-	tcr, err := resources.CreateSiteWhereTenantCR(i.buildCRSiteWhereTenant(), i.Namespace, dynamicClientset)
-	if err != nil {
-		return nil, err
-	}
-
 	return &instanceResourcesResult{
 		InstanceName: icr.GetName(),
-		TenantName:   tcr.GetName(),
 	}, nil
 }
 
