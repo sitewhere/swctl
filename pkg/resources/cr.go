@@ -32,13 +32,6 @@ import (
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 )
 
-// CreateSiteWhereInstanceCR Creates a Custom Resource for a SiteWhere Instance
-func CreateSiteWhereInstanceCR(cr *unstructured.Unstructured, dynamicClient dynamic.Interface) (*unstructured.Unstructured, error) {
-	sitewhereInstanceGVR := grv.SiteWhereInstanceGRV()
-	res := dynamicClient.Resource(sitewhereInstanceGVR)
-	return res.Create(context.TODO(), cr, metav1.CreateOptions{})
-}
-
 // ListSitewhereInstacesCR List SiteWhere Instance CR installed
 func ListSitewhereInstacesCR(dynamicClient dynamic.Interface, clientset kubernetes.Interface) ([]*sitewhereiov1alpha4.SiteWhereInstance, error) {
 	sitewhereInstanceGVR := grv.SiteWhereInstanceGRV()
@@ -112,42 +105,6 @@ func extractFromResource(crSiteWhereInstace *unstructured.Unstructured, clientse
 		result.Microservices = microservices
 	*/
 	return &result, nil
-}
-
-func extractSiteWhereInstanceMetadata(metadata map[string]interface{}, instance *alpha3.SiteWhereInstance) {
-	name, exists, err := unstructured.NestedString(metadata, "name")
-	if err != nil {
-		fmt.Printf("Error Name from Metadata: %v\n", err)
-	} else if !exists {
-		fmt.Printf("Name from Metadata")
-	} else {
-		instance.Name = name
-	}
-}
-
-func extractSiteWhereInstanceSpec(spec map[string]interface{}, instance *alpha3.SiteWhereInstance) {
-	configurationTemplate := spec["configurationTemplate"]
-	datasetTemplate := spec["datasetTemplate"]
-	configuration := spec["configuration"]
-	sitewhereConfiguration := extractSiteWhereInstanceConfiguration(configuration)
-	instance.ConfigurationTemplate = fmt.Sprintf("%v", configurationTemplate)
-	instance.DatasetTemplate = fmt.Sprintf("%v", datasetTemplate)
-	instance.Configuration = sitewhereConfiguration
-}
-
-func extractSiteWhereInstanceStatus(status map[string]interface{}, instance *alpha3.SiteWhereInstance) {
-	tenantManagementBootstrapState, exists, err := unstructured.NestedString(status, "tenantManagementBootstrapState")
-	if err != nil || !exists {
-		tenantManagementBootstrapState = "Unknown"
-	}
-	userManagementBootstrapState, exists, err := unstructured.NestedString(status, "userManagementBootstrapState")
-	if err != nil || !exists {
-		userManagementBootstrapState = "Unknown"
-	}
-	instance.Status = &alpha3.SiteWhereInstanceStatus{
-		TenantManagementStatus: tenantManagementBootstrapState,
-		UserManagementStatus:   userManagementBootstrapState,
-	}
 }
 
 func extractSiteWhereInstanceConfiguration(config interface{}) *alpha3.SiteWhereInstanceConfiguration {

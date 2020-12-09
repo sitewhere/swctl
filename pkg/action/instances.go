@@ -40,6 +40,9 @@ func NewInstances(cfg *Configuration) *Instances {
 
 // Run executes the install command, returning the result of the installation
 func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
+	if err := i.cfg.KubeClient.IsReachable(); err != nil {
+		return nil, err
+	}
 	var client, err = i.cfg.ControllerClient()
 	if err != nil {
 		return nil, err
