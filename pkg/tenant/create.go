@@ -16,11 +16,11 @@
 
 package tenant
 
-// CreateSiteWhereInstance destribe the creating of a SiteWhere Instance.
+// CreateSiteWhereTenant destribe the creating of a SiteWhere Tenant.
 type CreateSiteWhereTenant struct {
 	// Name of the instance
-	InstanceName string `json:"instanceName"`
+	InstanceName string `json:"instance_name"`
 
 	// Name of the tenant
-	TenantName string `json:"instanceName"`
+	TenantName string `json:"tenant_name"`
 }
