@@ -42,6 +42,7 @@ func newCreateCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(newCreateInstanceCmd(cfg, out))
+	cmd.AddCommand(newCreateTenantCmd(cfg, out))
 
 	return cmd
 }
