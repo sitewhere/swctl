@@ -28,6 +28,8 @@ import (
 
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/sitewhere/swctl/pkg/resources/grv"
+
+	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 )
 
 // CreateSiteWhereInstanceCR Creates a Custom Resource for a SiteWhere Instance
@@ -38,14 +40,14 @@ func CreateSiteWhereInstanceCR(cr *unstructured.Unstructured, dynamicClient dyna
 }
 
 // ListSitewhereInstacesCR List SiteWhere Instance CR installed
-func ListSitewhereInstacesCR(dynamicClient dynamic.Interface, clientset kubernetes.Interface) ([]*alpha3.SiteWhereInstance, error) {
+func ListSitewhereInstacesCR(dynamicClient dynamic.Interface, clientset kubernetes.Interface) ([]*sitewhereiov1alpha4.SiteWhereInstance, error) {
 	sitewhereInstanceGVR := grv.SiteWhereInstanceGRV()
 	res := dynamicClient.Resource(sitewhereInstanceGVR)
 	sitewhereInstaces, err := res.List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	var result []*alpha3.SiteWhereInstance
+	var result []*sitewhereiov1alpha4.SiteWhereInstance
 	for _, instance := range sitewhereInstaces.Items {
 		sitewhereInstace, err := extractFromResource(&instance, clientset)
 		if err != nil {
@@ -70,43 +72,45 @@ func CreateSiteWhereTenantCR(cr *unstructured.Unstructured, namespace string, dy
 	return res.Create(context.TODO(), cr, metav1.CreateOptions{})
 }
 
-func extractFromResource(crSiteWhereInstace *unstructured.Unstructured, clientset kubernetes.Interface) (*alpha3.SiteWhereInstance, error) {
-	var result = alpha3.SiteWhereInstance{}
-	metadata, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "metadata")
-	if err != nil {
-		return nil, fmt.Errorf("Error reading metadata for %s: %v", crSiteWhereInstace, err)
-	}
-	if !exists {
-		fmt.Printf("Metadata not found for for SiteWhere Instance: %s", crSiteWhereInstace)
-	} else {
-		extractSiteWhereInstanceMetadata(metadata, &result)
-	}
-	spec, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "spec")
-	if err != nil {
-		return nil, fmt.Errorf("Error reading spec for %s: %v", result.Name, err)
-	}
-	if !exists {
-		fmt.Printf("Spec not found for for SiteWhere Instance: %s", result.Name)
-	} else {
-		extractSiteWhereInstanceSpec(spec, &result)
-	}
-	status, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "status")
-	if err != nil {
-		return nil, fmt.Errorf("Error reading status for %s: %v", result.Name, err)
-	}
-	if !exists {
-		result.Status = &alpha3.SiteWhereInstanceStatus{
-			TenantManagementStatus: "Unknown",
-			UserManagementStatus:   "Unknown",
+func extractFromResource(crSiteWhereInstace *unstructured.Unstructured, clientset kubernetes.Interface) (*sitewhereiov1alpha4.SiteWhereInstance, error) {
+	var result = sitewhereiov1alpha4.SiteWhereInstance{}
+	/*
+		metadata, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "metadata")
+		if err != nil {
+			return nil, fmt.Errorf("Error reading metadata for %s: %v", crSiteWhereInstace, err)
 		}
-	} else {
-		extractSiteWhereInstanceStatus(status, &result)
-	}
-	microservices, err := queryMicroservices(result.Name, clientset)
-	if err != nil {
-		return nil, fmt.Errorf("Error reading microservices statuses for %s: %v", result.Name, err)
-	}
-	result.Microservices = microservices
+		if !exists {
+			fmt.Printf("Metadata not found for for SiteWhere Instance: %s", crSiteWhereInstace)
+		} else {
+			extractSiteWhereInstanceMetadata(metadata, &result)
+		}
+		spec, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "spec")
+		if err != nil {
+			return nil, fmt.Errorf("Error reading spec for %s: %v", result.Name, err)
+		}
+		if !exists {
+			fmt.Printf("Spec not found for for SiteWhere Instance: %s", result.Name)
+		} else {
+			extractSiteWhereInstanceSpec(spec, &result)
+		}
+		status, exists, err := unstructured.NestedMap(crSiteWhereInstace.Object, "status")
+		if err != nil {
+			return nil, fmt.Errorf("Error reading status for %s: %v", result.Name, err)
+		}
+		if !exists {
+			result.Status = &alpha3.SiteWhereInstanceStatus{
+				TenantManagementStatus: "Unknown",
+				UserManagementStatus:   "Unknown",
+			}
+		} else {
+			extractSiteWhereInstanceStatus(status, &result)
+		}
+		microservices, err := queryMicroservices(result.Name, clientset)
+		if err != nil {
+			return nil, fmt.Errorf("Error reading microservices statuses for %s: %v", result.Name, err)
+		}
+		result.Microservices = microservices
+	*/
 	return &result, nil
 }
 
