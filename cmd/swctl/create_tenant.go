@@ -84,13 +84,15 @@ func (s createTenantPrinter) WriteYAML(out io.Writer) error {
 
 func (s createTenantPrinter) WriteTable(out io.Writer) error {
 	table := uitable.New()
-	table.AddRow("INSTANCE", "STATUS")
-	table.AddRow(s.instance.InstanceName, color.Info.Render("Installed"))
+	table.AddRow("INSTANCE", "TENANT", "STATUS")
+	table.AddRow(s.instance.InstanceName, s.instance.TenantName, color.Info.Render("Installed"))
 	return output.EncodeTable(out, table)
 }
 
 func addCreateTenantFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action.CreateTenant) {
-	f.StringVarP(&client.InstanceName, "namespace", "n", client.InstanceName, "Instance name")
-	f.StringVarP(&client.AuthorizedUserIds, "authorizedUserIds", "m", client.AuthorizedUserIds, "AuthorizedUserIds")
-	f.StringVarP(&client.AuthenticationToken, "authorizedUserIds", "m", client.AuthenticationToken, "AuthenticationToken")
+	f.StringVarP(&client.InstanceName, "instance", "i", client.InstanceName, "Instance name")
+	f.StringVar(&client.AuthorizedUserIds, "authorizedUserIds", client.AuthorizedUserIds, "AuthorizedUserIds")
+	f.StringVar(&client.AuthenticationToken, "authenticationToken", client.AuthenticationToken, "AuthenticationToken")
+
+	cmd.MarkFlagRequired("instance")
 }
