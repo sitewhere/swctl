@@ -79,9 +79,6 @@ func (i *CreateTenant) Run() (*tenant.CreateSiteWhereTenant, error) {
 	if err != nil {
 		return nil, err
 	}
-	if swInstance.GetName() == "" {
-		return nil, fmt.Errorf("instance not found or name is invalid")
-	}
 
 	swTenantCR := i.buildCRSiteWhereTenant()
 	ctx := context.TODO()
