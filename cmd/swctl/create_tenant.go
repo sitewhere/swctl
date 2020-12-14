@@ -91,8 +91,10 @@ func (s createTenantPrinter) WriteTable(out io.Writer) error {
 
 func addCreateTenantFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action.CreateTenant) {
 	f.StringVarP(&client.InstanceName, "instance", "i", client.InstanceName, "Instance name")
-	f.StringVar(&client.AuthorizedUserIds, "authorizedUserIds", client.AuthorizedUserIds, "AuthorizedUserIds")
-	f.StringVar(&client.AuthenticationToken, "authenticationToken", client.AuthenticationToken, "AuthenticationToken")
+	f.StringSliceVarP(&client.AuthorizedUserIds, "authorizedUserIds", "u", client.AuthorizedUserIds, "Authorized User Ids")
+	f.StringVarP(&client.AuthenticationToken, "authenticationToken", "t", client.AuthenticationToken, "AuthenticationToken")
+	f.StringVarP(&client.ConfigurationTemplate, "configurationTemplate", "c", client.ConfigurationTemplate, "Configuration Template")
+	f.StringVarP(&client.DatasetTemplate, "datasetTemplate", "d", client.DatasetTemplate, "Dataset Template")
 
 	cmd.MarkFlagRequired("instance")
 }

@@ -37,9 +37,13 @@ type CreateTenant struct {
 	// Name of the tenant
 	TenantName string
 	// AuthenticationToken is the token used for authenticating the tenant
-	AuthenticationToken string `json:"authenticationToken,omitempty"`
+	AuthenticationToken string
 	// Authorized are the IDs of the users that are authorized to use the tenant
-	AuthorizedUserIds string `json:"authorizedUserIds,omitempty"`
+	AuthorizedUserIds []string
+	// ConfigurationTemplate is the configuration template used for the tenant
+	ConfigurationTemplate string
+	// DatasetTemplate is the dataset template used for the tenant
+	DatasetTemplate string
 }
 
 type tenantResourcesResult struct {
@@ -50,9 +54,11 @@ type tenantResourcesResult struct {
 // NewCreateTenant constructs a new *Install
 func NewCreateTenant(cfg *Configuration) *CreateTenant {
 	return &CreateTenant{
-		cfg:          cfg,
-		InstanceName: "",
-		TenantName:   "",
+		cfg:                   cfg,
+		InstanceName:          "",
+		TenantName:            "",
+		ConfigurationTemplate: "default",
+		DatasetTemplate:       "construction",
 	}
 }
 
@@ -65,17 +71,16 @@ func (i *CreateTenant) Run() (*tenant.CreateSiteWhereTenant, error) {
 	//Revisar si existe la instancia
 	client, err := i.cfg.ControllerClient()
 	if err != nil {
-
+		return nil, err
 	}
+
 	var swInstance sitewhereiov1alpha4.SiteWhereInstance
-	err = client.Get(context.TODO(), k8sClient.ObjectKey{Namespace: i.InstanceName, Name: i.InstanceName}, &swInstance)
-
+	err = client.Get(context.TODO(), k8sClient.ObjectKey{Name: i.InstanceName}, &swInstance)
 	if err != nil {
-		fmt.Print("Se produjo un error al buscar instancia")
+		return nil, err
 	}
-
-	if swInstance.Name == "" {
-		fmt.Print("Lanzar error de que no encontró la instancia")
+	if swInstance.GetName() == "" {
+		return nil, fmt.Errorf("instance not found or name is invalid")
 	}
 
 	swTenantCR := i.buildCRSiteWhereTenant()
@@ -106,11 +111,11 @@ func (i *CreateTenant) buildCRSiteWhereTenant() *sitewhereiov1alpha4.SiteWhereTe
 			Namespace: i.InstanceName,
 		},
 		Spec: sitewhereiov1alpha4.SiteWhereTenantSpec{
-			Name:                i.TenantName,
-			AuthenticationToken: i.AuthenticationToken,
-
-			//TODO: Iterar los ids e ir seteandolos en la variable: i.AuthorizedUserIds
-			AuthorizedUserIds: nil,
+			Name:                  i.TenantName,
+			AuthenticationToken:   i.AuthenticationToken,
+			AuthorizedUserIds:     i.AuthorizedUserIds,
+			DatasetTemplate:       i.DatasetTemplate,
+			ConfigurationTemplate: i.ConfigurationTemplate,
 		},
 	}
 }
