@@ -17,8 +17,7 @@
 package action
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"strings"
 
@@ -163,23 +162,19 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 		}
 	}
 
+	client, err := i.cfg.ControllerClient()
+	if err != nil {
+		return nil, err
+	}
+
 	swInstanceCR := i.buildCRSiteWhereInstace()
-	swInstanceCRMarshalled, err := json.Marshal(swInstanceCR)
-	if err != nil {
-		return nil, err
-	}
-	buf := bytes.NewBuffer(swInstanceCRMarshalled)
+	ctx := context.TODO()
 
-	// Open the resource file
-	res, err := i.cfg.KubeClient.Build(buf, true)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := i.cfg.KubeClient.Create(res); err != nil {
-		// If the error is Resource already exists, continue.
+	if err := client.Create(ctx, swInstanceCR); err != nil {
 		if apierrors.IsAlreadyExists(err) {
-			i.cfg.Log(fmt.Sprintf("Instance %s is already present. Skipping.", i.InstanceName))
+			i.cfg.Log(fmt.Sprintf("Instance %s is already present. Skipping.", swInstanceCR.GetName()))
+		} else {
+			return nil, err
 		}
 	}
 

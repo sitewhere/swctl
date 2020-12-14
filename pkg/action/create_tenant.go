@@ -17,17 +17,16 @@
 package action
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/pkg/errors"
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 	"github.com/sitewhere/swctl/pkg/tenant"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	client2 "sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
+	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // CreateTenant is the action for creating a SiteWhere tenant
@@ -69,7 +68,7 @@ func (i *CreateTenant) Run() (*tenant.CreateSiteWhereTenant, error) {
 
 	}
 	var swInstance sitewhereiov1alpha4.SiteWhereInstance
-	err = client.Get(context.TODO(), client2.ObjectKey{Namespace: i.InstanceName, Name: i.InstanceName}, &swInstance)
+	err = client.Get(context.TODO(), k8sClient.ObjectKey{Namespace: i.InstanceName, Name: i.InstanceName}, &swInstance)
 
 	if err != nil {
 		fmt.Print("Se produjo un error al buscar instancia")
@@ -79,42 +78,20 @@ func (i *CreateTenant) Run() (*tenant.CreateSiteWhereTenant, error) {
 		fmt.Print("Lanzar error de que no encontró la instancia")
 	}
 
-	return i.createSiteWhereTenant()
-}
+	swTenantCR := i.buildCRSiteWhereTenant()
+	ctx := context.TODO()
 
-func (i *CreateTenant) createSiteWhereTenant() (*tenant.CreateSiteWhereTenant, error) {
-	i.createTenantResources()
-	return &tenant.CreateSiteWhereTenant{
-		InstanceName: i.InstanceName,
-		TenantName:   i.TenantName,
-	}, nil
-}
-
-func (i *CreateTenant) createTenantResources() (*tenantResourcesResult, error) {
-	var err error
-
-	swInstanceCR := i.buildCRSiteWhereTenant()
-	swInstanceCRMarshalled, err := json.Marshal(swInstanceCR)
-	if err != nil {
-		return nil, err
-	}
-	buf := bytes.NewBuffer(swInstanceCRMarshalled)
-
-	// Open the resource file
-	res, err := i.cfg.KubeClient.Build(buf, true)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := i.cfg.KubeClient.Create(res); err != nil {
-		// If the error is Resource already exists, continue.
+	if err := client.Create(ctx, swTenantCR); err != nil {
 		if apierrors.IsAlreadyExists(err) {
-			i.cfg.Log(fmt.Sprintf("Instance %s is already present. Skipping.", i.InstanceName))
+			i.cfg.Log(fmt.Sprintf("Tenant %s is already present. Skipping.", swTenantCR.GetName()))
+		} else {
+			return nil, err
 		}
 	}
 
-	return &tenantResourcesResult{
-		TenantName: i.TenantName,
+	return &tenant.CreateSiteWhereTenant{
+		InstanceName: i.InstanceName,
+		TenantName:   i.TenantName,
 	}, nil
 }
 
