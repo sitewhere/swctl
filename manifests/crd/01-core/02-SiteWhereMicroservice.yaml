@@ -51,6 +51,21 @@ spec:
             description:
               description: Description is the description of the microservice
               type: string
+            dockerSpec:
+              description: DockerSpec is the Docker specification of the microservice.
+                If this value is set a the microservice level, it will override the
+                value set at the instance level.
+              properties:
+                registry:
+                  description: Registry is the Docker registry
+                  type: string
+                repository:
+                  description: Repository is the Repository for docker images
+                  type: string
+                tag:
+                  description: Tag is the tag for docker images
+                  type: string
+              type: object
             functionalArea:
               description: Functional Area
               type: string
