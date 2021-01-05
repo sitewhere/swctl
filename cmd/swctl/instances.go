@@ -25,9 +25,10 @@ import (
 
 	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/sitewhere/swctl/pkg/cli/output"
 	"github.com/sitewhere/swctl/pkg/instance"
+
+	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 )
 
 var instancesHelp = `
@@ -58,7 +59,7 @@ func newInstancesCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 
 type instancesWriter struct {
 	// Instances found
-	Instances []*alpha3.SiteWhereInstance
+	Instances []sitewhereiov1alpha4.SiteWhereInstance
 }
 
 func newInstancesWriter(result *instance.ListSiteWhereInstance) *instancesWriter {
@@ -71,9 +72,9 @@ func (i *instancesWriter) WriteTable(out io.Writer) error {
 	table := uitable.New()
 	table.AddRow("NAME", "NAMESPACE", "CONFIG TMPL", "DATESET TMPL", "TM STATUS", "UM STATUS")
 	for _, item := range i.Instances {
-		tmState := renderState(item.Status.TenantManagementStatus)
-		umStatus := renderState(item.Status.UserManagementStatus)
-		table.AddRow(item.Name, item.Namespace, item.ConfigurationTemplate, item.DatasetTemplate, tmState, umStatus)
+		tmState := renderState(item.Status.TenantManagementBootstrapState)
+		umStatus := renderState(item.Status.UserManagementBootstrapState)
+		table.AddRow(item.Name, item.Name, item.Spec.ConfigurationTemplate, item.Spec.DatasetTemplate, tmState, umStatus)
 	}
 	return output.EncodeTable(out, table)
 }
@@ -86,7 +87,7 @@ func (i *instancesWriter) WriteYAML(out io.Writer) error {
 	return output.EncodeYAML(out, i)
 }
 
-func renderState(state string) string {
+func renderState(state sitewhereiov1alpha4.BootstrapState) string {
 	switch state {
 	case "Unknown":
 		return color.Warn.Render("Unknown")
@@ -95,7 +96,7 @@ func renderState(state string) string {
 	case "NotBootstrapped":
 		return color.Error.Render("Not Bootstrapped")
 	default:
-		return state
+		return ""
 	}
 }
 

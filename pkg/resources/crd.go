@@ -64,24 +64,24 @@ func DeleteCustomResourceDefinitionIfExists(crd *apiextv1beta1.CustomResourceDef
 }
 
 // CreateCustomResourceFromFile Reads a File from statik and creates a CustomResource from it.
-func CreateCustomResourceFromFile(crName string, statikFS http.FileSystem, config *rest.Config) error {
+func CreateCustomResourceFromFile(crName string, statikFS http.FileSystem, config *rest.Config) (*metav1.ObjectMeta, error) {
 	r, err := statikFS.Open(crName)
 	if err != nil {
 		fmt.Printf("Error reading %s: %v\n", crName, err)
-		return err
+		return nil, err
 	}
 	defer r.Close()
 	contents, err := ioutil.ReadAll(r)
 	if err != nil {
 		fmt.Printf("Error reading content of %s: %v\n", crName, err)
-		return err
+		return nil, err
 	}
 
 	// 1. Prepare a RESTMapper to find GVR
 	dc, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
 		fmt.Printf("Error getting NewDiscoveryClientForConfig for %s: %v\n", crName, err)
-		return err
+		return nil, err
 	}
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
 
@@ -89,7 +89,7 @@ func CreateCustomResourceFromFile(crName string, statikFS http.FileSystem, confi
 	dyn, err := dynamic.NewForConfig(config)
 	if err != nil {
 		fmt.Printf("Error getting NewForConfig for %s: %v\n", crName, err)
-		return err
+		return nil, err
 	}
 
 	// 3. Decode YAML manifest into unstructured.Unstructured
@@ -97,14 +97,14 @@ func CreateCustomResourceFromFile(crName string, statikFS http.FileSystem, confi
 	_, gvk, err := decUnstructured.Decode([]byte(contents), nil, obj)
 	if err != nil {
 		fmt.Printf("Error decoding for %s: %v\n", crName, err)
-		return err
+		return nil, err
 	}
 
 	// 4. Find GVR
 	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		fmt.Printf("Error finding GRV for %s: %v\n", crName, err)
-		return err
+		return nil, err
 	}
 
 	// 5. Obtain REST interface for the GVR
@@ -117,15 +117,17 @@ func CreateCustomResourceFromFile(crName string, statikFS http.FileSystem, confi
 		dr = dyn.Resource(mapping.Resource)
 	}
 
-	_, err = dr.Create(context.TODO(), obj, metav1.CreateOptions{})
+	created, err := dr.Create(context.TODO(), obj, metav1.CreateOptions{})
 
 	if err != nil {
 		if !errors.IsAlreadyExists(err) {
 			fmt.Printf("Error creating resource from file %s of Kind: %s: %v", crName, gvk.GroupKind().Kind, err)
 		}
-		return err
+		return nil, err
 	}
-	return nil
+	return &metav1.ObjectMeta{
+		Name: created.GetName(),
+	}, nil
 }
 
 // DeleteCustomResourceFromFile Reads a File from statik and deletes a CustomResource from it.

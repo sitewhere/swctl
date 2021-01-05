@@ -17,11 +17,11 @@
 package instance
 
 import (
-	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
+	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 )
 
 // ListSiteWhereInstance destribe the listing of a SiteWhere Instance.
 type ListSiteWhereInstance struct {
 	// Instances found
-	Instances []*alpha3.SiteWhereInstance
+	Instances []sitewhereiov1alpha4.SiteWhereInstance
 }

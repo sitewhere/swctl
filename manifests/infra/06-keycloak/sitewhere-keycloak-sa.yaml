@@ -1,0 +1,14 @@
+---
+# Source: sitewhere-keycloak/charts/keycloak/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sitewhere-keycloak
+  namespace: sitewhere-system
+  labels:
+    helm.sh/chart: keycloak-9.6.1
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "11.0.2"
+    app.kubernetes.io/managed-by: swctl
+imagePullSecrets: []

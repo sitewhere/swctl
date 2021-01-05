@@ -17,6 +17,7 @@
 package action
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,14 +25,14 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	rbacV1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
 	"github.com/sitewhere/swctl/pkg/instance"
 	"github.com/sitewhere/swctl/pkg/resources"
-	"github.com/sitewhere/swctl/pkg/resources/grv"
+
+	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 )
 
 // CreateInstance is the action for creating a SiteWhere instance
@@ -39,6 +40,8 @@ type CreateInstance struct {
 	cfg *Configuration
 	// Name of the instance
 	InstanceName string
+	// Name of the tenant
+	TenantName string
 	// Namespace to use
 	Namespace string
 	// Use minimal profile. Initialize only essential microservices.
@@ -70,13 +73,11 @@ type namespaceAndResourcesResult struct {
 
 type instanceResourcesResult struct {
 	// Custom Resource Name of the instance
-	CRName string
-	// Microservices created
-	Microservices []string
+	InstanceName string
 }
 
 // SiteWhere Docker Image default tag name
-const dockerImageDefaultTag = "3.0.0.beta1"
+const dockerImageDefaultTag = "3.0.0.beta3"
 
 // Default configuration Template
 const defaultConfigurationTemplate = "default"
@@ -89,6 +90,7 @@ func NewCreateInstance(cfg *Configuration) *CreateInstance {
 	return &CreateInstance{
 		cfg:                   cfg,
 		InstanceName:          "",
+		TenantName:            "default",
 		Namespace:             "",
 		Minimal:               false,
 		Replicas:              1,
@@ -122,28 +124,18 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 }
 
 func (i *CreateInstance) createSiteWhereInstance(profile alpha3.SiteWhereProfile) (*instance.CreateSiteWhereInstance, error) {
-	nsr, err := i.createNamespaceAndResources()
-	if err != nil {
-		return nil, err
-	}
-
 	inr, err := i.createInstanceResources(profile)
 	if err != nil {
 		return nil, err
 	}
 	return &instance.CreateSiteWhereInstance{
 		InstanceName:               i.InstanceName,
-		Namespace:                  nsr.Namespace,
 		Tag:                        i.Tag,
 		Replicas:                   i.Replicas,
 		Debug:                      i.Debug,
 		ConfigurationTemplate:      i.ConfigurationTemplate,
 		DatasetTemplate:            i.DatasetTemplate,
-		ServiceAccountName:         nsr.ServiceAccountName,
-		ClusterRoleName:            nsr.ClusterRoleName,
-		ClusterRoleBindingName:     nsr.ClusterRoleBindingName,
-		LoadBalanceServiceName:     nsr.LoadBalanceServiceName,
-		InstanceCustomResourceName: inr.CRName,
+		InstanceCustomResourceName: inr.InstanceName,
 	}, nil
 }
 
@@ -155,74 +147,39 @@ func (i *CreateInstance) ExtractInstanceName(args []string) (string, error) {
 	return args[0], nil
 }
 
-func (i *CreateInstance) createNamespaceAndResources() (*namespaceAndResourcesResult, error) {
+func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile) (*instanceResourcesResult, error) {
 	var err error
+
 	clientset, err := i.cfg.KubernetesClientSet()
 	if err != nil {
 		return nil, err
 	}
-	ns, err := resources.CreateNamespaceIfNotExists(i.Namespace, clientset)
-	if err != nil {
-		return nil, err
-	}
-	sa, err := resources.CreateServiceAccountIfNotExists(
-		i.buildInstanceServiceAccount(), clientset, i.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	clusterRole, err := resources.CreateClusterRoleIfNotExists(
-		i.buildInstanceClusterRole(), clientset)
-	if err != nil {
-		return nil, err
-	}
-	clusterRoleBinding, err := resources.CreateClusterRoleBindingIfNotExists(
-		i.buildInstanceClusterRoleBinding(sa, clusterRole), clientset)
-	if err != nil {
-		return nil, err
-	}
-	loadBalanceService, err := resources.CreateServiceIfNotExists(
-		i.buildLoadBalancerService(), clientset, i.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	return &namespaceAndResourcesResult{
-		Namespace:              ns.ObjectMeta.Name,
-		ServiceAccountName:     sa.ObjectMeta.Name,
-		ClusterRoleName:        clusterRole.ObjectMeta.Name,
-		ClusterRoleBindingName: clusterRoleBinding.ObjectMeta.Name,
-		LoadBalanceServiceName: loadBalanceService.ObjectMeta.Name,
-	}, nil
-}
 
-func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile) (*instanceResourcesResult, error) {
-	var err error
-	dynamicClientset, err := i.cfg.KubernetesDynamicClientSet()
+	_, err = resources.CreateNamespaceIfNotExists(i.Namespace, clientset)
 	if err != nil {
-		return nil, err
-	}
-	icr, err := resources.CreateSiteWhereInstanceCR(i.buildCRSiteWhereInstace(), dynamicClientset)
-	if err != nil {
-		return nil, err
-	}
-	var microservices = alpha3.GetSiteWhereMicroservicesList()
-	var installedMicroservices []string
-
-	for _, micrservice := range microservices {
-		var msCR *unstructured.Unstructured
-		if micrservice.ID == "instance-management" {
-			msCR = i.buildCRSiteWhereMicroserviceInstanceManagement()
-		} else if profile == alpha3.Default || profile != micrservice.Profile {
-			msCR = i.buildCRSiteWhereMicroservice(&micrservice)
-		}
-		mrc, err := resources.CreateSiteWhereMicroserviceCR(msCR, i.Namespace, dynamicClientset)
-		if err != nil {
+		if !apierrors.IsAlreadyExists(err) {
 			return nil, err
 		}
-		installedMicroservices = append(installedMicroservices, mrc.GetName())
 	}
+
+	client, err := i.cfg.ControllerClient()
+	if err != nil {
+		return nil, err
+	}
+
+	swInstanceCR := i.buildCRSiteWhereInstace()
+	ctx := context.TODO()
+
+	if err := client.Create(ctx, swInstanceCR); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			i.cfg.Log(fmt.Sprintf("Instance %s is already present. Skipping.", swInstanceCR.GetName()))
+		} else {
+			return nil, err
+		}
+	}
+
 	return &instanceResourcesResult{
-		CRName:        icr.GetName(),
-		Microservices: installedMicroservices,
+		InstanceName: i.InstanceName,
 	}, nil
 }
 
@@ -331,306 +288,22 @@ func (i *CreateInstance) buildInstanceClusterRoleBinding(serviceAccount *v1.Serv
 	}
 }
 
-func (i *CreateInstance) buildLoadBalancerService() *v1.Service {
-	return &v1.Service{
+func (i *CreateInstance) buildCRSiteWhereInstace() *sitewhereiov1alpha4.SiteWhereInstance {
+	return &sitewhereiov1alpha4.SiteWhereInstance{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sitewhereiov1alpha4.SiteWhereInstanceKind,
+			APIVersion: sitewhereiov1alpha4.GroupVersion.String(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "sitewhere-rest-http",
-			Labels: map[string]string{
-				"app": i.InstanceName,
-			},
+			Name: i.InstanceName,
 		},
-		Spec: v1.ServiceSpec{
-			Type: "LoadBalancer",
-			Ports: []v1.ServicePort{
-				{
-					Port:       8080,
-					TargetPort: intstr.FromInt(8080),
-					Protocol:   v1.ProtocolTCP,
-					Name:       "http-rest",
-				},
-			},
-			Selector: map[string]string{
-				"app.kubernetes.io/instance": i.InstanceName,
-				"sitewhere.io/name":          "instance-management",
-			},
-		},
-	}
-}
-
-func (i *CreateInstance) buildCRSiteWhereInstace() *unstructured.Unstructured {
-	sitewhereInstanceGVR := grv.SiteWhereInstanceGRV()
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"kind":       "SiteWhereInstance",
-			"apiVersion": sitewhereInstanceGVR.Group + "/" + sitewhereInstanceGVR.Version,
-			"metadata": map[string]interface{}{
-				"name": i.InstanceName,
-			},
-			"spec": map[string]interface{}{
-				"instanceNamespace":     i.Namespace,
-				"configurationTemplate": i.ConfigurationTemplate,
-				"datasetTemplate":       i.DatasetTemplate,
-			},
-		},
-	}
-}
-
-func (i *CreateInstance) buildCRSiteWhereMicroserviceInstanceManagement() *unstructured.Unstructured {
-	sitewhereMicroserviceGVR := grv.SiteWhereMicroserviceGRV()
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"kind":       "SiteWhereMicroservice",
-			"apiVersion": sitewhereMicroserviceGVR.Group + "/" + sitewhereMicroserviceGVR.Version,
-			"metadata": map[string]interface{}{
-				"name":      "instance-management-microservice",
-				"namespace": i.Namespace,
-				"labels": map[string]interface{}{
-					"sitewhere.io/instance":        i.InstanceName,
-					"sitewhere.io/functional-area": "instance-management",
-				},
-			},
-			"spec": map[string]interface{}{
-				"replicas":    i.Replicas,
-				"name":        "Instance Management",
-				"description": "Handles APIs for managing global aspects of an instance",
-				"icon":        "language",
-				"logging": map[string]interface{}{
-					"overrides": []map[string]interface{}{
-						{
-							"logger": "com.sitewhere",
-							"level":  "info",
-						},
-						{
-							"logger": "com.sitewhere.grpc.client",
-							"level":  "info",
-						},
-						{
-							"logger": "com.sitewhere.microservice.grpc",
-							"level":  "info",
-						},
-						{
-							"logger": "com.sitewhere.microservice.kafka",
-							"level":  "info",
-						},
-						{
-							"logger": "org.redisson",
-							"level":  "info",
-						},
-						{
-							"level":  "info",
-							"logger": "com.sitewhere.instance",
-						},
-						{
-							"level":  "info",
-							"logger": "com.sitewhere.web",
-						},
-					},
-				},
-				"configuration": map[string]interface{}{
-					"userManagement": map[string]interface{}{
-						"syncopeHost":            "sitewhere-syncope.sitewhere-system",
-						"syncopePort":            8080,
-						"jwtExpirationInMinutes": 60,
-					},
-				},
-				"helm": map[string]interface{}{ // TODO Remove when operatior udpates to not using helm
-					"chartName":      "sitewhere-0.3.0",
-					"releaseName":    i.InstanceName,
-					"releaseService": "Tiller",
-				},
-				"podSpec": map[string]interface{}{
-					"imageRegistry":   "docker.io",
-					"imageRepository": "sitewhere",
-					"imageTag":        i.Tag,
-					"imagePullPolicy": "IfNotPresent",
-					"ports": []map[string]interface{}{
-						{
-							"containerPort": 8080,
-						},
-						{
-							"containerPort": 9000,
-						},
-						{
-							"containerPort": 9090,
-						},
-					},
-					"env": []map[string]interface{}{
-						{
-							"name": "sitewhere.config.k8s.name",
-							"valueFrom": map[string]interface{}{
-								"fieldRef": map[string]interface{}{
-									"fieldPath": "metadata.name",
-								},
-							},
-						},
-						{
-							"name": "sitewhere.config.k8s.namespace",
-							"valueFrom": map[string]interface{}{
-								"fieldRef": map[string]interface{}{
-									"fieldPath": "metadata.namespace",
-								},
-							},
-						},
-						{
-							"name": "sitewhere.config.k8s.pod.ip",
-							"valueFrom": map[string]interface{}{
-								"fieldRef": map[string]interface{}{
-									"fieldPath": "status.podIP",
-								},
-							},
-						},
-					},
-				},
-				"serviceSpec": map[string]interface{}{
-					"type": "ClusterIP",
-					"ports": []map[string]interface{}{
-						{
-							"port":       8080,
-							"targetPort": 8080,
-							"protocol":   "TCP",
-							"name":       "http-rest",
-						},
-						{
-							"port":       9000,
-							"targetPort": 9000,
-							"protocol":   "TCP",
-							"name":       "grpc-api",
-						},
-						{
-							"port":       9090,
-							"targetPort": 9090,
-							"protocol":   "TCP",
-							"name":       "http-metrics",
-						},
-					},
-				},
-				"debug": map[string]interface{}{
-					"enabled":  i.Debug,
-					"jdwpPort": 8001,
-					"jmxPort":  1101,
-				},
-			},
-		},
-	}
-}
-
-func (i *CreateInstance) buildCRSiteWhereMicroservice(microservice *alpha3.SiteWhereMicroservice) *unstructured.Unstructured {
-	msName := fmt.Sprintf("%s-microservice", microservice.ID)
-	sitewhereMicroserviceGVR := grv.SiteWhereMicroserviceGRV()
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"kind":       "SiteWhereMicroservice",
-			"apiVersion": sitewhereMicroserviceGVR.Group + "/" + sitewhereMicroserviceGVR.Version,
-			"metadata": map[string]interface{}{
-				"name":      msName,
-				"namespace": i.Namespace,
-				"labels": map[string]interface{}{
-					"sitewhere.io/instance":        i.InstanceName,
-					"sitewhere.io/functional-area": microservice.ID,
-				},
-			},
-			"spec": map[string]interface{}{
-				"configuration": map[string]interface{}{},
-				"replicas":      i.Replicas,
-				"multitenant":   true,
-				"name":          microservice.Name,
-				"description":   microservice.Description,
-				"icon":          microservice.Icon,
-				"logging": map[string]interface{}{
-					"overrides": []map[string]interface{}{
-						{
-							"logger": "com.sitewhere",
-							"level":  "info",
-						},
-						{
-							"logger": "com.sitewhere.grpc.client",
-							"level":  "info",
-						},
-						{
-							"logger": "com.sitewhere.microservice.grpc",
-							"level":  "info",
-						},
-						{
-							"logger": "com.sitewhere.microservice.kafka",
-							"level":  "info",
-						},
-						{
-							"logger": "org.redisson",
-							"level":  "info",
-						},
-						{
-							"level":  "info",
-							"logger": microservice.Logger,
-						},
-					},
-				},
-				"helm": map[string]interface{}{ // TODO Remove when operatior udpates to not using helm
-					"chartName":      "sitewhere-0.3.0",
-					"releaseName":    i.InstanceName,
-					"releaseService": "Tiller",
-				},
-				"podSpec": map[string]interface{}{
-					"imageRegistry":   "docker.io",
-					"imageRepository": "sitewhere",
-					"imageTag":        i.Tag,
-					"imagePullPolicy": "IfNotPresent",
-					"ports": []map[string]interface{}{
-						{
-							"containerPort": 9000,
-						},
-						{
-							"containerPort": 9090,
-						},
-					},
-					"env": []map[string]interface{}{
-						{
-							"name": "sitewhere.config.k8s.name",
-							"valueFrom": map[string]interface{}{
-								"fieldRef": map[string]interface{}{
-									"fieldPath": "metadata.name",
-								},
-							},
-						},
-						{
-							"name": "sitewhere.config.k8s.namespace",
-							"valueFrom": map[string]interface{}{
-								"fieldRef": map[string]interface{}{
-									"fieldPath": "metadata.namespace",
-								},
-							},
-						},
-						{
-							"name": "sitewhere.config.k8s.pod.ip",
-							"valueFrom": map[string]interface{}{
-								"fieldRef": map[string]interface{}{
-									"fieldPath": "status.podIP",
-								},
-							},
-						},
-					},
-				},
-				"serviceSpec": map[string]interface{}{
-					"type": "ClusterIP",
-					"ports": []map[string]interface{}{
-						{
-							"port":       9000,
-							"targetPort": 9000,
-							"protocol":   "TCP",
-							"name":       "grpc-api",
-						},
-						{
-							"port":       9090,
-							"targetPort": 9090,
-							"protocol":   "TCP",
-							"name":       "http-metrics",
-						},
-					},
-				},
-				"debug": map[string]interface{}{
-					"enabled":  i.Debug,
-					"jdwpPort": 8000 + microservice.PortOffset,
-					"jmxPort":  1100 + microservice.PortOffset,
-				},
+		Spec: sitewhereiov1alpha4.SiteWhereInstanceSpec{
+			ConfigurationTemplate: i.ConfigurationTemplate,
+			DatasetTemplate:       i.DatasetTemplate,
+			DockerSpec: &sitewhereiov1alpha4.DockerSpec{
+				Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
+				Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
+				Tag:        i.Tag,
 			},
 		},
 	}

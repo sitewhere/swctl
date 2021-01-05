@@ -87,12 +87,6 @@ type SiteWhereInstanceConfiguration struct {
 	Persistence    *SiteWhereInstancePersistenceConfiguration    `json:"persistenceConfigurations"`
 }
 
-// SiteWhereInstanceStatus SiteWhere Instance Tenant Management and User Management Status
-type SiteWhereInstanceStatus struct {
-	TenantManagementStatus string `json:"tenantManagementStatus"`
-	UserManagementStatus   string `json:"userManagementStatus"`
-}
-
 // SiteWhereMicroserviceStatus SiteWhere Instance Microservice Status
 type SiteWhereMicroserviceStatus struct {
 	Name   string `json:"name"`
@@ -108,21 +102,6 @@ const (
 	// Minimal profile, use a reduce set of microservices
 	Minimal SiteWhereProfile = "Minimal"
 )
-
-// SiteWhereInstance represents an Instacen in SiteWhere
-type SiteWhereInstance struct {
-	Name                  string                          `json:"name"`
-	Namespace             string                          `json:"namespace"`
-	Replicas              int64                           `json:"replicas"`
-	Tag                   string                          `json:"tag"`
-	Debug                 bool                            `json:"debug"`
-	ConfigurationTemplate string                          `json:"configurationTemaplate"`
-	DatasetTemplate       string                          `json:"datasetTemplate"`
-	Configuration         *SiteWhereInstanceConfiguration `json:"configuration"`
-	Status                *SiteWhereInstanceStatus        `json:"status"`
-	Microservices         []SiteWhereMicroserviceStatus   `json:"microservices"`
-	Profile               SiteWhereProfile                `json:"profile"`
-}
 
 // SiteWhereMicroservice defines a microservice
 type SiteWhereMicroservice struct {

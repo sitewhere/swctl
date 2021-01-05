@@ -1,0 +1,8 @@
+# Source: sitewhere-infrastructure/charts/redis-ha/templates/redis-ha-serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sitewhere-infrastructure-redis-ha
+  namespace: sitewhere-system
+  labels:
+    app: sitewhere-infrastructure-redis-ha

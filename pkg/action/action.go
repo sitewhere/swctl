@@ -27,7 +27,30 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
+	//scriptingsitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/scripting.sitewhere.io/v1alpha4"
+	//templatessitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/templates.sitewhere.io/v1alpha4"
 )
+
+var (
+	scheme = runtime.NewScheme()
+)
+
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(apiextv1beta1.AddToScheme(scheme))
+
+	utilruntime.Must(sitewhereiov1alpha4.AddToScheme(scheme))
+	//	utilruntime.Must(templatessitewhereiov1alpha4.AddToScheme(scheme))
+	//	utilruntime.Must(scriptingsitewhereiov1alpha4.AddToScheme(scheme))
+}
 
 // Configuration injects the dependencies that all actions share.
 type Configuration struct {
@@ -88,4 +111,15 @@ func (c *Configuration) KubernetesDynamicClientSet() (dynamic.Interface, error) 
 		return nil, errors.Wrap(err, "unable to generate config for Dynamic Clientset")
 	}
 	return dynamic.NewForConfig(conf)
+}
+
+// ControllerClient creates a new controller client
+func (c *Configuration) ControllerClient() (client.Client, error) {
+	conf, err := c.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to generate config for kubernetes client")
+	}
+	return client.New(conf, client.Options{
+		Scheme: scheme,
+	})
 }

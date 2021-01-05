@@ -1,0 +1,22 @@
+# Source: sitewhere-infrastructure/templates/zoo-entrance.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: zoo-entrance
+  namespace: sitewhere-system
+  labels:
+    app: zoo-entrance
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: zoo-entrance
+      ports:
+        - port: 2181
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      strimzi.io/name: sitewhere-kafka-zookeeper
+  policyTypes:
+    - Ingress

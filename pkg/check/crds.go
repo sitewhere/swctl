@@ -23,27 +23,26 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 
-	"github.com/sitewhere/swctl/internal/crds"
-	"github.com/sitewhere/swctl/pkg/install"
+	"github.com/sitewhere/swctl/pkg/status"
 )
 
 // SiteWhereCRDs Install SiteWhere Custom Resource Definitions
 func SiteWhereCRDs(statikFS http.FileSystem,
 	clientset kubernetes.Interface,
 	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) ([]install.SiteWhereCRDStatus, error) {
+	config *rest.Config) ([]status.SiteWhereStatus, error) {
 	// var err error
-	var result []install.SiteWhereCRDStatus
-	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
-		// err = resources.InstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
-		// if err != nil && !errors.IsAlreadyExists(err) {
-		// 	return nil, err
-		// }
-		var crdStatus = install.SiteWhereCRDStatus{
-			Name: crdFile,
-			// Status: Installed,
-		}
-		result = append(result, crdStatus)
-	}
+	var result []status.SiteWhereStatus
+	//	for _, crdFile := range crds.GetSiteWhereCRDFiles() {
+	// err = resources.InstallResourceFromFile(crdFile, statikFS, clientset, apiextensionsClientset, config)
+	// if err != nil && !errors.IsAlreadyExists(err) {
+	// 	return nil, err
+	// }
+	//	var crdStatus = status.SiteWhereStatus{
+	//		Name: crdFile,
+	// Status: Installed,
+	//	}
+	//	result = append(result, crdStatus)
+	//}
 	return result, nil
 }

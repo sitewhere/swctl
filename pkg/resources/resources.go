@@ -19,29 +19,16 @@ package resources
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+
 	"time"
 
 	kubernetes "k8s.io/client-go/kubernetes"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	rest "k8s.io/client-go/rest"
-
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	policyV1beta1 "k8s.io/api/policy/v1beta1"
-	rbacV1 "k8s.io/api/rbac/v1"
-
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -49,162 +36,6 @@ const (
 	deployRunningThreshold     = time.Minute * 10 // Max wait time
 	deployRunningCheckInterval = time.Second * 2
 )
-
-// InstallResourceFromFile Install a resource from a file name
-func InstallResourceFromFile(fileName string,
-	statikFS http.FileSystem,
-	clientset kubernetes.Interface,
-	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) error {
-	r, err := statikFS.Open(fileName)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-	contents, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	sch := runtime.NewScheme()
-	_ = clientgoscheme.AddToScheme(sch)
-	_ = apiextv1beta1.AddToScheme(sch)
-
-	decode := serializer.NewCodecFactory(sch).UniversalDeserializer().Decode
-
-	obj, groupVersionKind, err := decode([]byte(contents), nil, nil)
-
-	_ = groupVersionKind
-
-	if err != nil {
-		// If we can decode, try installing custom resource
-		return CreateCustomResourceFromFile(fileName, statikFS, config)
-	}
-
-	// now use switch over the type of the object
-	// and match each type-case
-	switch o := obj.(type) {
-	case *v1.Pod:
-		_, err = CreatePodIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.ConfigMap:
-		_, err = CreateConfigMapIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.Secret:
-		_, err = CreateSecretIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.ServiceAccount:
-		_, err = CreateServiceAccountIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.PersistentVolumeClaim:
-		_, err = CreatePersistentVolumeClaimIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.Service:
-		_, err = CreateServiceIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *appsv1.Deployment:
-		_, err = CreateDeploymentIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *appsv1.StatefulSet:
-		_, err = CreateStatefulSetIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *rbacV1.ClusterRole:
-		_, err = CreateClusterRoleIfNotExists(o, clientset)
-	case *rbacV1.ClusterRoleBinding:
-		_, err = CreateClusterRoleBindingIfNotExists(o, clientset)
-	case *rbacV1.Role:
-		_, err = CreateRoleIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *rbacV1.RoleBinding:
-		_, err = CreateRoleBindingIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *policyV1beta1.PodDisruptionBudget:
-		_, err = CreatePodDisruptionBudgetIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *networkingv1.NetworkPolicy:
-		_, err = CreateNetworkPolicyIfNotExists(o, clientset, SitewhereSystemNamespace())
-	case *apiextv1beta1.CustomResourceDefinition:
-		_, err = CreateCustomResourceDefinitionIfNotExists(o, apiextensionsClientset)
-	default:
-		fmt.Println(fmt.Sprintf("Resource with type %v not handled.", groupVersionKind))
-		_ = o //o is unknown for us
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// UninstallResourceFromFile Uninstall a resource from a file name
-func UninstallResourceFromFile(fileName string,
-	statikFS http.FileSystem,
-	clientset kubernetes.Interface,
-	apiextensionsClientset apiextensionsclientset.Interface,
-	config *rest.Config) error {
-	r, err := statikFS.Open(fileName)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-	contents, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	sch := runtime.NewScheme()
-	_ = clientgoscheme.AddToScheme(sch)
-	_ = apiextv1beta1.AddToScheme(sch)
-
-	decode := serializer.NewCodecFactory(sch).UniversalDeserializer().Decode
-
-	obj, groupVersionKind, err := decode([]byte(contents), nil, nil)
-
-	_ = groupVersionKind
-
-	if err != nil {
-		// If we can decode, try uninstalling custom resource
-		return DeleteCustomResourceFromFile(fileName, config, statikFS)
-	}
-
-	// now use switch over the type of the object
-	// and match each type-case
-	switch o := obj.(type) {
-	case *v1.Pod:
-		err = DeletePodIfExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.ConfigMap:
-		err = DeleteConfigMapIfExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.Secret:
-		err = DeleteSecretIfExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.ServiceAccount:
-		err = DeleteServiceAccountIfExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.PersistentVolumeClaim:
-		err = DeletePersistentVolumeClaimIfExists(o, clientset, SitewhereSystemNamespace())
-	case *v1.Service:
-		err = DeleteServiceIfExists(o, clientset, SitewhereSystemNamespace())
-	case *appsv1.Deployment:
-		err = DeleteDeploymentIfExists(o, clientset, SitewhereSystemNamespace())
-	case *appsv1.StatefulSet:
-		err = DeleteStatefulSetIfExists(o, clientset, SitewhereSystemNamespace())
-	case *rbacV1.ClusterRole:
-		err = DeleteClusterRoleIfExists(o, clientset)
-	case *rbacV1.ClusterRoleBinding:
-		err = DeleteClusterRoleBindingIfExists(o, clientset)
-	case *rbacV1.Role:
-		err = DeleteRoleIfExists(o, clientset, SitewhereSystemNamespace())
-	case *rbacV1.RoleBinding:
-		err = DeleteRoleBindingIfExists(o, clientset, SitewhereSystemNamespace())
-	case *policyV1beta1.PodDisruptionBudget:
-		err = DeletePodDisruptionBudgetIfExists(o, clientset, SitewhereSystemNamespace())
-	case *networkingv1.NetworkPolicy:
-		err = DeleteNetworkPolicyIfExists(o, clientset, SitewhereSystemNamespace())
-	case *apiextv1beta1.CustomResourceDefinition:
-		apiextensionsClient, err := apiextensionsclientset.NewForConfig(config)
-		if err != nil {
-			fmt.Printf("Error getting Kubernetes API Extension Client: %v\n", err)
-			return err
-		}
-		err = DeleteCustomResourceDefinitionIfExists(o, apiextensionsClient)
-	default:
-		fmt.Println(fmt.Sprintf("Resource with type %v not handled.", groupVersionKind))
-		_ = o //o is unknown for us
-	}
-
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-	return nil
-}
 
 func waitForPodContainersRunning(clientset kubernetes.Interface, podName string, namespace string) error {
 	end := time.Now().Add(deployRunningThreshold)
@@ -248,7 +79,8 @@ func podContainersRunning(clientset kubernetes.Interface, podName string, namesp
 	return true, nil
 }
 
-func waitForDeploymentAvailable(clientset kubernetes.Interface, deploymentName string, namespace string) error {
+// WaitForDeploymentAvailable waits for a Deployment to became available
+func WaitForDeploymentAvailable(clientset kubernetes.Interface, deploymentName string, namespace string) error {
 	end := time.Now().Add(deployRunningThreshold)
 
 	for true {
@@ -284,6 +116,90 @@ func deploymentAvailable(clientset kubernetes.Interface, deploymentName string, 
 	if existingDeploy.Status.ReadyReplicas < existingDeploy.Status.AvailableReplicas {
 		return false, nil
 	}
+	for _, cond := range existingDeploy.Status.Conditions {
+		if cond.Type == appsv1.DeploymentProgressing {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// WaitForSecretExists waits for a Secret to exists
+func WaitForSecretExists(clientset kubernetes.Interface, name string, namespace string) error {
+	end := time.Now().Add(deployRunningThreshold)
+
+	for true {
+		<-time.NewTimer(deployRunningCheckInterval).C
+
+		var err error
+		running, err := secretExists(clientset, name, namespace)
+		if running {
+			return nil
+		}
+
+		if err != nil && !errors.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s\n", err))
+		}
+
+		if time.Now().After(end) {
+			return fmt.Errorf("Failed to get Secret available")
+		}
+	}
+	return nil
+}
+
+func secretExists(clientset kubernetes.Interface, name string, namespace string) (bool, error) {
+	_, err := clientset.CoreV1().Secrets(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{})
+
+	if err != nil {
+		return false, err
+	}
 
 	return true, nil
+}
+
+// WaitForCRDStablished waits for a CRD to be stablished
+func WaitForCRDStablished(apiextensionsclientset apiextensionsclientset.Interface, name string) error {
+	end := time.Now().Add(deployRunningThreshold)
+
+	for true {
+		<-time.NewTimer(deployRunningCheckInterval).C
+
+		var err error
+		running, err := crdStablished(apiextensionsclientset, name)
+		if running {
+			return nil
+		}
+
+		if err != nil && !errors.IsNotFound(err) {
+			fmt.Printf(fmt.Sprintf("Encountered an error checking for deployment available: %s\n", err))
+		}
+
+		if time.Now().After(end) {
+			return fmt.Errorf("Failed to get Secret available")
+		}
+	}
+	return nil
+}
+
+func crdStablished(apiextensionsclientset apiextensionsclientset.Interface, name string) (bool, error) {
+	crds := apiextensionsclientset.ApiextensionsV1beta1().CustomResourceDefinitions()
+
+	existingCRD, err := crds.Get(context.TODO(),
+		name,
+		metav1.GetOptions{})
+
+	if err != nil {
+		return false, err
+	}
+
+	for _, cond := range existingCRD.Status.Conditions {
+		if cond.Type == apiextv1beta1.Established {
+			return true, nil
+		}
+	}
+	return false, nil
 }

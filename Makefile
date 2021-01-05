@@ -10,6 +10,9 @@ GOX           = $(GOPATH)/bin/gox
 GOIMPORTS     = $(GOPATH)/bin/goimports
 ARCH          = $(shell uname -p)
 
+MANIFEST_SRC  = ./manifests
+MANIFEST_DEST = ./internal
+
 ACCEPTANCE_DIR:=../acceptance-testing
 # To specify the subset of acceptance tests to run. '.' means all tests
 ACCEPTANCE_RUN_TESTS=.
@@ -53,7 +56,17 @@ LDFLAGS += -X github.com/sitewhere/swctl/internal/version.gitTreeState=${GIT_DIR
 LDFLAGS += $(EXT_LDFLAGS)
 
 .PHONY: all
-all: build
+all: manifests build
+
+# ------------------------------------------------------------------------------
+# Generate Statik
+
+internal/statik/statik.go:
+	statik --f --src $(MANIFEST_SRC) --dest $(MANIFEST_DEST)
+
+.PHONY: manifests
+manifests: internal/statik/statik.go
+
 
 # ------------------------------------------------------------------------------
 #  build

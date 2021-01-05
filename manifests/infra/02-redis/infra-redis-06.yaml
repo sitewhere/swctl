@@ -1,0 +1,15 @@
+# Source: sitewhere-infrastructure/charts/redis-ha/templates/redis-ha-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sitewhere-infrastructure-redis-ha
+  namespace: sitewhere-system
+  labels:
+    app: sitewhere-infrastructure-redis-ha
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+    verbs:
+      - get

@@ -1,0 +1,12 @@
+# Source: sitewhere-infrastructure/charts/influxdb/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sitewhere-infrastructure-influxdb
+  namespace: sitewhere-system
+  labels:
+    helm.sh/chart: influxdb-4.8.1
+    app.kubernetes.io/name: influxdb
+    app.kubernetes.io/instance: sitewhere-infrastructure
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Tiller

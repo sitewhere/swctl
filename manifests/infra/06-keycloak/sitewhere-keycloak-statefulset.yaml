@@ -1,0 +1,159 @@
+# Source: sitewhere-keycloak/charts/keycloak/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sitewhere-keycloak
+  namespace: sitewhere-system
+  labels:
+    helm.sh/chart: keycloak-9.6.1
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "11.0.2"
+    app.kubernetes.io/managed-by: swctl
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+      app.kubernetes.io/instance: keycloak
+  replicas: 1
+  serviceName: sitewhere-keycloak-headless
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config-startup: ecd22646766ac64c92660a23e917026473efe29d93f55ab0d14e457cc32d00fb
+        checksum/secrets: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+      labels:
+        app.kubernetes.io/name: keycloak
+        app.kubernetes.io/instance: keycloak
+    spec:
+      initContainers:
+        - name: pgchecker
+          image: "docker.io/busybox:1.32"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          command:
+            - sh
+            - -c
+            - |
+              echo 'Waiting for PostgreSQL to become ready...'
+
+              until printf "." && nc -z -w 2 keycloak-postgresql 5432; do
+                  sleep 2;
+              done;
+
+              echo 'PostgreSQL OK ✓'
+          resources:
+            limits:
+              cpu: 10m
+              memory: 16Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+      containers:
+        - name: keycloak
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "docker.io/jboss/keycloak:11.0.2"
+          imagePullPolicy: IfNotPresent
+          command: []
+          args: []
+          env:
+            - name: DB_VENDOR
+              value: postgres
+            - name: DB_ADDR
+              value: keycloak-postgresql
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: "keycloak"
+            - name: DB_USER
+              value: "keycloak"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-postgresql
+                  key: postgresql-password
+            - name: KEYCLOAK_USER
+              value: sitewhere
+            - name: KEYCLOAK_PASSWORD
+              value: sitewhere
+          envFrom:
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+            - name: http-management
+              containerPort: 9990
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /auth/
+              port: http
+            initialDelaySeconds: 300
+            timeoutSeconds: 5
+
+          readinessProbe:
+            httpGet:
+              path: /auth/realms/master
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+
+          resources: {}
+          volumeMounts:
+            - name: startup
+              mountPath: "/opt/jboss/startup-scripts/keycloak.cli"
+              subPath: "keycloak.cli"
+              readOnly: true
+      serviceAccountName: sitewhere-keycloak
+      securityContext:
+        fsGroup: 1000
+      enableServiceLinks: true
+      restartPolicy: Always
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: keycloak
+                  app.kubernetes.io/instance: keycloak
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: NotIn
+                    values:
+                      - test
+              topologyKey: kubernetes.io/hostname
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: keycloak
+                    app.kubernetes.io/instance: keycloak
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: NotIn
+                      values:
+                        - test
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: startup
+          configMap:
+            name: sitewhere-keycloak-startup
+            defaultMode: 0555
+            items:
+              - key: keycloak.cli
+                path: keycloak.cli

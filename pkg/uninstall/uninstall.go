@@ -16,6 +16,16 @@
 
 package uninstall
 
+import "github.com/sitewhere/swctl/pkg/status"
+
 // SiteWhereUninstall destribe the uninstallation of SiteWhere.
 type SiteWhereUninstall struct {
+	// Status of SiteWhere CDR installation
+	CDRStatuses []status.SiteWhereStatus `json:"crdStatues,omitempty"`
+	// Status of SiteWhere Templates installation
+	TemplatesStatues []status.SiteWhereStatus `json:"templatesStatues,omitempty"`
+	// Status of SiteWhere Operator
+	OperatorStatuses []status.SiteWhereStatus `json:"operatorStatuses,omitempty"`
+	// Status of SiteWhere Infrastructure
+	InfrastructureStatuses []status.SiteWhereStatus `json:"infrastructureStatuses,omitempty"`
 }

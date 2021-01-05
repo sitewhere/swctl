@@ -1,0 +1,15 @@
+# Source: sitewhere-infrastructure/charts/mosquitto/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sitewhere-infrastructure-mosquitto
+  namespace: sitewhere-system
+  labels:
+    app: mosquitto
+    chart: mosquitto-0.1.6
+data:
+  mosquitto.conf: |-
+    log_dest stdout
+    listener 1883
+    listener 9090
+    protocol websockets

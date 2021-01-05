@@ -1,0 +1,63 @@
+# Source: sitewhere-infrastructure/charts/warp10/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "sitewhere-infrastructure-warp10"
+  namespace: sitewhere-system
+  labels:
+    app: warp10
+spec:
+  serviceName: sitewhere-infrastructure-warp10-headless
+  podManagementPolicy:
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: warp10
+      release: sitewhere-infrastructure
+  template:
+    metadata:
+      labels:
+        app: warp10
+        release: sitewhere-infrastructure
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: "app"
+                      operator: In
+                      values:
+                        - warp10
+                    - key: "release"
+                      operator: In
+                      values:
+                        - sitewhere-infrastructure
+                topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: sitewhere-infrastructure-warp10
+          image: "sitewhere/warp10:2.2.0-sitewhere"
+          imagePullPolicy: "IfNotPresent"
+          resources: {}
+
+          ports:
+            - name: api
+              containerPort: 8080
+            - name: studio
+              containerPort: 8081
+          volumeMounts:
+            - name: datadir-0
+              mountPath: /data
+      volumes:
+  volumeClaimTemplates:
+    - metadata:
+        name: datadir-0
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "1Gi"
