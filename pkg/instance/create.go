@@ -23,7 +23,7 @@ type CreateSiteWhereInstance struct {
 	// Docker Image Tag
 	Tag string `json:"tag"`
 	// Number of replicas
-	Replicas int64
+	Replicas int32
 	// Use debug mode
 	Debug bool
 	// Configuration Template
