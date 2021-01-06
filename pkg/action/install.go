@@ -62,14 +62,14 @@ type Install struct {
 	cfg *Configuration
 
 	StatikFS http.FileSystem
-	// CRD indicates if we need to install SiteWhere Custom Resource Definitions
-	CRD bool
-	// Template indicates if we need to install SiteWhere templates
-	Template bool
-	// Operator indicates if we need to install SiteWhere Operator
-	Operator bool
-	// Infrastructure indicates if we need to install SiteWhere Infrastructure
-	Infrastructure bool
+	// SkipCRD indicates if we need to install SiteWhere Custom Resource Definitions
+	SkipCRD bool
+	// SkipTemplate indicates if we need to install SiteWhere templates
+	SkipTemplate bool
+	// SkipOperator indicates if we need to install SiteWhere Operator
+	SkipOperator bool
+	// SkipInfrastructure indicates if we need to install SiteWhere Infrastructure
+	SkipInfrastructure bool
 	// Minimal installation only install escential SiteWhere components
 	Minimal bool
 	// Wait for components to be ready before return control.
@@ -82,15 +82,15 @@ type Install struct {
 func NewInstall(cfg *Configuration) *Install {
 	statikFS, _ := fs.New()
 	return &Install{
-		cfg:            cfg,
-		StatikFS:       statikFS,
-		CRD:            true,
-		Template:       true,
-		Operator:       true,
-		Infrastructure: true,
-		Minimal:        false,
-		WaitReady:      false,
-		Verbose:        false,
+		cfg:                cfg,
+		StatikFS:           statikFS,
+		SkipCRD:            false,
+		SkipTemplate:       false,
+		SkipOperator:       false,
+		SkipInfrastructure: false,
+		Minimal:            false,
+		WaitReady:          false,
+		Verbose:            false,
 	}
 }
 
@@ -101,7 +101,7 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		return nil, err
 	}
 	var crdStatuses []status.SiteWhereStatus
-	if i.CRD {
+	if !i.SkipCRD {
 		// Install Custom Resource Definitions
 		crdStatuses, err = i.InstallCRDs()
 		if err != nil {
@@ -109,7 +109,7 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		}
 	}
 	var templatesStatues []status.SiteWhereStatus
-	if i.Template {
+	if !i.SkipTemplate {
 		// Install Templates
 		templatesStatues, err = i.InstallTemplates()
 		if err != nil {
@@ -117,7 +117,7 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		}
 	}
 	var operatorStatuses []status.SiteWhereStatus
-	if i.Operator {
+	if !i.SkipOperator {
 		// Install Operator
 		operatorStatuses, err = i.InstallOperator()
 		if err != nil {
@@ -125,7 +125,7 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		}
 	}
 	var infraStatuses []status.SiteWhereStatus
-	if i.Infrastructure {
+	if !i.SkipInfrastructure {
 		// Install Infrastructure
 		infraStatuses, err = i.InstallInfrastructure()
 		if err != nil {

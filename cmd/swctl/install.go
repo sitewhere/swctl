@@ -56,7 +56,7 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return outFmt.Write(out, newInstallWriter(results))
+			return outFmt.Write(out, newInstallWriter(client.SkipCRD, client.SkipTemplate, client.SkipOperator, client.SkipInfrastructure, results))
 		},
 	}
 
@@ -64,26 +64,48 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 
 	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal installation.")
 	f.BoolVarP(&client.WaitReady, "wait", "w", false, "Wait for components to be ready before return control.")
+	f.BoolVar(&client.SkipCRD, "skip-crd", false, "Skip Custom Resource Definition installation.")
+	f.BoolVar(&client.SkipTemplate, "skip-templates", false, "Skip Templates installation.")
+	f.BoolVar(&client.SkipOperator, "skip-operator", false, "Skip Operator installation.")
+	f.BoolVar(&client.SkipInfrastructure, "skip-infra", false, "Skip Infrastructure installation.")
 	bindOutputFlag(cmd, &outFmt)
 
 	return cmd
 }
 
 type installWriter struct {
-	Results *install.SiteWhereInstall `json:"results"`
+	SkipCRD            bool
+	SkipTemplate       bool
+	SkipOperator       bool
+	SkipInfrastructure bool
+	Results            *install.SiteWhereInstall `json:"results"`
 }
 
-func newInstallWriter(results *install.SiteWhereInstall) *installWriter {
-	return &installWriter{Results: results}
+func newInstallWriter(skipCRD bool, skipTemplate bool, skipOperator bool, skipInfrastructure bool, results *install.SiteWhereInstall) *installWriter {
+	return &installWriter{
+		SkipCRD:            skipCRD,
+		SkipTemplate:       skipTemplate,
+		SkipOperator:       skipOperator,
+		SkipInfrastructure: skipInfrastructure,
+		Results:            results,
+	}
 }
 
 func (i *installWriter) WriteTable(out io.Writer) error {
 	table := uitable.New()
 	table.AddRow("COMPONENT", "RESOURCES", "STATUS")
-	table.AddRow("Custom Resource Definitions", fmt.Sprintf("%d", i.countCRDs()), color.Info.Render("Installed"))
-	table.AddRow("Templates", fmt.Sprintf("%d", i.countTemplates()), color.Info.Render("Installed"))
-	table.AddRow("Operator", fmt.Sprintf("%d", i.countOperator()), color.Info.Render("Installed"))
-	table.AddRow("Infrastructure", fmt.Sprintf("%d", i.countInfrastructure()), color.Info.Render("Installed"))
+	if !i.SkipCRD {
+		table.AddRow("Custom Resource Definitions", fmt.Sprintf("%d", i.countCRDs()), color.Info.Render("Installed"))
+	}
+	if !i.SkipTemplate {
+		table.AddRow("Templates", fmt.Sprintf("%d", i.countTemplates()), color.Info.Render("Installed"))
+	}
+	if !i.SkipOperator {
+		table.AddRow("Operator", fmt.Sprintf("%d", i.countOperator()), color.Info.Render("Installed"))
+	}
+	if !i.SkipInfrastructure {
+		table.AddRow("Infrastructure", fmt.Sprintf("%d", i.countInfrastructure()), color.Info.Render("Installed"))
+	}
 	table.AddRow(color.Style{color.FgGreen, color.OpBold}.Render("SiteWhere 3.0 Installed"))
 	return output.EncodeTable(out, table)
 }
