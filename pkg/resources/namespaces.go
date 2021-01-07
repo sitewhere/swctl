@@ -49,7 +49,8 @@ func CreateNamespaceIfNotExists(namespace string, clientset kubernetes.Interface
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
 				Labels: map[string]string{
-					"app": namespace,
+					"app":             namespace,
+					"istio-injection": "enabled",
 				},
 			},
 		}
