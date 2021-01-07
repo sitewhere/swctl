@@ -6,6 +6,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/gookit/color v1.2.7
 	github.com/gosuri/uitable v0.0.4
 	github.com/mattn/go-shellwords v1.0.10
@@ -28,13 +29,13 @@ require (
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/kubernetes/kubernetes.v0 v0.21.4
 	gopkg.in/yaml.v2 v2.3.0
-	k8s.io/api v0.18.8
-	k8s.io/apiextensions-apiserver v0.18.8
-	k8s.io/apimachinery v0.18.8
-	k8s.io/cli-runtime v0.18.8
-	k8s.io/client-go v0.18.8
+	k8s.io/api v0.19.4
+	k8s.io/apiextensions-apiserver v0.19.4
+	k8s.io/apimachinery v0.19.4
+	k8s.io/cli-runtime v0.19.4
+	k8s.io/client-go v0.19.4
 	k8s.io/klog v1.0.0
-	k8s.io/kubectl v0.18.8
+	k8s.io/kubectl v0.19.4
 	sigs.k8s.io/controller-runtime v0.6.2
 	sigs.k8s.io/structured-merge-diff v0.0.0-20190525122527-15d366b2352e // indirect
 	sigs.k8s.io/yaml v1.2.0

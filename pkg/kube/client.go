@@ -43,6 +43,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	cachetools "k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
@@ -60,6 +61,8 @@ type Client struct {
 	Log     func(string, ...interface{})
 	// Namespace allows to bypass the kubeconfig file for the choice of the namespace
 	Namespace string
+
+	kubeClient *kubernetes.Clientset
 }
 
 var addToScheme sync.Once
@@ -87,9 +90,19 @@ func New(getter genericclioptions.RESTClientGetter) *Client {
 
 var nopLogger = func(_ string, _ ...interface{}) {}
 
+// getKubeClient get or create a new KubernetesClientSet
+func (c *Client) getKubeClient() (*kubernetes.Clientset, error) {
+	var err error
+	if c.kubeClient == nil {
+		c.kubeClient, err = c.Factory.KubernetesClientSet()
+	}
+
+	return c.kubeClient, err
+}
+
 // IsReachable tests connectivity to the cluster
 func (c *Client) IsReachable() error {
-	client, err := c.Factory.KubernetesClientSet()
+	client, err := c.getKubeClient()
 	if err == genericclioptions.ErrEmptyConfig {
 		// re-replace kubernetes ErrEmptyConfig error with a friendy error
 		// moar workarounds for Kubernetes API breaking.
@@ -112,20 +125,6 @@ func (c *Client) Create(resources ResourceList) (*Result, error) {
 	}
 	return &Result{Created: resources}, nil
 }
-
-// // Wait up to the given timeout for the specified resources to be ready
-// func (c *Client) Wait(resources ResourceList, timeout time.Duration) error {
-// 	cs, err := c.Factory.KubernetesClientSet()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	w := waiter{
-// 		c:       cs,
-// 		log:     c.Log,
-// 		timeout: timeout,
-// 	}
-// 	return w.waitForResources(resources)
-// }
 
 func (c *Client) namespace() string {
 	if c.Namespace != "" {
@@ -161,7 +160,7 @@ func (c *Client) Build(reader io.Reader, validate bool) (ResourceList, error) {
 }
 
 // Update takes the current list of objects and target list of objects and
-// creates resources that don't already exists, updates resources that have been
+// creates resources that don't already exist, updates resources that have been
 // modified in the target configuration, and deletes resources from the current
 // configuration that are not present in the target configuration. If an error
 // occurs, a Result will still be returned with the error, containing all
@@ -178,7 +177,7 @@ func (c *Client) Update(original, target ResourceList, force bool) (*Result, err
 		}
 
 		helper := resource.NewHelper(info.Client, info.Mapping)
-		if _, err := helper.Get(info.Namespace, info.Name, info.Export); err != nil {
+		if _, err := helper.Get(info.Namespace, info.Name); err != nil {
 			if !apierrors.IsNotFound(err) {
 				return errors.Wrap(err, "could not get information about the resource")
 			}
@@ -369,7 +368,7 @@ func createPatch(target *resource.Info, current runtime.Object) ([]byte, types.P
 
 	// Fetch the current object for the three way merge
 	helper := resource.NewHelper(target.Client, target.Mapping)
-	currentObj, err := helper.Get(target.Namespace, target.Name, target.Export)
+	currentObj, err := helper.Get(target.Namespace, target.Name)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, types.StrategicMergePatchType, errors.Wrapf(err, "unable to get data for current object %s/%s", target.Namespace, target.Name)
 	}
@@ -567,7 +566,7 @@ func scrubValidationError(err error) error {
 // WaitAndGetCompletedPodPhase waits up to a timeout until a pod enters a completed phase
 // and returns said phase (PodSucceeded or PodFailed qualify).
 func (c *Client) WaitAndGetCompletedPodPhase(name string, timeout time.Duration) (v1.PodPhase, error) {
-	client, err := c.Factory.KubernetesClientSet()
+	client, err := c.getKubeClient()
 	if err != nil {
 		return v1.PodUnknown, err
 	}
