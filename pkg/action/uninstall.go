@@ -136,18 +136,6 @@ func (i *Uninstall) UninstallOperator() ([]status.SiteWhereStatus, error) {
 	}
 	result = append(result, ns...)
 
-	certmager, err := i.uninstallDirFiles(certManagerPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, certmager...)
-
-	operatorDeps, err := i.uninstallDirFiles(operatorDepsPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, operatorDeps...)
-
 	operator, err := i.uninstallDirFiles(operatorPath)
 	if err != nil {
 		return nil, err
