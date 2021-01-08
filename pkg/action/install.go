@@ -37,14 +37,8 @@ const crdPath = "/crd/"
 // path for template manifests
 const templatePath = "/templates/"
 
-// path for certificate manager
-const certManagerPath = "/cm/"
-
 // path to namespace objects
 const namespacePath = "/namespace/"
-
-// path for operator dependencies
-const operatorDepsPath = "/operator-deps/"
 
 // path for operator manifests
 const operatorPath = "/operator/"
@@ -153,49 +147,12 @@ func (i *Install) InstallTemplates() ([]status.SiteWhereStatus, error) {
 // InstallOperator Install SiteWhere Operator resource file in the cluster
 func (i *Install) InstallOperator() ([]status.SiteWhereStatus, error) {
 	var result []status.SiteWhereStatus
-	clientset, err := i.cfg.KubernetesClientSet()
-	if err != nil {
-		return nil, err
-	}
 
 	ns, err := i.installDirFiles(namespacePath)
 	if err != nil {
 		return nil, err
 	}
 	result = append(result, ns...)
-
-	certmager, err := i.installDirFiles(certManagerPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, certmager...)
-
-	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager", "cert-manager")
-	if err != nil {
-		return nil, err
-	}
-	err = resources.WaitForSecretExists(clientset, "cert-manager-webhook-ca", "cert-manager")
-	if err != nil {
-		return nil, err
-	}
-	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager-webhook", "cert-manager")
-	if err != nil {
-		return nil, err
-	}
-	err = resources.WaitForDeploymentAvailable(clientset, "cert-manager-cainjector", "cert-manager")
-	if err != nil {
-		return nil, err
-	}
-	operatorDeps, err := i.installDirFilesWithRetries(operatorDepsPath, 5)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, operatorDeps...)
-
-	err = resources.WaitForSecretExists(clientset, "webhook-server-cert", "sitewhere-system")
-	if err != nil {
-		return nil, err
-	}
 
 	operator, err := i.installDirFiles(operatorPath)
 	if err != nil {
