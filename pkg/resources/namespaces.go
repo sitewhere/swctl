@@ -38,20 +38,28 @@ func SitewhereSystemNamespace() string {
 }
 
 // CreateNamespaceIfNotExists Create a Namespace in Kubernetes if it does not exists.
-func CreateNamespaceIfNotExists(namespace string, clientset kubernetes.Interface) (*v1.Namespace, error) {
+func CreateNamespaceIfNotExists(namespace string, istioInject bool, clientset kubernetes.Interface) (*v1.Namespace, error) {
 	var err error
 	var ns *v1.Namespace
 
 	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 
 	if err != nil && errors.IsNotFound(err) {
+		var labels map[string]string
+		if istioInject {
+			labels = map[string]string{
+				"app": namespace,
+			}
+		} else {
+			labels = map[string]string{
+				"app":             namespace,
+				"istio-injection": "enabled",
+			}
+		}
 		ns = &v1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-				Labels: map[string]string{
-					"app":             namespace,
-					"istio-injection": "enabled",
-				},
+				Name:   namespace,
+				Labels: labels,
 			},
 		}
 

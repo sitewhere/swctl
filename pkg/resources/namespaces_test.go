@@ -59,7 +59,7 @@ func TestCreateNamespaceIfNotExists(t *testing.T) {
 			err       error
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
-				result, err := CreateNamespaceIfNotExists(single.namespace, single.clientset)
+				result, err := CreateNamespaceIfNotExists(single.namespace, false, single.clientset)
 
 				if err != nil {
 					if single.err == nil {
