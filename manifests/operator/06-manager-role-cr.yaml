@@ -5,6 +5,33 @@ metadata:
   name: sitewhere-manager-role
 rules:
 - apiGroups:
+    - apps
+  resources:
+    - deployments
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups:
+    - ""
+  resources:
+    - services
+    - configmaps
+    - secrets
+    - namespaces
+  verbs:
+    - create
+    - delet
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups:
   - sitewhere.io
   resources:
   - instances
