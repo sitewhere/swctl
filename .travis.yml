@@ -2,13 +2,8 @@ language: go
 sudo: false
 matrix:
   include:
-    # "1.x" always refers to the latest Go version, inc. the patch release.
-    # e.g. "1.x" is 1.11 until 1.11.1 is available.
-    - go: 1.x
+    - go: 1.15.x
       env: LATEST=true
-    - go: tip
-  allow_failures:
-    - go: tip
 
 before_install:
   # gox simplifies building for multiple architectures
@@ -43,12 +38,8 @@ deploy:
   file:
     # The names of the binaries to output, based on the -output template passed to gox.
     - ./_dist/swctl.darwin.amd64
-    - ./_dist/swctl.linux.386
     - ./_dist/swctl.linux.amd64
-    - ./_dist/swctl.linux.arm
     - ./_dist/swctl.linux.arm64
-    - ./_dist/swctl.linux.ppc64le
-    - ./_dist/swctl.linux.s390x
     - ./_dist/swctl.windows.amd64.exe
 
   on:
