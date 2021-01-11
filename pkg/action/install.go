@@ -241,8 +241,8 @@ func (i *Install) IstioGateway() ([]status.SiteWhereStatus, error) {
 						"*",
 					},
 					Port: &networkingv1alpha3.Port{
-						Number:   8080,
-						Name:     "http-web-rest",
+						Number:   80,
+						Name:     "http",
 						Protocol: "HTTP",
 					},
 				},

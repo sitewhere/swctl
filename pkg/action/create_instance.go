@@ -37,6 +37,10 @@ import (
 	"github.com/sitewhere/swctl/pkg/resources"
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
+
+	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
+	v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 )
 
 // CreateInstance is the action for creating a SiteWhere instance
@@ -94,6 +98,9 @@ const defaultDatasetTemplate = "default"
 const (
 	// Client Secret key
 	clientSecretKey = "client-secret"
+
+	// sitewhereGatewayName is the FQDN of sitewhere gateway
+	sitewhereGatewayName = "sitewhere-gateway.sitewhere-system.svc.cluster.local"
 )
 
 // NewCreateInstance constructs a new *Install
@@ -187,6 +194,11 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 		} else {
 			return nil, err
 		}
+	}
+
+	_, err = i.AddIstioVirtualService()
+	if err != nil {
+		return nil, err
 	}
 
 	return &instanceResourcesResult{
@@ -2235,4 +2247,63 @@ func (i *CreateInstance) renderDefaultMicroservices() []sitewhereiov1alpha4.Site
 		},
 	}
 	return result
+}
+
+// AddIstioVirtualService install Istio Virtual Service
+func (i *CreateInstance) AddIstioVirtualService() error {
+
+	restconfig, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return err
+	}
+	ic, err := versionedclient.NewForConfig(restconfig)
+	if err != nil {
+		return err
+	}
+
+	var vsName = fmt.Sprintf("%s-vs", i.InstanceName)
+	var vsRouteHost = fmt.Sprintf("instance-management.%s.svc.cluster.local", i.Namespace)
+
+	var vs *v1alpha3.VirtualService = &v1alpha3.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: i.Namespace,
+			Name:      vsName,
+		},
+		Spec: networkingv1alpha3.VirtualService{
+			Gateways: []string{
+				sitewhereGatewayName,
+			},
+			Hosts: []string{
+				"*",
+			},
+			Http: []*networkingv1alpha3.HTTPRoute{
+				&networkingv1alpha3.HTTPRoute{
+					Name: "instance-rest",
+					Match: []*networkingv1alpha3.HTTPMatchRequest{
+						&networkingv1alpha3.HTTPMatchRequest{
+							Uri: &networkingv1alpha3.StringMatch{
+								MatchType: &networkingv1alpha3.StringMatch_Prefix{
+									Prefix: i.InstanceName,
+								},
+							},
+						},
+					},
+					Route: []*networkingv1alpha3.HTTPRouteDestination{
+						&networkingv1alpha3.HTTPRouteDestination{
+							Destination: &networkingv1alpha3.Destination{
+								Host: vsRouteHost,
+								Port: &networkingv1alpha3.PortSelector{
+									Number: 8080,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// createGateway, err := ic.NetworkingV1alpha3().Gateways(siteWhereSystemNamespace).Create(context.TODO(), gateway, metav1.CreateOptions{})
+
+	return nil
 }
