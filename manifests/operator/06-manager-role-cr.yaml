@@ -46,6 +46,7 @@ rules:
   - instances
   - microservices
   - tenants
+  - tenantengines
   verbs:
   - create
   - delete
@@ -60,6 +61,7 @@ rules:
   - instances/finalizers
   - microservices/finalizers
   - tenants/finalizers
+  - tenantengines/finalizers
   verbs:
   - update
 - apiGroups:
@@ -68,6 +70,7 @@ rules:
   - instances/status
   - microservices/status
   - tenants/status
+  - tenantengines/status
   verbs:
   - get
   - patch
