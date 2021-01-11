@@ -40,7 +40,6 @@ rules:
   - rolebindings
   verbs:
   - "*"
-
 - apiGroups:
   - sitewhere.io
   resources:
@@ -67,6 +66,8 @@ rules:
   - sitewhere.io
   resources:
   - instances/status
+  - microservices/status
+  - tenants/status
   verbs:
   - get
   - patch
