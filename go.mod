@@ -29,6 +29,8 @@ require (
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/kubernetes/kubernetes.v0 v0.21.4
 	gopkg.in/yaml.v2 v2.3.0
+	istio.io/api v0.0.0-20201123152548-197f11e4ea09
+	istio.io/client-go v1.8.1
 	k8s.io/api v0.19.4
 	k8s.io/apiextensions-apiserver v0.19.4
 	k8s.io/apimachinery v0.19.4

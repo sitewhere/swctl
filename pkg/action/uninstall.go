@@ -17,6 +17,7 @@
 package action
 
 import (
+	"context"
 	"fmt"
 	"github.com/sitewhere/swctl/pkg/status"
 	"net/http"
@@ -25,9 +26,12 @@ import (
 	"github.com/rakyll/statik/fs"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/uninstall"
+
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 )
 
 // Uninstall is the action for installing SiteWhere
@@ -141,6 +145,12 @@ func (i *Uninstall) UninstallOperator() ([]status.SiteWhereStatus, error) {
 		return nil, err
 	}
 	result = append(result, operator...)
+
+	_, err = i.IstioGateway()
+	if err != nil {
+		return nil, err
+	}
+
 	return result, nil
 }
 
@@ -224,5 +234,32 @@ func (i *Uninstall) uninstallFiles(parentPath string, fi os.FileInfo) ([]status.
 			result = append(result, deployStatus)
 		}
 	}
+	return result, nil
+}
+
+// IstioGateway uninstall Istio Gateway
+func (i *Uninstall) IstioGateway() ([]status.SiteWhereStatus, error) {
+	var result []status.SiteWhereStatus
+
+	restconfig, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	ic, err := versionedclient.NewForConfig(restconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ic.NetworkingV1alpha3().Gateways(siteWhereSystemNamespace).Delete(context.TODO(), "sitewhere-gateway", metav1.DeleteOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var deployStatus = status.SiteWhereStatus{
+		Name:   "sitewhere-gateway",
+		Status: status.Uninstalled,
+	}
+	result = append(result, deployStatus)
+
 	return result, nil
 }

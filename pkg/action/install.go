@@ -17,6 +17,7 @@
 package action
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -24,11 +25,16 @@ import (
 
 	"github.com/rakyll/statik/fs"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/install"
 	"github.com/sitewhere/swctl/pkg/resources"
 	"github.com/sitewhere/swctl/pkg/status"
+
+	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
+	v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 )
 
 // path for CRD manifests
@@ -48,6 +54,8 @@ const infraDepsPath = "/infra-deps/"
 
 // path for operator infra
 const infraPath = "/infra/"
+
+const siteWhereSystemNamespace = "sitewhere-system"
 
 const maxRetries = 5
 
@@ -126,6 +134,12 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 			return nil, err
 		}
 	}
+
+	_, err = i.IstioGateway()
+	if err != nil {
+		return nil, err
+	}
+
 	return &install.SiteWhereInstall{
 		CDRStatuses:            crdStatuses,
 		TemplatesStatues:       templatesStatues,
@@ -185,7 +199,7 @@ func (i *Install) InstallInfrastructure() ([]status.SiteWhereStatus, error) {
 		return nil, err
 	}
 
-	err = resources.WaitForDeploymentAvailable(clientset, "strimzi-cluster-operator", "sitewhere-system")
+	err = resources.WaitForDeploymentAvailable(clientset, "strimzi-cluster-operator", siteWhereSystemNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -195,6 +209,57 @@ func (i *Install) InstallInfrastructure() ([]status.SiteWhereStatus, error) {
 		return nil, err
 	}
 	result = append(result, infra...)
+
+	return result, nil
+}
+
+// IstioGateway install Istio Gateway
+func (i *Install) IstioGateway() ([]status.SiteWhereStatus, error) {
+	var result []status.SiteWhereStatus
+
+	restconfig, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	ic, err := versionedclient.NewForConfig(restconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	var gateway *v1alpha3.Gateway = &v1alpha3.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: siteWhereSystemNamespace,
+			Name:      "sitewhere-gateway",
+		},
+		Spec: networkingv1alpha3.Gateway{
+			Selector: map[string]string{
+				"istio": "ingressgateway",
+			},
+			Servers: []*networkingv1alpha3.Server{
+				&networkingv1alpha3.Server{
+					Hosts: []string{
+						"*",
+					},
+					Port: &networkingv1alpha3.Port{
+						Number:   8080,
+						Name:     "http-web-rest",
+						Protocol: "HTTP",
+					},
+				},
+			},
+		},
+	}
+
+	createGateway, err := ic.NetworkingV1alpha3().Gateways(siteWhereSystemNamespace).Create(context.TODO(), gateway, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var deployStatus = status.SiteWhereStatus{
+		Name:   createGateway.GetName(),
+		Status: status.Installed,
+	}
+	result = append(result, deployStatus)
 
 	return result, nil
 }
