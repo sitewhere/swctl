@@ -196,7 +196,7 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 		}
 	}
 
-	_, err = i.AddIstioVirtualService()
+	err = i.AddIstioVirtualService()
 	if err != nil {
 		return nil, err
 	}
@@ -2303,7 +2303,7 @@ func (i *CreateInstance) AddIstioVirtualService() error {
 		},
 	}
 
-	// createGateway, err := ic.NetworkingV1alpha3().Gateways(siteWhereSystemNamespace).Create(context.TODO(), gateway, metav1.CreateOptions{})
+	_, err = ic.NetworkingV1alpha3().VirtualServices(i.Namespace).Create(context.TODO(), vs, metav1.CreateOptions{})
 
 	return nil
 }
