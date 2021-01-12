@@ -72,8 +72,6 @@ type Install struct {
 	SkipOperator bool
 	// SkipInfrastructure indicates if we need to install SiteWhere Infrastructure
 	SkipInfrastructure bool
-	// Minimal installation only install escential SiteWhere components
-	Minimal bool
 	// Wait for components to be ready before return control.
 	WaitReady bool
 	// Use verbose mode
@@ -90,7 +88,6 @@ func NewInstall(cfg *Configuration) *Install {
 		SkipTemplate:       false,
 		SkipOperator:       false,
 		SkipInfrastructure: false,
-		Minimal:            false,
 		WaitReady:          false,
 		Verbose:            false,
 	}

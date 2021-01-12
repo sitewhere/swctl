@@ -62,7 +62,6 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal installation.")
 	f.BoolVarP(&client.WaitReady, "wait", "w", false, "Wait for components to be ready before return control.")
 	f.BoolVar(&client.SkipCRD, "skip-crd", false, "Skip Custom Resource Definition installation.")
 	f.BoolVar(&client.SkipTemplate, "skip-templates", false, "Skip Templates installation.")
