@@ -100,7 +100,8 @@ const (
 	clientSecretKey = "client-secret"
 
 	// sitewhereGatewayName is the FQDN of sitewhere gateway
-	sitewhereGatewayName = "sitewhere-gateway.sitewhere-system.svc.cluster.local"
+	//	sitewhereGatewayName = "sitewhere-gateway.sitewhere-system.svc.cluster.local"
+	sitewhereGatewayName = "sitewhere-system/sitewhere-gateway"
 )
 
 // NewCreateInstance constructs a new *Install
@@ -337,8 +338,333 @@ func (i *CreateInstance) buildCRSiteWhereInstace() *sitewhereiov1alpha4.SiteWher
 }
 
 func (i *CreateInstance) renderDefaultMicroservices() []sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result []sitewhereiov1alpha4.SiteWhereMicroserviceSpec = []sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
+		renderAssetManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderBatchOperationsMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderDeviceRegistrationMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderDeviceStateMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderEventManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderEventSourcesMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderLabelGenerationMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		renderScheduleManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+	}
+	return result
+}
 
+func renderDefaultMicroserviceTemplate(replicas int32,
+	tag string,
+	instanceName string,
+	functionalArea string,
+	multitenant bool,
+	name string,
+	nescription string,
+	icon string,
+	debugOffset int) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var clusterIPType = corev1.ServiceTypeClusterIP
+	return sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
+		FunctionalArea: functionalArea,
+		Replicas:       replicas,
+		Multitenant:    multitenant,
+		Name:           name,
+		Description:    nescription,
+		Icon:           icon,
+		PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
+			DockerSpec: &sitewhereiov1alpha4.DockerSpec{
+				Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
+				Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
+				Tag:        tag,
+			},
+			ImagePullPolicy: corev1.PullIfNotPresent,
+			Ports: []corev1.ContainerPort{
+				corev1.ContainerPort{
+					ContainerPort: 9000,
+					Protocol:      corev1.ProtocolTCP,
+				},
+				corev1.ContainerPort{
+					ContainerPort: 9090,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+			Env: []corev1.EnvVar{
+				corev1.EnvVar{
+					Name: "sitewhere.config.k8s.name",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							APIVersion: "v1",
+							FieldPath:  "metadata.name",
+						},
+					},
+				},
+				corev1.EnvVar{
+					Name: "sitewhere.config.k8s.namespace",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							APIVersion: "v1",
+							FieldPath:  "metadata.namespace",
+						},
+					},
+				},
+				corev1.EnvVar{
+					Name: "sitewhere.config.k8s.pod.ip",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							APIVersion: "v1",
+							FieldPath:  "status.podIP",
+						},
+					},
+				},
+				corev1.EnvVar{
+					Name:  "sitewhere.config.product.id",
+					Value: instanceName,
+				},
+				corev1.EnvVar{
+					Name:  "sitewhere.config.keycloak.service.name",
+					Value: "sitewhere-keycloak-http",
+				},
+				corev1.EnvVar{
+					Name:  "sitewhere.config.keycloak.api.port",
+					Value: "80",
+				},
+				corev1.EnvVar{
+					Name:  "sitewhere.config.keycloak.realm",
+					Value: "sitewhere",
+				},
+				corev1.EnvVar{
+					Name:  "sitewhere.config.keycloak.master.realm",
+					Value: "master",
+				},
+				corev1.EnvVar{
+					Name:  "sitewhere.config.keycloak.master.username",
+					Value: "sitewhere",
+				},
+				corev1.EnvVar{
+					Name:  "sitewhere.config.keycloak.master.password",
+					Value: "sitewhere",
+				},
+				corev1.EnvVar{
+					Name: "sitewhere.config.keycloak.oidc.secret",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: instanceName,
+							},
+							Key: clientSecretKey,
+						},
+					},
+				},
+			},
+		},
+		SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
+			Type: &clusterIPType,
+			Ports: []corev1.ServicePort{
+				corev1.ServicePort{
+					Name:       "grpc-api",
+					Port:       9000,
+					Protocol:   corev1.ProtocolTCP,
+					TargetPort: intstr.IntOrString{IntVal: 9000},
+				},
+				corev1.ServicePort{
+					Name:       "http-metrics",
+					Port:       9090,
+					Protocol:   corev1.ProtocolTCP,
+					TargetPort: intstr.IntOrString{IntVal: 9090},
+				},
+			},
+		},
+		Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
+			Enabled:  false,
+			JDWPPort: 8000 + debugOffset,
+			JMXPort:  1100 + debugOffset,
+		},
+		Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
+			Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
+				sitewhereiov1alpha4.MicroserviceLoggingEntry{
+					Logger: "com.sitewhere",
+					Level:  "info",
+				},
+				sitewhereiov1alpha4.MicroserviceLoggingEntry{
+					Logger: "com.sitewhere.grpc.client",
+					Level:  "info",
+				},
+				sitewhereiov1alpha4.MicroserviceLoggingEntry{
+					Logger: "com.sitewhere.microservice.grpc",
+					Level:  "info",
+				},
+				sitewhereiov1alpha4.MicroserviceLoggingEntry{
+					Logger: "com.sitewhere.microservice.kafka",
+					Level:  "info",
+				},
+				sitewhereiov1alpha4.MicroserviceLoggingEntry{
+					Logger: "org.redisson",
+					Level:  "info",
+				},
+				sitewhereiov1alpha4.MicroserviceLoggingEntry{
+					Logger: "com.sitewhere.asset",
+					Level:  "info",
+				},
+			},
+		},
+	}
+}
+
+func renderAssetManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"asset-management",
+		true,
+		"Asset Management",
+		"Provides APIs for managing assets associated with device assignments",
+		"devices_other",
+		6)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.asset",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderBatchOperationsMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"batch-operations",
+		true,
+		"Batch Operations",
+		"Handles processing of operations which affect a large number of devices",
+		"view_module",
+		11)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.batch",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderCommandDeliveryMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"command-delivery",
+		true,
+		"Command Delivery",
+		"Manages delivery of commands in various formats based on invocation events",
+		"call_made",
+		12)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.commands",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderDeviceManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"device-management",
+		true,
+		"Device Management",
+		"Provides APIs for managing the device object model",
+		"developer_board",
+		4)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.device",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderDeviceRegistrationMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"device-registration",
+		true,
+		"Device Registration",
+		"Handles registration of new devices with the system",
+		"add_box",
+		13)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.registration",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderDeviceStateMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"device-state",
+		true,
+		"Device State",
+		"Provides device state management features such as device shadows",
+		"warning",
+		14)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.devicestate",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderEventManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"event-management",
+		true,
+		"Event Management",
+		"Provides APIs for persisting and accessing events generated by devices",
+		"dynamic_feed",
+		5)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.event",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderEventSourcesMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"event-sources",
+		true,
+		"Event Sources",
+		"Handles inbound device data from various sources, protocols, and formats",
+		"forward",
+		8)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.sources",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderInboundProcessingMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"inbound-processing",
+		true,
+		"Inbound Processing",
+		"Common processing logic applied to enrich and direct inbound events",
+		"input",
+		7)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.inbound",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderInstanceManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 
 	var imConfiguration = &sitewhereiov1alpha4.InstanceMangementConfiguration{
 		UserManagementConfiguration: &sitewhereiov1alpha4.UserManagementConfiguration{
@@ -349,1903 +675,94 @@ func (i *CreateInstance) renderDefaultMicroservices() []sitewhereiov1alpha4.Site
 	}
 	marshalledBytes, err := json.Marshal(imConfiguration)
 	if err != nil {
-		return nil
+		return sitewhereiov1alpha4.SiteWhereMicroserviceSpec{}
 	}
 	var instanceManagementConfiguration = &runtime.RawExtension{}
 	err = instanceManagementConfiguration.UnmarshalJSON(marshalledBytes)
 	if err != nil {
-		return nil
+		return sitewhereiov1alpha4.SiteWhereMicroserviceSpec{}
 	}
 
-	var result []sitewhereiov1alpha4.SiteWhereMicroserviceSpec = []sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "asset-management",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Asset Management",
-			Description:    "Provides APIs for managing assets associated with device assignments",
-			Icon:           "devices_other",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8006,
-				JMXPort:  1106,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.asset",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "batch-operations",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Batch Operations",
-			Description:    "Handles processing of operations which affect a large number of devices",
-			Icon:           "view_module",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8011,
-				JMXPort:  1111,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.batch",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "command-delivery",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Command Delivery",
-			Description:    "Manages delivery of commands in various formats based on invocation events",
-			Icon:           "call_made",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8012,
-				JMXPort:  1112,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.commands",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "device-management",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Device Management",
-			Description:    "Provides APIs for managing the device object model",
-			Icon:           "developer_board",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8004,
-				JMXPort:  1104,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.device",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "device-registration",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Device Registration",
-			Description:    "Handles registration of new devices with the system",
-			Icon:           "add_box",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8013,
-				JMXPort:  1113,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.registration",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "device-state",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Device State",
-			Description:    "Provides device state management features such as device shadows",
-			Icon:           "warning",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8014,
-				JMXPort:  1114,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.devicestate",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "event-management",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Event Management",
-			Description:    "Provides APIs for persisting and accessing events generated by devices",
-			Icon:           "dynamic_feed",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8005,
-				JMXPort:  1105,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.event",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "event-sources",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Event Sources",
-			Description:    "Handles inbound device data from various sources, protocols, and formats",
-			Icon:           "forward",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8008,
-				JMXPort:  1108,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.sources",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "inbound-processing",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Inbound Processing",
-			Description:    "Common processing logic applied to enrich and direct inbound events",
-			Icon:           "input",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8007,
-				JMXPort:  1107,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.inbound",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "instance-management",
-			Replicas:       i.Replicas,
-			Multitenant:    false,
-			Name:           "Instance Management",
-			Description:    "Handles APIs for managing global aspects of an instance",
-			Icon:           "language",
-			Configuration:  instanceManagementConfiguration,
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 8080,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "http-rest",
-						Port:       8080,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 8080},
-					},
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8001,
-				JMXPort:  1101,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.instance",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.web",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "label-generation",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Label Generation",
-			Description:    "Supports generating labels such as bar codes and QR codes for devices",
-			Icon:           "label",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8009,
-				JMXPort:  1109,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.labels",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "outbound-connectors",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Outbound Connectors",
-			Description:    "Allows event streams to be delivered to external systems for additional processing",
-			Icon:           "label",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8016,
-				JMXPort:  1116,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.connectors",
-						Level:  "info",
-					},
-				},
-			},
-		},
-		sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			FunctionalArea: "schedule-management",
-			Replicas:       i.Replicas,
-			Multitenant:    true,
-			Name:           "Schedule Management",
-			Description:    "Supports scheduling of various system operations",
-			Icon:           "label",
-			PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
-				DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-					Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
-					Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
-					Tag:        i.Tag,
-				},
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						ContainerPort: 9000,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					corev1.ContainerPort{
-						ContainerPort: 9090,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Env: []corev1.EnvVar{
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.name",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.name",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.namespace",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.k8s.pod.ip",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "status.podIP",
-							},
-						},
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.product.id",
-						Value: i.InstanceName,
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.service.name",
-						Value: "sitewhere-keycloak-http",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.api.port",
-						Value: "80",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.realm",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.realm",
-						Value: "master",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.username",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name:  "sitewhere.config.keycloak.master.password",
-						Value: "sitewhere",
-					},
-					corev1.EnvVar{
-						Name: "sitewhere.config.keycloak.oidc.secret",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: i.InstanceName,
-								},
-								Key: clientSecretKey,
-							},
-						},
-					},
-				},
-			},
-			SerivceSpec: &sitewhereiov1alpha4.MicroserviceServiceSpecification{
-				Type: &clusterIPType,
-				Ports: []corev1.ServicePort{
-					corev1.ServicePort{
-						Name:       "grpc-api",
-						Port:       9000,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9000},
-					},
-					corev1.ServicePort{
-						Name:       "http-metrics",
-						Port:       9090,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.IntOrString{IntVal: 9090},
-					},
-				},
-			},
-			Debug: &sitewhereiov1alpha4.MicroserviceDebugSpecification{
-				Enabled:  false,
-				JDWPPort: 8018,
-				JMXPort:  1118,
-			},
-			Logging: &sitewhereiov1alpha4.MicroserviceLoggingSpecification{
-				Overrides: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.grpc.client",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.grpc",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.microservice.kafka",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "org.redisson",
-						Level:  "info",
-					},
-					sitewhereiov1alpha4.MicroserviceLoggingEntry{
-						Logger: "com.sitewhere.schedule",
-						Level:  "info",
-					},
-				},
-			},
-		},
-	}
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"instance-management",
+		false,
+		"Instance Management",
+		"Handles APIs for managing global aspects of an instance",
+		"language",
+		1)
+
+	result.Configuration = instanceManagementConfiguration
+	result.PodSpec.Ports = append(result.PodSpec.Ports, corev1.ContainerPort{
+		ContainerPort: 8080,
+		Protocol:      corev1.ProtocolTCP,
+	})
+	result.SerivceSpec.Ports = append(result.SerivceSpec.Ports, corev1.ServicePort{
+		Name:       "http-rest",
+		Port:       8080,
+		Protocol:   corev1.ProtocolTCP,
+		TargetPort: intstr.IntOrString{IntVal: 8080},
+	})
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.instance",
+		Level:  "info",
+	})
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.web",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderLabelGenerationMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"label-generation",
+		true,
+		"Label Generation",
+		"Supports generating labels such as bar codes and QR codes for devices",
+		"label",
+		9)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.labels",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderOutboundConnectorsMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"outbound-connectors",
+		true,
+		"Outbound Connectors",
+		"Allows event streams to be delivered to external systems for additional processing",
+		"label",
+		16)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.connectors",
+		Level:  "info",
+	})
+	return result
+}
+
+func renderScheduleManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+	var result = renderDefaultMicroserviceTemplate(replicas,
+		tag,
+		instanceName,
+		"schedule-management",
+		true,
+		"Schedule Management",
+		"Supports scheduling of various system operations",
+		"label",
+		18)
+	result.Logging.Overrides = append(result.Logging.Overrides, sitewhereiov1alpha4.MicroserviceLoggingEntry{
+		Logger: "com.sitewhere.schedule",
+		Level:  "info",
+	})
 	return result
 }
 
@@ -2263,6 +780,7 @@ func (i *CreateInstance) AddIstioVirtualService() error {
 
 	var vsName = fmt.Sprintf("%s-vs", i.InstanceName)
 	var vsRouteHost = fmt.Sprintf("instance-management.%s.svc.cluster.local", i.Namespace)
+	var prefixValue = fmt.Sprintf("/%s", i.InstanceName)
 
 	var vs *v1alpha3.VirtualService = &v1alpha3.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
@@ -2283,7 +801,7 @@ func (i *CreateInstance) AddIstioVirtualService() error {
 						&networkingv1alpha3.HTTPMatchRequest{
 							Uri: &networkingv1alpha3.StringMatch{
 								MatchType: &networkingv1alpha3.StringMatch_Prefix{
-									Prefix: i.InstanceName,
+									Prefix: prefixValue,
 								},
 							},
 						},
