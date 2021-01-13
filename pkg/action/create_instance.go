@@ -338,20 +338,37 @@ func (i *CreateInstance) buildCRSiteWhereInstace() *sitewhereiov1alpha4.SiteWher
 }
 
 func (i *CreateInstance) renderDefaultMicroservices() []sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
-	var result []sitewhereiov1alpha4.SiteWhereMicroserviceSpec = []sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-		renderAssetManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderBatchOperationsMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderDeviceRegistrationMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderDeviceStateMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderEventManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderEventSourcesMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderLabelGenerationMicroservice(i.Replicas, i.Tag, i.InstanceName),
-		renderScheduleManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+	var result []sitewhereiov1alpha4.SiteWhereMicroserviceSpec
+
+	if i.Minimal {
+		result = []sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
+			renderAssetManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderEventManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderEventSourcesMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderOutboundConnectorsMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		}
+	} else {
+		result = []sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
+			renderAssetManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderBatchOperationsMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderDeviceRegistrationMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderDeviceStateMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderEventManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderEventSourcesMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderLabelGenerationMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderOutboundConnectorsMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderScheduleManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+		}
 	}
+
 	return result
 }
 
