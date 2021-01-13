@@ -65,14 +65,12 @@ spec:
       if (!userBuilder.hasUsers()) {
         // Create the primary admin user.
         let adminUser = userBuilder.newUser('admin', 'password', 'Admin', 'User')
-        adminUser.withStatus(AccountStatus.Active)
         adminUser.withRole("SystemAdministrator")
         adminUser = userBuilder.persist(adminUser)
         logger.info(`[Create User] ${adminUser.getUsername()}`)
 
         // Create the default remote user.
         let remoteUser = userBuilder.newUser('remote', 'remote', 'Remote', 'User')
-        remoteUser.withStatus(AccountStatus.Active)
         remoteUser.withRole("RemoteAccessOnly")
         remoteUser = userBuilder.persist(remoteUser)
         logger.info(`[Create User] ${remoteUser.getUsername()}`)
