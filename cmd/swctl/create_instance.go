@@ -75,6 +75,7 @@ func addCreateInstanceFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action
 	f.StringVarP(&client.Namespace, "namespace", "n", client.Namespace, "Namespace of the instance.")
 	f.BoolVarP(&client.Minimal, "minimal", "m", client.Minimal, "Minimal installation.")
 	f.StringVarP(&client.Tag, "tag", "t", client.Tag, "Docker image tag.")
+	f.StringVarP(&client.Registry, "registry", "r", client.Registry, "Docker image registry.")
 	f.BoolVarP(&client.Debug, "debug", "d", client.Debug, "Debug mode.")
 	f.BoolVar(&client.IstioInject, "skip-istio-inject", client.IstioInject, "Skip Istio Inject namespace label.")
 	f.Int32VarP(&client.Replicas, "replicas", "r", client.Replicas, "Number of replicas")

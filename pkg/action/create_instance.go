@@ -58,6 +58,8 @@ type CreateInstance struct {
 	Minimal bool
 	// Number of replicas
 	Replicas int32
+	// Registry is the docker registry of the microservices images
+	Registry string
 	// Docker image tag
 	Tag string
 	// Use debug mode
@@ -115,6 +117,7 @@ func NewCreateInstance(cfg *Configuration) *CreateInstance {
 		Minimal:               false,
 		Replicas:              1,
 		Tag:                   dockerImageDefaultTag,
+		Registry:              sitewhereiov1alpha4.DefaultDockerSpec.Registry,
 		Debug:                 false,
 		ConfigurationTemplate: defaultConfigurationTemplate,
 		DatasetTemplate:       defaultDatasetTemplate,
@@ -328,7 +331,7 @@ func (i *CreateInstance) buildCRSiteWhereInstace() *sitewhereiov1alpha4.SiteWher
 			ConfigurationTemplate: i.ConfigurationTemplate,
 			DatasetTemplate:       i.DatasetTemplate,
 			DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-				Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
+				Registry:   i.Registry,
 				Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
 				Tag:        i.Tag,
 			},
@@ -342,30 +345,30 @@ func (i *CreateInstance) renderDefaultMicroservices() []sitewhereiov1alpha4.Site
 
 	if i.Minimal {
 		result = []sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			renderAssetManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderEventManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderEventSourcesMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderOutboundConnectorsMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderAssetManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderEventManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderEventSourcesMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderOutboundConnectorsMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
 		}
 	} else {
 		result = []sitewhereiov1alpha4.SiteWhereMicroserviceSpec{
-			renderAssetManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderBatchOperationsMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderDeviceRegistrationMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderDeviceStateMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderEventManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderEventSourcesMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderLabelGenerationMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderOutboundConnectorsMicroservice(i.Replicas, i.Tag, i.InstanceName),
-			renderScheduleManagementMicroservice(i.Replicas, i.Tag, i.InstanceName),
+			renderAssetManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderBatchOperationsMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderCommandDeliveryMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderDeviceManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderDeviceRegistrationMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderDeviceStateMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderEventManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderEventSourcesMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderInboundProcessingMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderInstanceManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderLabelGenerationMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderOutboundConnectorsMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
+			renderScheduleManagementMicroservice(i.Replicas, i.Tag, i.Registry, i.InstanceName),
 		}
 	}
 
@@ -374,6 +377,7 @@ func (i *CreateInstance) renderDefaultMicroservices() []sitewhereiov1alpha4.Site
 
 func renderDefaultMicroserviceTemplate(replicas int32,
 	tag string,
+	registry string,
 	instanceName string,
 	functionalArea string,
 	multitenant bool,
@@ -391,7 +395,7 @@ func renderDefaultMicroserviceTemplate(replicas int32,
 		Icon:           icon,
 		PodSpec: &sitewhereiov1alpha4.MicroservicePodSpecification{
 			DockerSpec: &sitewhereiov1alpha4.DockerSpec{
-				Registry:   sitewhereiov1alpha4.DefaultDockerSpec.Registry,
+				Registry:   registry,
 				Repository: sitewhereiov1alpha4.DefaultDockerSpec.Repository,
 				Tag:        tag,
 			},
@@ -528,9 +532,10 @@ func renderDefaultMicroserviceTemplate(replicas int32,
 	}
 }
 
-func renderAssetManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderAssetManagementMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"asset-management",
 		true,
@@ -545,9 +550,10 @@ func renderAssetManagementMicroservice(replicas int32, tag string, instanceName 
 	return result
 }
 
-func renderBatchOperationsMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderBatchOperationsMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"batch-operations",
 		true,
@@ -562,9 +568,10 @@ func renderBatchOperationsMicroservice(replicas int32, tag string, instanceName 
 	return result
 }
 
-func renderCommandDeliveryMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderCommandDeliveryMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"command-delivery",
 		true,
@@ -579,9 +586,10 @@ func renderCommandDeliveryMicroservice(replicas int32, tag string, instanceName 
 	return result
 }
 
-func renderDeviceManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderDeviceManagementMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"device-management",
 		true,
@@ -596,9 +604,10 @@ func renderDeviceManagementMicroservice(replicas int32, tag string, instanceName
 	return result
 }
 
-func renderDeviceRegistrationMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderDeviceRegistrationMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"device-registration",
 		true,
@@ -613,9 +622,10 @@ func renderDeviceRegistrationMicroservice(replicas int32, tag string, instanceNa
 	return result
 }
 
-func renderDeviceStateMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderDeviceStateMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"device-state",
 		true,
@@ -630,9 +640,10 @@ func renderDeviceStateMicroservice(replicas int32, tag string, instanceName stri
 	return result
 }
 
-func renderEventManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderEventManagementMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"event-management",
 		true,
@@ -647,9 +658,10 @@ func renderEventManagementMicroservice(replicas int32, tag string, instanceName 
 	return result
 }
 
-func renderEventSourcesMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderEventSourcesMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"event-sources",
 		true,
@@ -664,9 +676,10 @@ func renderEventSourcesMicroservice(replicas int32, tag string, instanceName str
 	return result
 }
 
-func renderInboundProcessingMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderInboundProcessingMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"inbound-processing",
 		true,
@@ -681,8 +694,7 @@ func renderInboundProcessingMicroservice(replicas int32, tag string, instanceNam
 	return result
 }
 
-func renderInstanceManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
-
+func renderInstanceManagementMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var imConfiguration = &sitewhereiov1alpha4.InstanceMangementConfiguration{
 		UserManagementConfiguration: &sitewhereiov1alpha4.UserManagementConfiguration{
 			SyncopeHost:            "sitewhere-syncope.sitewhere-system.cluster.local",
@@ -702,6 +714,7 @@ func renderInstanceManagementMicroservice(replicas int32, tag string, instanceNa
 
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"instance-management",
 		false,
@@ -732,9 +745,10 @@ func renderInstanceManagementMicroservice(replicas int32, tag string, instanceNa
 	return result
 }
 
-func renderLabelGenerationMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderLabelGenerationMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"label-generation",
 		true,
@@ -749,9 +763,10 @@ func renderLabelGenerationMicroservice(replicas int32, tag string, instanceName 
 	return result
 }
 
-func renderOutboundConnectorsMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderOutboundConnectorsMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"outbound-connectors",
 		true,
@@ -766,9 +781,10 @@ func renderOutboundConnectorsMicroservice(replicas int32, tag string, instanceNa
 	return result
 }
 
-func renderScheduleManagementMicroservice(replicas int32, tag string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
+func renderScheduleManagementMicroservice(replicas int32, tag string, registry string, instanceName string) sitewhereiov1alpha4.SiteWhereMicroserviceSpec {
 	var result = renderDefaultMicroserviceTemplate(replicas,
 		tag,
+		registry,
 		instanceName,
 		"schedule-management",
 		true,
@@ -785,7 +801,6 @@ func renderScheduleManagementMicroservice(replicas int32, tag string, instanceNa
 
 // AddIstioVirtualService install Istio Virtual Service
 func (i *CreateInstance) AddIstioVirtualService() error {
-
 	restconfig, err := i.cfg.RESTClientGetter.ToRESTConfig()
 	if err != nil {
 		return err
