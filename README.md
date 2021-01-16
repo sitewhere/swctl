@@ -44,6 +44,16 @@ curl -L https://github.com/sitewhere/swctl/releases/latest/download/swctl.window
 
 ## Usage
 
+### Prerequistes
+
+- [Istio](https://istio.io) 1.8+ Installed in your cluster. Check Istio setup [documentation](https://istio.io/latest/docs/setup/).
+
+If run into docker pull image request limit, use the following command
+
+```command
+istioctl install -y --set hub=gcr.io/istio-release
+```
+
 ### Install SiteWhere
 
 To install SiteWhere 3.0 on your Kubernetes cluster, run the following command.
