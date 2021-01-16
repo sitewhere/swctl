@@ -89,7 +89,7 @@ type instanceResourcesResult struct {
 }
 
 // SiteWhere Docker Image default tag name
-const dockerImageDefaultTag = "3.0.0.beta3"
+const dockerImageDefaultTag = "3.0.0"
 
 // Default configuration Template
 const defaultConfigurationTemplate = "default"
