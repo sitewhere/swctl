@@ -23,8 +23,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rakyll/statik/fs"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
@@ -58,6 +59,11 @@ const infraPath = "/infra/"
 const siteWhereSystemNamespace = "sitewhere-system"
 
 const maxRetries = 5
+
+const (
+	// ErrIstioNotInstalled is the error when istio is not installed
+	ErrIstioNotInstalled = "Istio is not intalled, install istio with `istioctl install` and try again"
+)
 
 // Install is the action for installing SiteWhere
 type Install struct {
@@ -134,7 +140,7 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 
 	_, err = i.IstioGateway()
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf(ErrIstioNotInstalled)
 	}
 
 	return &install.SiteWhereInstall{
@@ -303,7 +309,7 @@ func (i *Install) installFiles(parentPath string, fi os.FileInfo, retryCount int
 		}
 		for _, fileInfo := range files {
 			installResult, err := i.installFiles(dirName, fileInfo, retryCount)
-			if err != nil && !errors.IsAlreadyExists(err) {
+			if err != nil && !apierrors.IsAlreadyExists(err) {
 				return nil, err
 			}
 			result = append(result, installResult...)
@@ -323,7 +329,7 @@ func (i *Install) installFiles(parentPath string, fi os.FileInfo, retryCount int
 
 		if _, err := i.cfg.KubeClient.Create(res); err != nil {
 			// If the error is Resource already exists, continue.
-			if errors.IsAlreadyExists(err) {
+			if apierrors.IsAlreadyExists(err) {
 				i.cfg.Log(fmt.Sprintf("Resource %s is already present. Skipping.", fileName))
 				var deployStatus = status.SiteWhereStatus{
 					Name:   fileName,
