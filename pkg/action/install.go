@@ -102,7 +102,8 @@ func NewInstall(cfg *Configuration) *Install {
 // Run executes the install command, returning the result of the installation
 func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	var err error
-	if err = i.cfg.KubeClient.IsReachable(); err != nil {
+	err = i.CheckInstallPrerequisites()
+	if err != nil {
 		return nil, err
 	}
 	var crdStatuses []status.SiteWhereStatus
@@ -149,6 +150,28 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		OperatorStatuses:       operatorStatuses,
 		InfrastructureStatuses: infraStatuses,
 	}, nil
+}
+
+// CheckInstallPrerequisites checks for SiteWhere Install Prerequisites
+func (i *Install) CheckInstallPrerequisites() error {
+	var err error
+	// check for kubernetes cluster
+	if err = i.cfg.KubeClient.IsReachable(); err != nil {
+		return err
+	}
+	clientSet, err := i.cfg.KubernetesClientSet()
+	if err != nil {
+		return err
+	}
+	// check for Istio installed on the cluster
+	ok, err := resources.CheckIfExistsNamespace("istio-system", clientSet)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.Errorf(ErrIstioNotInstalled)
+	}
+	return nil
 }
 
 // InstallCRDs Install SiteWhere Custom Resource Definitions

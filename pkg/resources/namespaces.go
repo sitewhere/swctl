@@ -92,3 +92,16 @@ func DeleteNamespaceIfExists(namespace string, clientset kubernetes.Interface) e
 func DeleteSiteWhereNamespaceIfExists(clientset kubernetes.Interface) error {
 	return DeleteNamespaceIfExists(SitewhereSystemNamespace(), clientset)
 }
+
+// CheckIfExistsNamespace check is a namespace exists
+func CheckIfExistsNamespace(namespace string, clientset kubernetes.Interface) (bool, error) {
+	var err error
+	_, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	if err != nil && errors.IsNotFound(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
