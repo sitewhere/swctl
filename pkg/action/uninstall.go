@@ -20,7 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/sitewhere/swctl/pkg/uninstall"
+	"github.com/sitewhere/swctl/pkg/install"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
@@ -65,7 +65,7 @@ func NewUninstall(cfg *action.Configuration, settings *cli.EnvSettings) *Uninsta
 }
 
 // Run executes the uninstall command, returning the result of the uninstallation
-func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
+func (i *Uninstall) Run() (*install.SiteWhereInstall, error) {
 	var err error
 	if err = i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
 	return i.uninstallRelease()
 }
 
-func (i *Uninstall) uninstallRelease() (*uninstall.SiteWhereUninstall, error) {
+func (i *Uninstall) uninstallRelease() (*install.SiteWhereInstall, error) {
 	actionConfig := new(action.Configuration)
 	// You can pass an empty string instead of settings.Namespace() to list
 	// all namespaces
@@ -89,12 +89,8 @@ func (i *Uninstall) uninstallRelease() (*uninstall.SiteWhereUninstall, error) {
 		return nil, err
 	}
 
-	return &uninstall.SiteWhereUninstall{
+	return &install.SiteWhereInstall{
 		Release:   res.Release.Name,
 		Namespace: res.Release.Namespace,
-		//CDRStatuses: crdDeletedStatuses,
-		//InfrastructureStatuses: infraStatuses,
-		//OperatorStatuses: operatorStatuses,
-		//TemplatesStatues: templatesStatues
 	}, nil
 }

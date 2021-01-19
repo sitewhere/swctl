@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/uninstall"
+	"github.com/sitewhere/swctl/pkg/install"
 
 	"helm.sh/helm/v3/cmd/helm/require"
 	helmAction "helm.sh/helm/v3/pkg/action"
@@ -71,10 +71,10 @@ func newUninstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Comman
 }
 
 type uninstallWriter struct {
-	Results *uninstall.SiteWhereUninstall `json:"results"`
+	Results *install.SiteWhereInstall `json:"results"`
 }
 
-func newUninstallWriter(results *uninstall.SiteWhereUninstall) *uninstallWriter {
+func newUninstallWriter(results *install.SiteWhereInstall) *uninstallWriter {
 	return &uninstallWriter{Results: results}
 }
 

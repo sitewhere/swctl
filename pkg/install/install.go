@@ -16,10 +16,6 @@
 
 package install
 
-import (
-	"github.com/sitewhere/swctl/pkg/status"
-)
-
 // Status Status of a installable item.
 type Status string
 
@@ -38,14 +34,4 @@ type SiteWhereInstall struct {
 	Release string `json:"release,omitempty"`
 	// Namespace
 	Namespace string `json:"namespace,omitempty"`
-
-	// Deprecated
-	// Status of SiteWhere CDR installation
-	CDRStatuses []status.SiteWhereStatus `json:"crdStatues,omitempty"`
-	// Status of SiteWhere Templates installation
-	TemplatesStatues []status.SiteWhereStatus `json:"templatesStatues,omitempty"`
-	// Status of SiteWhere Operator
-	OperatorStatuses []status.SiteWhereStatus `json:"operatorStatuses,omitempty"`
-	// Status of SiteWhere Infrastructure
-	InfrastructureStatuses []status.SiteWhereStatus `json:"infrastructureStatuses,omitempty"`
 }
