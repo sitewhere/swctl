@@ -23,12 +23,12 @@ import (
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
-	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
 	"github.com/sitewhere/swctl/pkg/instance"
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 
+	"helm.sh/helm/v3/cmd/helm/require"
 	helmAction "helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/output"
 )

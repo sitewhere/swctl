@@ -24,11 +24,11 @@ import (
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
-	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
 	"github.com/sitewhere/swctl/pkg/install"
 	"github.com/sitewhere/swctl/pkg/status"
 
+	"helm.sh/helm/v3/cmd/helm/require"
 	helmAction "helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/output"
 )

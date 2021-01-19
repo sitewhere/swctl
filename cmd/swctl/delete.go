@@ -21,8 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sitewhere/swctl/cmd/swctl/require"
-
+	"helm.sh/helm/v3/cmd/helm/require"
 	"helm.sh/helm/v3/pkg/action"
 )
 

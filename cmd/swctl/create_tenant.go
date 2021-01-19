@@ -24,10 +24,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
 	"github.com/sitewhere/swctl/pkg/tenant"
 
+	"helm.sh/helm/v3/cmd/helm/require"
 	helmAction "helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli/output"
 )
