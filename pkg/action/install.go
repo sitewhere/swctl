@@ -233,6 +233,7 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	installAction.Namespace = sitewhereSystemNamespace
 	installAction.ReleaseName = sitewhereReleaseName
 	installAction.CreateNamespace = true
+	installAction.SkipCRDs = i.SkipCRD
 
 	cp, err := installAction.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", sitewhereRepoName, sitewhereChartName), i.settings)
 
