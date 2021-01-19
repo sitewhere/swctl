@@ -32,7 +32,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/sitewhere/swctl/pkg/apis/v1/alpha3"
+	"github.com/sitewhere/swctl/pkg/install/profile"
 	"github.com/sitewhere/swctl/pkg/instance"
 	"github.com/sitewhere/swctl/pkg/resources"
 
@@ -41,11 +41,13 @@ import (
 	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
 	v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	versionedclient "istio.io/client-go/pkg/clientset/versioned"
+
+	"helm.sh/helm/v3/pkg/action"
 )
 
 // CreateInstance is the action for creating a SiteWhere instance
 type CreateInstance struct {
-	cfg *Configuration
+	cfg *action.Configuration
 	// Name of the instance
 	InstanceName string
 	// Name of the tenant
@@ -107,7 +109,7 @@ const (
 )
 
 // NewCreateInstance constructs a new *Install
-func NewCreateInstance(cfg *Configuration) *CreateInstance {
+func NewCreateInstance(cfg *action.Configuration) *CreateInstance {
 	return &CreateInstance{
 		cfg:                   cfg,
 		InstanceName:          "",
@@ -129,7 +131,7 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	var profile alpha3.SiteWhereProfile = alpha3.Default
+	var prof profile.SiteWhereProfile = profile.Default
 	if i.Namespace == "" {
 		i.Namespace = i.InstanceName
 	}
@@ -140,14 +142,14 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 		i.ConfigurationTemplate = defaultConfigurationTemplate
 	}
 	if i.Minimal {
-		profile = alpha3.Minimal
+		prof = profile.Minimal
 		i.ConfigurationTemplate = "minimal"
 	}
-	return i.createSiteWhereInstance(profile)
+	return i.createSiteWhereInstance(prof)
 }
 
-func (i *CreateInstance) createSiteWhereInstance(profile alpha3.SiteWhereProfile) (*instance.CreateSiteWhereInstance, error) {
-	inr, err := i.createInstanceResources(profile)
+func (i *CreateInstance) createSiteWhereInstance(prof profile.SiteWhereProfile) (*instance.CreateSiteWhereInstance, error) {
+	inr, err := i.createInstanceResources(prof)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +172,7 @@ func (i *CreateInstance) ExtractInstanceName(args []string) (string, error) {
 	return args[0], nil
 }
 
-func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile) (*instanceResourcesResult, error) {
+func (i *CreateInstance) createInstanceResources(profile profile.SiteWhereProfile) (*instanceResourcesResult, error) {
 	var err error
 
 	clientset, err := i.cfg.KubernetesClientSet()
@@ -184,7 +186,7 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 		}
 	}
 
-	client, err := i.cfg.ControllerClient()
+	client, err := ControllerClient(i.cfg)
 	if err != nil {
 		return nil, err
 	}

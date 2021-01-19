@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-// Package alpha3 defines SiteWhere Structures
-package alpha3
+package action
 
-import "testing"
+const (
+	sitewhereRepoName        = "sitewhere"
+	sitewhereRepoURL         = "https://sitewhere.io/helm-charts"
+	sitewhereChartName       = "sitewhere-infrastructure"
+	sitewhereSystemNamespace = "sitewhere-system"
+	sitewhereReleaseName     = "sitewhere"
+)
 
-func TestGetSiteWhereMicroservicesList(t *testing.T) {
-
-	result := GetSiteWhereMicroservicesList()
-
-	if result == nil {
-		t.Error("Expected no nil list")
-	}
-	if len(result) <= 0 {
-		t.Error("Expected no empty list")
-	}
-}
+const (
+	// ErrIstioNotInstalled is the error when istio is not installed
+	ErrIstioNotInstalled = "Istio is not intalled, install istio with `istioctl install` and try again"
+)

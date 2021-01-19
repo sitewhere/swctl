@@ -17,57 +17,51 @@
 package action
 
 import (
-	"net/http"
+	"github.com/sitewhere/swctl/pkg/install"
 
-	"github.com/rakyll/statik/fs"
-
-	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
-	"github.com/sitewhere/swctl/pkg/check"
+	"helm.sh/helm/v3/pkg/action"
 )
 
 // CheckInstall is the action for check SiteWhere installation
 type CheckInstall struct {
-	cfg *Configuration
+	cfg *action.Configuration
 
-	StatikFS http.FileSystem
 	// Use verbose mode
 	Verbose bool
 }
 
 // NewCheckInstall constructs a new *Install
-func NewCheckInstall(cfg *Configuration) *CheckInstall {
-	statikFS, _ := fs.New()
+func NewCheckInstall(cfg *action.Configuration) *CheckInstall {
 	return &CheckInstall{
-		cfg:      cfg,
-		StatikFS: statikFS,
-		Verbose:  false,
+		cfg:     cfg,
+		Verbose: false,
 	}
 }
 
 // Run executes the list command, returning a set of matches.
-func (i *CheckInstall) Run() (*check.SiteWhereInstall, error) {
+func (i *CheckInstall) Run() (*install.SiteWhereInstall, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	clientSet, err := i.cfg.KubernetesClientSet()
-	if err != nil {
-		return nil, err
-	}
-	extensionsClients, err := i.cfg.KubernetesAPIExtensionClientSet()
-	if err != nil {
-		return nil, err
-	}
-	config, err := i.cfg.RESTClientGetter.ToRESTConfig()
-	if err != nil {
-		return nil, err
-	}
+	// clientSet, err := i.cfg.KubernetesClientSet()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// extensionsClients, err := i.cfg.KubernetesAPIExtensionClientSet()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// config, err := i.cfg.RESTClientGetter.ToRESTConfig()
+	// if err != nil {
+	// 	return nil, err
+	// }
 	// Install Custom Resource Definitions
-	_, err = check.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
-	if err != nil {
-		return nil, err
-	}
+	// _, err = check.SiteWhereCRDs(i.StatikFS, clientSet, extensionsClients, config)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return &check.SiteWhereInstall{
+	return &install.SiteWhereInstall{
 		// CDRStatues: crdStatues,
 	}, nil
 }

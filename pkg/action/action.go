@@ -17,17 +17,13 @@
 package action
 
 import (
-	"github.com/sitewhere/swctl/pkg/kube"
-
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"helm.sh/helm/v3/pkg/action"
 
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,8 +31,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
-	//scriptingsitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/scripting.sitewhere.io/v1alpha4"
-	//templatessitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/templates.sitewhere.io/v1alpha4"
 )
 
 var (
@@ -48,45 +42,10 @@ func init() {
 	utilruntime.Must(apiextv1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(sitewhereiov1alpha4.AddToScheme(scheme))
-	//	utilruntime.Must(templatessitewhereiov1alpha4.AddToScheme(scheme))
-	//	utilruntime.Must(scriptingsitewhereiov1alpha4.AddToScheme(scheme))
-}
-
-// Configuration injects the dependencies that all actions share.
-type Configuration struct {
-	// RESTClientGetter is an interface that loads Kubernetes clients.
-	RESTClientGetter RESTClientGetter
-
-	// KubeClient is a Kubernetes API client.
-	KubeClient kube.Interface
-
-	Log func(string, ...interface{})
-}
-
-// RESTClientGetter gets the rest client
-type RESTClientGetter interface {
-	ToRESTConfig() (*rest.Config, error)
-	ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
-	ToRESTMapper() (meta.RESTMapper, error)
-}
-
-// DebugLog sets the logger that writes debug strings
-type DebugLog func(format string, v ...interface{})
-
-// Init initializes the action configuration
-func (c *Configuration) Init(getter genericclioptions.RESTClientGetter, namespace string, log DebugLog) error {
-	kc := kube.New(getter)
-	kc.Log = log
-
-	c.RESTClientGetter = getter
-	c.KubeClient = kc
-	c.Log = log
-
-	return nil
 }
 
 // KubernetesClientSet creates a new kubernetes ClientSet based on the configuration
-func (c *Configuration) KubernetesClientSet() (kubernetes.Interface, error) {
+func KubernetesClientSet(c *action.Configuration) (kubernetes.Interface, error) {
 	conf, err := c.RESTClientGetter.ToRESTConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to generate config for kubernetes client")
@@ -96,7 +55,7 @@ func (c *Configuration) KubernetesClientSet() (kubernetes.Interface, error) {
 }
 
 // KubernetesAPIExtensionClientSet create a new kubernetes API Extension Clientset
-func (c *Configuration) KubernetesAPIExtensionClientSet() (clientset.Interface, error) {
+func KubernetesAPIExtensionClientSet(c *action.Configuration) (clientset.Interface, error) {
 	conf, err := c.RESTClientGetter.ToRESTConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to generate config for API Extension Clientset")
@@ -105,7 +64,7 @@ func (c *Configuration) KubernetesAPIExtensionClientSet() (clientset.Interface, 
 }
 
 // KubernetesDynamicClientSet create a new kubernetes API Extension Clientset
-func (c *Configuration) KubernetesDynamicClientSet() (dynamic.Interface, error) {
+func KubernetesDynamicClientSet(c *action.Configuration) (dynamic.Interface, error) {
 	conf, err := c.RESTClientGetter.ToRESTConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to generate config for Dynamic Clientset")
@@ -114,7 +73,7 @@ func (c *Configuration) KubernetesDynamicClientSet() (dynamic.Interface, error) 
 }
 
 // ControllerClient creates a new controller client
-func (c *Configuration) ControllerClient() (client.Client, error) {
+func ControllerClient(c *action.Configuration) (client.Client, error) {
 	conf, err := c.RESTClientGetter.ToRESTConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to generate config for kubernetes client")

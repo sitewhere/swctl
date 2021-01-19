@@ -19,20 +19,19 @@ package action
 import (
 	"context"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/sitewhere/swctl/pkg/instance"
-
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
+	"github.com/sitewhere/swctl/pkg/instance"
+	"helm.sh/helm/v3/pkg/action"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // Instances is the action for listing SiteWhere instances
 type Instances struct {
-	cfg *Configuration
+	cfg *action.Configuration
 }
 
 // NewInstances constructs a new *Instances
-func NewInstances(cfg *Configuration) *Instances {
+func NewInstances(cfg *action.Configuration) *Instances {
 	return &Instances{
 		cfg: cfg,
 	}
@@ -43,7 +42,7 @@ func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	var client, err = i.cfg.ControllerClient()
+	var client, err = ControllerClient(i.cfg)
 	if err != nil {
 		return nil, err
 	}

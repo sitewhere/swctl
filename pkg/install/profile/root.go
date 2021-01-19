@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package kube
+// Package profile defines SiteWhere Structures for Install Profiles
+package profile
 
-// Result contains the information of created, updated, and deleted resources
-// for various kube API calls along with helper methods for using those
-// resources
-type Result struct {
-	Created ResourceList
-	Updated ResourceList
-	Deleted ResourceList
-}
+// SiteWhereProfile profiles to use the application
+type SiteWhereProfile string
 
-// If needed, we can add methods to the Result type for things like diffing
+const (
+	// Default profile, use all microservices
+	Default SiteWhereProfile = "Default"
+	// Minimal profile, use a reduce set of microservices
+	Minimal SiteWhereProfile = "Minimal"
+)

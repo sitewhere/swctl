@@ -20,8 +20,6 @@ import (
 	"bytes"
 	"io/ioutil"
 	"os"
-	// "os/exec"
-	// "runtime"
 	"strings"
 	"testing"
 
@@ -29,9 +27,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sitewhere/swctl/internal/test"
-	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli"
-	kubefake "github.com/sitewhere/swctl/pkg/kube/fake"
+
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 )
 
 func runTestCmd(t *testing.T, tests []cmdTestCase) {
@@ -66,7 +65,7 @@ func executeActionCommandStdinC(in *os.File, cmd string) (*cobra.Command, string
 
 	buf := new(bytes.Buffer)
 
-	actionConfig := &action.Configuration{
+	actionConfig := &helmAction.Configuration{
 		KubeClient: &kubefake.PrintingKubeClient{Out: ioutil.Discard},
 		Log:        func(format string, v ...interface{}) {},
 	}

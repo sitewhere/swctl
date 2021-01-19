@@ -17,17 +17,19 @@
 package main
 
 import (
-	"github.com/gosuri/uitable"
 	"io"
 
 	"github.com/gookit/color"
+	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli/output"
 	"github.com/sitewhere/swctl/pkg/instance"
+
+	"helm.sh/helm/v3/cmd/helm/require"
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 var deleteInstanceDesc = `
@@ -35,7 +37,7 @@ Use this command to delete a SiteWhere Instance.
 Use can use purge flag to remove the namespace of the instance.
 `
 
-func newDeleteInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+func newDeleteInstanceCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewDeleteInstance(cfg)
 	var outFmt output.Format
 

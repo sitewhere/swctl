@@ -30,11 +30,13 @@ import (
 	"github.com/sitewhere/swctl/pkg/resources"
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
+
+	"helm.sh/helm/v3/pkg/action"
 )
 
 // DeleteInstance is the action for creating a SiteWhere instance
 type DeleteInstance struct {
-	cfg *Configuration
+	cfg *action.Configuration
 	// Name of the instance
 	InstanceName string
 	// Purge Instance data
@@ -42,7 +44,7 @@ type DeleteInstance struct {
 }
 
 // NewDeleteInstance constructs a new *Install
-func NewDeleteInstance(cfg *Configuration) *DeleteInstance {
+func NewDeleteInstance(cfg *action.Configuration) *DeleteInstance {
 	return &DeleteInstance{
 		cfg:          cfg,
 		InstanceName: "",
@@ -55,7 +57,7 @@ func (i *DeleteInstance) Run() (*instance.DeleteSiteWhereInstance, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	var client, err = i.cfg.ControllerClient()
+	var client, err = ControllerClient(i.cfg)
 	if err != nil {
 		return nil, err
 	}

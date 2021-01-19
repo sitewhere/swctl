@@ -22,18 +22,19 @@ import (
 	// "github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
-	"github.com/sitewhere/swctl/cmd/swctl/require"
-
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/check"
-	"github.com/sitewhere/swctl/pkg/cli/output"
+	"github.com/sitewhere/swctl/pkg/install"
+
+	"helm.sh/helm/v3/cmd/helm/require"
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 var checkInstallHelp = `
 Use this command to check the install of SiteWhere 3.0 on a Kubernetes Cluster.
 `
 
-func newCheckInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+func newCheckInstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewCheckInstall(cfg)
 	var outFmt output.Format
 
@@ -61,7 +62,7 @@ func newCheckInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command
 type checkInstallWriter struct {
 }
 
-func newCheckInstallWriter(install *check.SiteWhereInstall) *checkInstallWriter {
+func newCheckInstallWriter(install *install.SiteWhereInstall) *checkInstallWriter {
 	return &checkInstallWriter{}
 }
 

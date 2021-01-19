@@ -21,10 +21,10 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/internal/version"
 
 	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/cmd/helm/require"
 )
 
 const versionDesc = `

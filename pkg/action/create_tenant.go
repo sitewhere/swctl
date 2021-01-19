@@ -27,11 +27,13 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
+
+	"helm.sh/helm/v3/pkg/action"
 )
 
 // CreateTenant is the action for creating a SiteWhere tenant
 type CreateTenant struct {
-	cfg *Configuration
+	cfg *action.Configuration
 	// Name of the instance
 	InstanceName string
 	// Name of the tenant
@@ -52,7 +54,7 @@ type tenantResourcesResult struct {
 }
 
 // NewCreateTenant constructs a new *Install
-func NewCreateTenant(cfg *Configuration) *CreateTenant {
+func NewCreateTenant(cfg *action.Configuration) *CreateTenant {
 	return &CreateTenant{
 		cfg:                   cfg,
 		InstanceName:          "",
@@ -68,8 +70,8 @@ func (i *CreateTenant) Run() (*tenant.CreateSiteWhereTenant, error) {
 		return nil, err
 	}
 
-	//Revisar si existe la instancia
-	client, err := i.cfg.ControllerClient()
+	// Check if the instance exists
+	client, err := ControllerClient(i.cfg)
 	if err != nil {
 		return nil, err
 	}
