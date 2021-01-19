@@ -26,9 +26,11 @@ import (
 
 	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli/output"
 	"github.com/sitewhere/swctl/pkg/install"
 	"github.com/sitewhere/swctl/pkg/status"
+
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 var installHelp = `
@@ -41,8 +43,8 @@ This command will install:
  - SiteWhere Infrastructure.
 `
 
-func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
-	client := action.NewInstall(cfg)
+func newInstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
+	client := action.NewInstall(cfg, settings)
 	var outFmt output.Format
 
 	cmd := &cobra.Command{

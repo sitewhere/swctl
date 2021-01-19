@@ -17,26 +17,20 @@
 package action
 
 import (
-	"context"
-	"fmt"
-	"github.com/sitewhere/swctl/pkg/status"
-	"net/http"
+	"log"
 	"os"
 
-	"github.com/rakyll/statik/fs"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/uninstall"
 
-	versionedclient "istio.io/client-go/pkg/clientset/versioned"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
 )
 
 // Uninstall is the action for installing SiteWhere
 type Uninstall struct {
-	cfg *Configuration
+	cfg *action.Configuration
+
+	settings *cli.EnvSettings
 
 	// CRD indicates if we need to uninstall SiteWhere Custom Resource Definitions
 	CRD bool
@@ -46,7 +40,6 @@ type Uninstall struct {
 	Operator bool
 	// Template indicates if we need to install SiteWhere templates
 	Template bool
-	StatikFS http.FileSystem
 
 	// Minimal installation only install escential SiteWhere components.
 	Minimal bool
@@ -57,11 +50,10 @@ type Uninstall struct {
 }
 
 // NewUninstall constructs a new *Uninstall
-func NewUninstall(cfg *Configuration) *Uninstall {
-	statikFS, _ := fs.New()
+func NewUninstall(cfg *action.Configuration, settings *cli.EnvSettings) *Uninstall {
 	return &Uninstall{
 		cfg:            cfg,
-		StatikFS:       statikFS,
+		settings:       settings,
 		CRD:            true,
 		Template:       true,
 		Operator:       true,
@@ -74,192 +66,35 @@ func NewUninstall(cfg *Configuration) *Uninstall {
 
 // Run executes the uninstall command, returning the result of the uninstallation
 func (i *Uninstall) Run() (*uninstall.SiteWhereUninstall, error) {
-
 	var err error
 	if err = i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-
-	var infraStatuses []status.SiteWhereStatus
-	if i.Infrastructure {
-		// Uninstall Infrastructure
-		infraStatuses, err = i.UninstallInfrastructure()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
-	var operatorStatuses []status.SiteWhereStatus
-	if i.Operator {
-		// Uninstall Operator
-		operatorStatuses, err = i.UninstallOperator()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
-	var templatesStatues []status.SiteWhereStatus
-	if i.Template {
-		// Uninstall Templates
-		templatesStatues, err = i.UninstallTemplates()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
-	var crdDeletedStatuses []status.SiteWhereStatus
-
-	if i.CRD {
-		// Uninstall Custom Resource Definitions
-		crdDeletedStatuses, err = i.UninstallCRDs()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
-	return &uninstall.SiteWhereUninstall{CDRStatuses: crdDeletedStatuses, InfrastructureStatuses: infraStatuses, OperatorStatuses: operatorStatuses, TemplatesStatues: templatesStatues}, nil
+	return i.uninstallRelease()
 }
 
-// UninstallCRDs Uninstall SiteWhere Custom Resource Definitions
-func (i *Uninstall) UninstallCRDs() ([]status.SiteWhereStatus, error) {
-	return i.uninstallDirFiles(crdPath)
-}
-
-// UninstallTemplates Uninstall SiteWhere Templates CRD
-func (i *Uninstall) UninstallTemplates() ([]status.SiteWhereStatus, error) {
-	return i.uninstallDirFiles(templatePath)
-}
-
-// UninstallOperator Uninstall SiteWhere Operator resource file in the cluster
-func (i *Uninstall) UninstallOperator() ([]status.SiteWhereStatus, error) {
-	var result []status.SiteWhereStatus
-
-	ns, err := i.uninstallDirFiles(namespacePath)
-	if err != nil {
+func (i *Uninstall) uninstallRelease() (*uninstall.SiteWhereUninstall, error) {
+	actionConfig := new(action.Configuration)
+	// You can pass an empty string instead of settings.Namespace() to list
+	// all namespaces
+	if err := actionConfig.Init(i.settings.RESTClientGetter(), sitewhereSystemNamespace, os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
 		return nil, err
 	}
-	result = append(result, ns...)
 
-	operator, err := i.uninstallDirFiles(operatorPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, operator...)
+	uninstallAction := action.NewUninstall(actionConfig)
 
-	_, err = i.IstioGateway()
+	res, err := uninstallAction.Run(sitewhereReleaseName)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
-}
-
-// UninstallInfrastructure Uninstall SiteWhere infrastructure
-func (i *Uninstall) UninstallInfrastructure() ([]status.SiteWhereStatus, error) {
-	var result []status.SiteWhereStatus
-
-	infraDeps, err := i.uninstallDirFiles(infraDepsPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, infraDeps...)
-
-	infra, err := i.uninstallDirFiles(infraPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, infra...)
-
-	return result, nil
-}
-
-func (i *Uninstall) uninstallDirFiles(path string) ([]status.SiteWhereStatus, error) {
-	r, err := i.StatikFS.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	fi, err := r.Stat()
-	if err != nil {
-		return nil, err
-	}
-	return i.uninstallFiles("", fi)
-}
-
-func (i *Uninstall) uninstallFiles(parentPath string, fi os.FileInfo) ([]status.SiteWhereStatus, error) {
-
-	var result []status.SiteWhereStatus
-
-	if fi.IsDir() {
-		dirName := parentPath + string(os.PathSeparator) + fi.Name()
-		i.cfg.Log(fmt.Sprintf("Uninstalling Resources from %s", dirName))
-		r, err := i.StatikFS.Open(dirName)
-		if err != nil {
-			return nil, err
-		}
-		files, err := r.Readdir(-1)
-		if err != nil {
-			return nil, err
-		}
-		for _, fileInfo := range files {
-			unInstallResult, err := i.uninstallFiles(dirName, fileInfo)
-			if err != nil && !errors.IsAlreadyExists(err) {
-				return nil, err
-			}
-			result = append(result, unInstallResult...)
-		}
-	} else {
-		var fileName = parentPath + string(os.PathSeparator) + fi.Name()
-		i.cfg.Log(fmt.Sprintf("Uninstalling Resources %s", fileName))
-		deployFile, err := i.StatikFS.Open(fileName)
-		if err != nil {
-			return nil, err
-		}
-		// Open the resource file
-		res, err := i.cfg.KubeClient.Build(deployFile, false)
-		if err != nil {
-			return nil, err
-		}
-		if _, err := i.cfg.KubeClient.Delete(res); err != nil {
-			var deleteStatus = status.SiteWhereStatus{
-				Name:   fileName,
-				Status: status.Unknown,
-			}
-			result = append(result, deleteStatus)
-		} else {
-			var deployStatus = status.SiteWhereStatus{
-				Name:   fileName,
-				Status: status.Uninstalled,
-				//		ObjectMeta: createObject,
-			}
-			result = append(result, deployStatus)
-		}
-	}
-	return result, nil
-}
-
-// IstioGateway uninstall Istio Gateway
-func (i *Uninstall) IstioGateway() ([]status.SiteWhereStatus, error) {
-	var result []status.SiteWhereStatus
-
-	restconfig, err := i.cfg.RESTClientGetter.ToRESTConfig()
-	if err != nil {
-		return nil, err
-	}
-	ic, err := versionedclient.NewForConfig(restconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ic.NetworkingV1alpha3().Gateways(siteWhereSystemNamespace).Delete(context.TODO(), "sitewhere-gateway", metav1.DeleteOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	var deployStatus = status.SiteWhereStatus{
-		Name:   "sitewhere-gateway",
-		Status: status.Uninstalled,
-	}
-	result = append(result, deployStatus)
-
-	return result, nil
+	return &uninstall.SiteWhereUninstall{
+		Release:   res.Release.Name,
+		Namespace: res.Release.Namespace,
+		//CDRStatuses: crdDeletedStatuses,
+		//InfrastructureStatuses: infraStatuses,
+		//OperatorStatuses: operatorStatuses,
+		//TemplatesStatues: templatesStatues
+	}, nil
 }

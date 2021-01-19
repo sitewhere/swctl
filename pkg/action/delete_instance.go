@@ -17,24 +17,26 @@
 package action
 
 import (
-	"context"
-	"fmt"
+	//	"context"
+	//	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+	//	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	//	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/sitewhere/swctl/pkg/instance"
-	"github.com/sitewhere/swctl/pkg/resources"
+	//	"github.com/sitewhere/swctl/pkg/resources"
 
-	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
+	//	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
+
+	"helm.sh/helm/v3/pkg/action"
 )
 
 // DeleteInstance is the action for creating a SiteWhere instance
 type DeleteInstance struct {
-	cfg *Configuration
+	cfg *action.Configuration
 	// Name of the instance
 	InstanceName string
 	// Purge Instance data
@@ -42,7 +44,7 @@ type DeleteInstance struct {
 }
 
 // NewDeleteInstance constructs a new *Install
-func NewDeleteInstance(cfg *Configuration) *DeleteInstance {
+func NewDeleteInstance(cfg *action.Configuration) *DeleteInstance {
 	return &DeleteInstance{
 		cfg:          cfg,
 		InstanceName: "",
@@ -55,33 +57,34 @@ func (i *DeleteInstance) Run() (*instance.DeleteSiteWhereInstance, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	var client, err = i.cfg.ControllerClient()
-	if err != nil {
-		return nil, err
-	}
-	ctx := context.TODO()
-	var swInstance sitewhereiov1alpha4.SiteWhereInstance
-	if err := client.Get(ctx, types.NamespacedName{Name: i.InstanceName}, &swInstance); err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, fmt.Errorf("sitewhere instance '%s' not found", i.InstanceName)
-		}
+	// TODO REFACTOR
+	// var client, err = i.cfg.ControllerClient()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// ctx := context.TODO()
+	// var swInstance sitewhereiov1alpha4.SiteWhereInstance
+	// if err := client.Get(ctx, types.NamespacedName{Name: i.InstanceName}, &swInstance); err != nil {
+	// 	if apierrors.IsNotFound(err) {
+	// 		return nil, fmt.Errorf("sitewhere instance '%s' not found", i.InstanceName)
+	// 	}
 
-		return nil, err
-	}
-	if err := client.Delete(ctx, &swInstance); err != nil {
-		return nil, err
-	}
+	// 	return nil, err
+	// }
+	// if err := client.Delete(ctx, &swInstance); err != nil {
+	// 	return nil, err
+	// }
 
-	if i.Purge {
-		clientset, err := i.cfg.KubernetesClientSet()
-		if err != nil {
-			return nil, err
-		}
-		err = resources.DeleteNamespaceIfExists(i.InstanceName, clientset)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// if i.Purge {
+	// 	clientset, err := i.cfg.KubernetesClientSet()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	err = resources.DeleteNamespaceIfExists(i.InstanceName, clientset)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	return &instance.DeleteSiteWhereInstance{
 		InstanceName: i.InstanceName,

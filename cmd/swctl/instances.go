@@ -25,17 +25,19 @@ import (
 
 	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli/output"
 	"github.com/sitewhere/swctl/pkg/instance"
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
+
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 var instancesHelp = `
 Use this command to list SiteWhere Intances.
 `
 
-func newInstancesCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+func newInstancesCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewInstances(cfg)
 	var outFmt output.Format
 

@@ -20,6 +20,12 @@ import "github.com/sitewhere/swctl/pkg/status"
 
 // SiteWhereUninstall destribe the uninstallation of SiteWhere.
 type SiteWhereUninstall struct {
+	// Release
+	Release string `json:"release,omitempty"`
+	// Namespace
+	Namespace string `json:"namespace,omitempty"`
+
+	// Deprecated, unify
 	// Status of SiteWhere CDR installation
 	CDRStatuses []status.SiteWhereStatus `json:"crdStatues,omitempty"`
 	// Status of SiteWhere Templates installation

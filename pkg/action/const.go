@@ -14,8 +14,17 @@
  * limitations under the License.
  */
 
-package check
+package action
 
-// SiteWhereInstall destribe the installation of SiteWhere.
-type SiteWhereInstall struct {
-}
+const (
+	sitewhereRepoName        = "sitewhere"
+	sitewhereRepoURL         = "https://sitewhere.io/helm-charts"
+	sitewhereChartName       = "sitewhere-infrastructure"
+	sitewhereSystemNamespace = "sitewhere-system"
+	sitewhereReleaseName     = "sitewhere"
+)
+
+const (
+	// ErrIstioNotInstalled is the error when istio is not installed
+	ErrIstioNotInstalled = "Istio is not intalled, install istio with `istioctl install` and try again"
+)

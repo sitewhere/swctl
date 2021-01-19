@@ -17,15 +17,19 @@
 package main
 
 import (
+	"io"
+
 	"github.com/gookit/color"
 	"github.com/gosuri/uitable"
-	"github.com/sitewhere/swctl/cmd/swctl/require"
-	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli/output"
-	"github.com/sitewhere/swctl/pkg/tenant"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"io"
+
+	"github.com/sitewhere/swctl/cmd/swctl/require"
+	"github.com/sitewhere/swctl/pkg/action"
+	"github.com/sitewhere/swctl/pkg/tenant"
+
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 var createTenantDesc = `
@@ -36,7 +40,7 @@ swctl create tenant sitewhereTenant
 
 `
 
-func newCreateTenantCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+func newCreateTenantCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewCreateTenant(cfg)
 	var outFmt output.Format
 

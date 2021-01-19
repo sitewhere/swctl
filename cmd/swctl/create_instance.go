@@ -26,8 +26,10 @@ import (
 
 	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli/output"
 	"github.com/sitewhere/swctl/pkg/instance"
+
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 var createInstanceDesc = `
@@ -41,7 +43,7 @@ To create an instance with the minimal profile use:
 	swctl create instance sitewhere -m
 `
 
-func newCreateInstanceCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+func newCreateInstanceCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewCreateInstance(cfg)
 	var outFmt output.Format
 

@@ -27,8 +27,8 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/klog"
 
-	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
 )
 
 var settings = cli.New()
@@ -64,7 +64,7 @@ func main() {
 
 	// run when each command's execute method is called
 	cobra.OnInitialize(func() {
-		if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), debug); err != nil {
+		if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), debug); err != nil {
 			log.Fatal(err)
 		}
 	})

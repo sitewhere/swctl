@@ -19,57 +19,43 @@ package action
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
+	"github.com/gofrs/flock"
 	"github.com/pkg/errors"
-	"github.com/rakyll/statik/fs"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	//	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	//	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	_ "github.com/sitewhere/swctl/internal/statik" // User for statik
 	"github.com/sitewhere/swctl/pkg/install"
 	"github.com/sitewhere/swctl/pkg/resources"
-	"github.com/sitewhere/swctl/pkg/status"
+	//	"github.com/sitewhere/swctl/pkg/status"
+	// networkingv1alpha3 "istio.io/api/networking/v1alpha3"
+	// v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	// versionedclient "istio.io/client-go/pkg/clientset/versioned"
 
-	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
-	v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	versionedclient "istio.io/client-go/pkg/clientset/versioned"
-)
-
-// path for CRD manifests
-const crdPath = "/crd/"
-
-// path for template manifests
-const templatePath = "/templates/"
-
-// path to namespace objects
-const namespacePath = "/namespace/"
-
-// path for operator manifests
-const operatorPath = "/operator/"
-
-// path for infrastructure dependencies
-const infraDepsPath = "/infra-deps/"
-
-// path for operator infra
-const infraPath = "/infra/"
-
-const siteWhereSystemNamespace = "sitewhere-system"
-
-const maxRetries = 5
-
-const (
-	// ErrIstioNotInstalled is the error when istio is not installed
-	ErrIstioNotInstalled = "Istio is not intalled, install istio with `istioctl install` and try again"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/downloader"
+	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/repo"
 )
 
 // Install is the action for installing SiteWhere
 type Install struct {
-	cfg *Configuration
+	cfg *action.Configuration
 
-	StatikFS http.FileSystem
+	settings *cli.EnvSettings
+
 	// SkipCRD indicates if we need to install SiteWhere Custom Resource Definitions
 	SkipCRD bool
 	// SkipTemplate indicates if we need to install SiteWhere templates
@@ -85,11 +71,10 @@ type Install struct {
 }
 
 // NewInstall constructs a new *Install
-func NewInstall(cfg *Configuration) *Install {
-	statikFS, _ := fs.New()
+func NewInstall(cfg *action.Configuration, settings *cli.EnvSettings) *Install {
 	return &Install{
 		cfg:                cfg,
-		StatikFS:           statikFS,
+		settings:           settings,
 		SkipCRD:            false,
 		SkipTemplate:       false,
 		SkipOperator:       false,
@@ -106,50 +91,16 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	if err != nil {
 		return nil, err
 	}
-	var crdStatuses []status.SiteWhereStatus
-	if !i.SkipCRD {
-		// Install Custom Resource Definitions
-		crdStatuses, err = i.InstallCRDs()
-		if err != nil {
-			return nil, err
-		}
-	}
-	var templatesStatues []status.SiteWhereStatus
-	if !i.SkipTemplate {
-		// Install Templates
-		templatesStatues, err = i.InstallTemplates()
-		if err != nil {
-			return nil, err
-		}
-	}
-	var operatorStatuses []status.SiteWhereStatus
-	if !i.SkipOperator {
-		// Install Operator
-		operatorStatuses, err = i.InstallOperator()
-		if err != nil {
-			return nil, err
-		}
-	}
-	var infraStatuses []status.SiteWhereStatus
-	if !i.SkipInfrastructure {
-		// Install Infrastructure
-		infraStatuses, err = i.InstallInfrastructure()
-		if err != nil {
-			return nil, err
-		}
-	}
 
-	_, err = i.IstioGateway()
+	err = i.addSiteWhereRepository()
 	if err != nil {
-		return nil, errors.Errorf(ErrIstioNotInstalled)
+		return nil, err
 	}
-
-	return &install.SiteWhereInstall{
-		CDRStatuses:            crdStatuses,
-		TemplatesStatues:       templatesStatues,
-		OperatorStatuses:       operatorStatuses,
-		InfrastructureStatuses: infraStatuses,
-	}, nil
+	err = i.updateSiteWhereRepository()
+	if err != nil {
+		return nil, err
+	}
+	return i.installRelease()
 }
 
 // CheckInstallPrerequisites checks for SiteWhere Install Prerequisites
@@ -174,212 +125,179 @@ func (i *Install) CheckInstallPrerequisites() error {
 	return nil
 }
 
-// InstallCRDs Install SiteWhere Custom Resource Definitions
-func (i *Install) InstallCRDs() ([]status.SiteWhereStatus, error) {
-	return i.installDirFiles(crdPath)
+func (i *Install) addSiteWhereRepository() error {
+	repoFile := i.settings.RepositoryConfig
+
+	//Ensure the file directory exists as it is required for file locking
+	err := os.MkdirAll(filepath.Dir(repoFile), os.ModePerm)
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+
+	// Acquire a file lock for process synchronization
+	fileLock := flock.New(strings.Replace(repoFile, filepath.Ext(repoFile), ".lock", 1))
+	lockCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	locked, err := fileLock.TryLockContext(lockCtx, time.Second)
+	if err == nil && locked {
+		defer fileLock.Unlock()
+	}
+	if err != nil {
+		return err
+	}
+
+	b, err := ioutil.ReadFile(repoFile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	var f repo.File
+	if err := yaml.Unmarshal(b, &f); err != nil {
+		return err
+	}
+
+	if f.Has(sitewhereRepoName) {
+		fmt.Printf("repository name (%s) already exists\n", sitewhereRepoName)
+		return nil
+	}
+
+	c := repo.Entry{
+		Name: sitewhereRepoName,
+		URL:  sitewhereRepoURL,
+	}
+
+	r, err := repo.NewChartRepository(&c, getter.All(i.settings))
+	if err != nil {
+		return err
+	}
+
+	if _, err := r.DownloadIndexFile(); err != nil {
+		err := errors.Wrapf(err, "looks like %q is not a valid chart repository or cannot be reached", sitewhereRepoURL)
+		return err
+	}
+
+	f.Update(&c)
+
+	if err := f.WriteFile(repoFile, 0644); err != nil {
+		return err
+	}
+	return nil
 }
 
-// InstallTemplates Install SiteWhere Templates CRD
-func (i *Install) InstallTemplates() ([]status.SiteWhereStatus, error) {
-	return i.installDirFiles(templatePath)
-}
+func (i *Install) updateSiteWhereRepository() error {
+	repoFile := i.settings.RepositoryConfig
 
-// InstallOperator Install SiteWhere Operator resource file in the cluster
-func (i *Install) InstallOperator() ([]status.SiteWhereStatus, error) {
-	var result []status.SiteWhereStatus
-
-	ns, err := i.installDirFiles(namespacePath)
-	if err != nil {
-		return nil, err
+	f, err := repo.LoadFile(repoFile)
+	if os.IsNotExist(errors.Cause(err)) || len(f.Repositories) == 0 {
+		return errors.New("no repositories found. You must add one before updating")
 	}
-	result = append(result, ns...)
-
-	operator, err := i.installDirFiles(operatorPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, operator...)
-	return result, nil
-}
-
-// InstallInfrastructure Install SiteWhere infrastructure
-func (i *Install) InstallInfrastructure() ([]status.SiteWhereStatus, error) {
-	var result []status.SiteWhereStatus
-	clientset, err := i.cfg.KubernetesClientSet()
-	if err != nil {
-		return nil, err
-	}
-	apiextensionsclientset, err := i.cfg.KubernetesAPIExtensionClientSet()
-	if err != nil {
-		return nil, err
-	}
-
-	infraDeps, err := i.installDirFiles(infraDepsPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, infraDeps...)
-
-	err = resources.WaitForCRDStablished(apiextensionsclientset, "kafkas.kafka.strimzi.io")
-	if err != nil {
-		return nil, err
-	}
-
-	err = resources.WaitForDeploymentAvailable(clientset, "strimzi-cluster-operator", siteWhereSystemNamespace)
-	if err != nil {
-		return nil, err
-	}
-
-	infra, err := i.installDirFiles(infraPath)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, infra...)
-
-	return result, nil
-}
-
-// IstioGateway install Istio Gateway
-func (i *Install) IstioGateway() ([]status.SiteWhereStatus, error) {
-	var result []status.SiteWhereStatus
-
-	restconfig, err := i.cfg.RESTClientGetter.ToRESTConfig()
-	if err != nil {
-		return nil, err
-	}
-	ic, err := versionedclient.NewForConfig(restconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	var gateway *v1alpha3.Gateway = &v1alpha3.Gateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: siteWhereSystemNamespace,
-			Name:      "sitewhere-gateway",
-		},
-		Spec: networkingv1alpha3.Gateway{
-			Selector: map[string]string{
-				"istio": "ingressgateway",
-			},
-			Servers: []*networkingv1alpha3.Server{
-				&networkingv1alpha3.Server{
-					Hosts: []string{
-						"*",
-					},
-					Port: &networkingv1alpha3.Port{
-						Number:   80,
-						Name:     "http",
-						Protocol: "HTTP",
-					},
-				},
-			},
-		},
-	}
-
-	createGateway, err := ic.NetworkingV1alpha3().Gateways(siteWhereSystemNamespace).Create(context.TODO(), gateway, metav1.CreateOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	var deployStatus = status.SiteWhereStatus{
-		Name:   createGateway.GetName(),
-		Status: status.Installed,
-	}
-	result = append(result, deployStatus)
-
-	return result, nil
-}
-
-func (i *Install) installDirFiles(path string) ([]status.SiteWhereStatus, error) {
-	return i.installDirFilesWithRetries(path, 1)
-}
-
-func (i *Install) installDirFilesWithRetries(path string, retryCount int) ([]status.SiteWhereStatus, error) {
-	if retryCount < 1 {
-		retryCount = 1
-	}
-	if retryCount > maxRetries {
-		retryCount = maxRetries
-	}
-	r, err := i.StatikFS.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	fi, err := r.Stat()
-	if err != nil {
-		return nil, err
-	}
-	return i.installFiles("", fi, retryCount)
-}
-
-func (i *Install) installFiles(parentPath string, fi os.FileInfo, retryCount int) ([]status.SiteWhereStatus, error) {
-	var result []status.SiteWhereStatus
-
-	if retryCount <= 0 {
-		return nil, fmt.Errorf("retry count for resource %s overdue", fi.Name())
-	}
-
-	if fi.IsDir() {
-		dirName := parentPath + string(os.PathSeparator) + fi.Name()
-		i.cfg.Log(fmt.Sprintf("Installing Resources from %s", dirName))
-		r, err := i.StatikFS.Open(dirName)
+	var repos []*repo.ChartRepository
+	for _, cfg := range f.Repositories {
+		r, err := repo.NewChartRepository(cfg, getter.All(i.settings))
 		if err != nil {
-			return nil, err
+			return err
 		}
-		files, err := r.Readdir(-1)
-		if err != nil {
-			return nil, err
-		}
-		for _, fileInfo := range files {
-			installResult, err := i.installFiles(dirName, fileInfo, retryCount)
-			if err != nil && !apierrors.IsAlreadyExists(err) {
+		repos = append(repos, r)
+	}
+
+	fmt.Printf("Hang tight while we grab the latest from your chart repositories...\n")
+	var wg sync.WaitGroup
+	for _, re := range repos {
+		wg.Add(1)
+		go func(re *repo.ChartRepository) {
+			defer wg.Done()
+			if _, err := re.DownloadIndexFile(); err != nil {
+				fmt.Printf("...Unable to get an update from the %q chart repository (%s):\n\t%s\n", re.Config.Name, re.Config.URL, err)
+			} else {
+				fmt.Printf("...Successfully got an update from the %q chart repository\n", re.Config.Name)
+			}
+		}(re)
+	}
+	wg.Wait()
+
+	return nil
+}
+
+func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
+	actionConfig := new(action.Configuration)
+	// You can pass an empty string instead of settings.Namespace() to list
+	// all namespaces
+	if err := actionConfig.Init(i.settings.RESTClientGetter(), sitewhereSystemNamespace, os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+		return nil, err
+	}
+
+	installAction := action.NewInstall(actionConfig)
+	if installAction.Version == "" && installAction.Devel {
+		installAction.Version = ">0.0.0-0"
+	}
+	installAction.Namespace = sitewhereSystemNamespace
+	installAction.ReleaseName = sitewhereReleaseName
+	installAction.CreateNamespace = true
+
+	cp, err := installAction.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", sitewhereRepoName, sitewhereChartName), i.settings)
+
+	p := getter.All(i.settings)
+	valueOpts := &values.Options{}
+	vals, err := valueOpts.MergeValues(p)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check chart dependencies to make sure all are present in /charts
+	chartRequested, err := loader.Load(cp)
+	if err != nil {
+		return nil, err
+	}
+
+	validInstallableChart, err := isChartInstallable(chartRequested)
+	if !validInstallableChart {
+		return nil, err
+	}
+
+	if req := chartRequested.Metadata.Dependencies; req != nil {
+		// If CheckDependencies returns an error, we have unfulfilled dependencies.
+		// As of Helm 2.4.0, this is treated as a stopping condition:
+		// https://github.com/helm/helm/issues/2209
+		if err := action.CheckDependencies(chartRequested, req); err != nil {
+			if installAction.DependencyUpdate {
+				man := &downloader.Manager{
+					Out:              os.Stdout,
+					ChartPath:        cp,
+					Keyring:          installAction.ChartPathOptions.Keyring,
+					SkipUpdate:       false,
+					Getters:          p,
+					RepositoryConfig: i.settings.RepositoryConfig,
+					RepositoryCache:  i.settings.RepositoryCache,
+				}
+				if err := man.Update(); err != nil {
+					return nil, err
+				}
+			} else {
 				return nil, err
 			}
-			result = append(result, installResult...)
-		}
-	} else {
-		var fileName = parentPath + string(os.PathSeparator) + fi.Name()
-		i.cfg.Log(fmt.Sprintf("Installing Resources %s", fileName))
-		deployFile, err := i.StatikFS.Open(fileName)
-		if err != nil {
-			return nil, err
-		}
-		// Open the resource file
-		res, err := i.cfg.KubeClient.Build(deployFile, false)
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := i.cfg.KubeClient.Create(res); err != nil {
-			// If the error is Resource already exists, continue.
-			if apierrors.IsAlreadyExists(err) {
-				i.cfg.Log(fmt.Sprintf("Resource %s is already present. Skipping.", fileName))
-				var deployStatus = status.SiteWhereStatus{
-					Name:   fileName,
-					Status: status.Installed,
-				}
-				result = append(result, deployStatus)
-			} else {
-				var newRetryCount = retryCount - 1
-				time.Sleep(time.Duration(maxRetries-newRetryCount) * time.Second)
-				result, err := i.installFiles(parentPath, fi, newRetryCount)
-				if err != nil {
-					fmt.Printf("Error creating resource %s: %v\n", fileName, err)
-					var deployStatus = status.SiteWhereStatus{
-						Name:   fileName,
-						Status: status.Unknown,
-					}
-					result = append(result, deployStatus)
-				}
-			}
-		} else {
-			var deployStatus = status.SiteWhereStatus{
-				Name:   fileName,
-				Status: status.Installed,
-				//		ObjectMeta: createObject,
-			}
-			result = append(result, deployStatus)
 		}
 	}
-	return result, nil
+
+	res, err := installAction.Run(chartRequested, vals)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &install.SiteWhereInstall{
+		Release:   res.Name,
+		Namespace: res.Namespace,
+		// CDRStatuses:            crdStatuses,
+		// TemplatesStatues:       templatesStatues,
+		// OperatorStatuses:       operatorStatuses,
+		// InfrastructureStatuses: infraStatuses,
+	}, nil
+}
+
+func isChartInstallable(ch *chart.Chart) (bool, error) {
+	switch ch.Metadata.Type {
+	case "", "application":
+		return true, nil
+	}
+	return false, errors.Errorf("%s charts are not installable", ch.Metadata.Type)
 }

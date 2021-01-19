@@ -41,11 +41,13 @@ import (
 	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
 	v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	versionedclient "istio.io/client-go/pkg/clientset/versioned"
+
+	"helm.sh/helm/v3/pkg/action"
 )
 
 // CreateInstance is the action for creating a SiteWhere instance
 type CreateInstance struct {
-	cfg *Configuration
+	cfg *action.Configuration
 	// Name of the instance
 	InstanceName string
 	// Name of the tenant
@@ -107,7 +109,7 @@ const (
 )
 
 // NewCreateInstance constructs a new *Install
-func NewCreateInstance(cfg *Configuration) *CreateInstance {
+func NewCreateInstance(cfg *action.Configuration) *CreateInstance {
 	return &CreateInstance{
 		cfg:                   cfg,
 		InstanceName:          "",
@@ -184,21 +186,22 @@ func (i *CreateInstance) createInstanceResources(profile alpha3.SiteWhereProfile
 		}
 	}
 
-	client, err := i.cfg.ControllerClient()
-	if err != nil {
-		return nil, err
-	}
+	// TODO REFACTOR
+	// client, err := i.cfg.ControllerClient()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	swInstanceCR := i.buildCRSiteWhereInstace()
-	ctx := context.TODO()
+	// swInstanceCR := i.buildCRSiteWhereInstace()
+	// ctx := context.TODO()
 
-	if err := client.Create(ctx, swInstanceCR); err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			i.cfg.Log(fmt.Sprintf("Instance %s is already present. Skipping.", swInstanceCR.GetName()))
-		} else {
-			return nil, err
-		}
-	}
+	// if err := client.Create(ctx, swInstanceCR); err != nil {
+	// 	if apierrors.IsAlreadyExists(err) {
+	// 		i.cfg.Log(fmt.Sprintf("Instance %s is already present. Skipping.", swInstanceCR.GetName()))
+	// 	} else {
+	// 		return nil, err
+	// 	}
+	// }
 
 	err = i.AddIstioVirtualService()
 	if err != nil {

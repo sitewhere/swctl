@@ -23,7 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sitewhere/swctl/pkg/cli/output"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 const outputFlag = "output"

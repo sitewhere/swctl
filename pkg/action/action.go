@@ -35,8 +35,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
-	//scriptingsitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/scripting.sitewhere.io/v1alpha4"
-	//templatessitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/templates.sitewhere.io/v1alpha4"
 )
 
 var (
@@ -48,8 +46,6 @@ func init() {
 	utilruntime.Must(apiextv1beta1.AddToScheme(scheme))
 
 	utilruntime.Must(sitewhereiov1alpha4.AddToScheme(scheme))
-	//	utilruntime.Must(templatessitewhereiov1alpha4.AddToScheme(scheme))
-	//	utilruntime.Must(scriptingsitewhereiov1alpha4.AddToScheme(scheme))
 }
 
 // Configuration injects the dependencies that all actions share.

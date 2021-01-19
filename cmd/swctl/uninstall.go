@@ -25,8 +25,10 @@ import (
 
 	"github.com/sitewhere/swctl/cmd/swctl/require"
 	"github.com/sitewhere/swctl/pkg/action"
-	"github.com/sitewhere/swctl/pkg/cli/output"
 	"github.com/sitewhere/swctl/pkg/uninstall"
+
+	helmAction "helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli/output"
 )
 
 var uninstallHelp = `
@@ -39,8 +41,8 @@ This command will uninstall:
  - SiteWhere Infrastructure.
 `
 
-func newUninstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
-	client := action.NewUninstall(cfg)
+func newUninstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
+	client := action.NewUninstall(cfg, settings)
 	var outFmt output.Format
 
 	cmd := &cobra.Command{
