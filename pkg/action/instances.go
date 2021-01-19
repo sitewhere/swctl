@@ -17,15 +17,12 @@
 package action
 
 import (
-	//	"context"
+	"context"
 
-	//	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
+	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 	"github.com/sitewhere/swctl/pkg/instance"
-
-	//	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
-
 	"helm.sh/helm/v3/pkg/action"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // Instances is the action for listing SiteWhere instances
@@ -45,21 +42,20 @@ func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
 	if err := i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	// TODO REFACTOR
-	// var client, err = i.cfg.ControllerClient()
-	// if err != nil {
-	// 	return nil, err
-	// }
+	var client, err = ControllerClient(i.cfg)
+	if err != nil {
+		return nil, err
+	}
 
-	// ctx := context.TODO()
-	// var swInstancesList sitewhereiov1alpha4.SiteWhereInstanceList
+	ctx := context.TODO()
+	var swInstancesList sitewhereiov1alpha4.SiteWhereInstanceList
 
-	// if err := client.List(ctx, &swInstancesList); err != nil {
-	// 	if !apierrors.IsNotFound(err) {
-	// 		return nil, err
-	// 	}
-	// }
+	if err := client.List(ctx, &swInstancesList); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return nil, err
+		}
+	}
 	return &instance.ListSiteWhereInstance{
-		//		Instances: swInstancesList.Items,
+		Instances: swInstancesList.Items,
 	}, nil
 }

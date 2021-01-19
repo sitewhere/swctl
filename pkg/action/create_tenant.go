@@ -17,16 +17,16 @@
 package action
 
 import (
-	//"context"
-	//"fmt"
+	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 	"github.com/sitewhere/swctl/pkg/tenant"
-	//apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
+	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"helm.sh/helm/v3/pkg/action"
 )
@@ -70,29 +70,28 @@ func (i *CreateTenant) Run() (*tenant.CreateSiteWhereTenant, error) {
 		return nil, err
 	}
 
-	// TODO Refactor this
 	// Check if the instance exists
-	// client, err := i.cfg.ControllerClient()
-	// if err != nil {
-	// 	return nil, err
-	// }
+	client, err := ControllerClient(i.cfg)
+	if err != nil {
+		return nil, err
+	}
 
-	// var swInstance sitewhereiov1alpha4.SiteWhereInstance
-	// err = client.Get(context.TODO(), k8sClient.ObjectKey{Name: i.InstanceName}, &swInstance)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	var swInstance sitewhereiov1alpha4.SiteWhereInstance
+	err = client.Get(context.TODO(), k8sClient.ObjectKey{Name: i.InstanceName}, &swInstance)
+	if err != nil {
+		return nil, err
+	}
 
-	// swTenantCR := i.buildCRSiteWhereTenant()
-	// ctx := context.TODO()
+	swTenantCR := i.buildCRSiteWhereTenant()
+	ctx := context.TODO()
 
-	// if err := client.Create(ctx, swTenantCR); err != nil {
-	// 	if apierrors.IsAlreadyExists(err) {
-	// 		i.cfg.Log(fmt.Sprintf("Tenant %s is already present. Skipping.", swTenantCR.GetName()))
-	// 	} else {
-	// 		return nil, err
-	// 	}
-	// }
+	if err := client.Create(ctx, swTenantCR); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			i.cfg.Log(fmt.Sprintf("Tenant %s is already present. Skipping.", swTenantCR.GetName()))
+		} else {
+			return nil, err
+		}
+	}
 
 	return &tenant.CreateSiteWhereTenant{
 		InstanceName: i.InstanceName,
