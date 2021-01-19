@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-// Package alpha3 defines SiteWhere Structures
-package alpha3
+// Package profile defines SiteWhere Structures for Install Profiles
+package profile
 
 // SiteWhereProfile profiles to use the application
 type SiteWhereProfile string
