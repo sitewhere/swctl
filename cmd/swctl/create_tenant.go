@@ -46,7 +46,7 @@ func newCreateTenantCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Com
 
 	cmd := &cobra.Command{
 		Use:               "tenant [NAME]",
-		Short:             "create an tenant",
+		Short:             "create a tenant for an instance",
 		Long:              createTenantDesc,
 		Args:              require.ExactArgs(1),
 		ValidArgsFunction: noCompletions,
