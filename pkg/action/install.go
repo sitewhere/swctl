@@ -222,7 +222,14 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	actionConfig := new(action.Configuration)
 	// You can pass an empty string instead of settings.Namespace() to list
 	// all namespaces
-	if err := actionConfig.Init(i.settings.RESTClientGetter(), sitewhereSystemNamespace, os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+	var logConf action.DebugLog
+	if i.Verbose {
+		logConf = log.Printf
+	} else {
+		logConf = Discardf
+	}
+
+	if err := actionConfig.Init(i.settings.RESTClientGetter(), sitewhereSystemNamespace, os.Getenv("HELM_DRIVER"), logConf); err != nil {
 		return nil, err
 	}
 
@@ -242,6 +249,21 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	vals, err := valueOpts.MergeValues(p)
 	if err != nil {
 		return nil, err
+	}
+
+	// Skip operator
+	vals["operator"] = map[string]interface{}{
+		"enabled": !i.SkipOperator,
+	}
+
+	// Skip templates
+	vals["templates"] = map[string]interface{}{
+		"enabled": !i.SkipTemplate,
+	}
+
+	// Skip infrastructure
+	vals["tags"] = map[string]interface{}{
+		"infrastructure": !i.SkipInfrastructure,
 	}
 
 	// Check chart dependencies to make sure all are present in /charts

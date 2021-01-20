@@ -93,16 +93,24 @@ func newInstallWriter(skipCRD bool, skipTemplate bool, skipOperator bool, skipIn
 func (i *installWriter) WriteTable(out io.Writer) error {
 	table := uitable.New()
 	table.AddRow("COMPONENT", "STATUS")
-	if !i.SkipCRD {
+	if i.SkipCRD {
+		table.AddRow("Custom Resource Definitions", color.Warn.Render("Skipped"))
+	} else {
 		table.AddRow("Custom Resource Definitions", color.Info.Render("Installed"))
 	}
-	if !i.SkipTemplate {
+	if i.SkipTemplate {
+		table.AddRow("Templates", color.Warn.Render("Skipped"))
+	} else {
 		table.AddRow("Templates", color.Info.Render("Installed"))
 	}
-	if !i.SkipOperator {
+	if i.SkipOperator {
+		table.AddRow("Operator", color.Warn.Render("Skipped"))
+	} else {
 		table.AddRow("Operator", color.Info.Render("Installed"))
 	}
-	if !i.SkipInfrastructure {
+	if i.SkipInfrastructure {
+		table.AddRow("Infrastructure", color.Warn.Render("Skipped"))
+	} else {
 		table.AddRow("Infrastructure", color.Info.Render("Installed"))
 	}
 	table.AddRow(color.Style{color.FgGreen, color.OpBold}.Render("SiteWhere 3.0 Installed"))

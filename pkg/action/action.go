@@ -82,3 +82,7 @@ func ControllerClient(c *action.Configuration) (client.Client, error) {
 		Scheme: scheme,
 	})
 }
+
+// Discardf discards messages
+func Discardf(format string, v ...interface{}) {
+}

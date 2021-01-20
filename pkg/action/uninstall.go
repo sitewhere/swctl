@@ -77,7 +77,15 @@ func (i *Uninstall) uninstallRelease() (*install.SiteWhereInstall, error) {
 	actionConfig := new(action.Configuration)
 	// You can pass an empty string instead of settings.Namespace() to list
 	// all namespaces
-	if err := actionConfig.Init(i.settings.RESTClientGetter(), sitewhereSystemNamespace, os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+
+	var logConf action.DebugLog
+	if i.Verbose {
+		logConf = log.Printf
+	} else {
+		logConf = Discardf
+	}
+
+	if err := actionConfig.Init(i.settings.RESTClientGetter(), sitewhereSystemNamespace, os.Getenv("HELM_DRIVER"), logConf); err != nil {
 		return nil, err
 	}
 
