@@ -17,6 +17,7 @@
 package action
 
 import (
+	"github.com/sitewhere/swctl/pkg/resources"
 	"log"
 	"os"
 
@@ -32,17 +33,6 @@ type Uninstall struct {
 
 	settings *cli.EnvSettings
 
-	// CRD indicates if we need to uninstall SiteWhere Custom Resource Definitions
-	CRD bool
-	// Infrastructure indicates if we need to install SiteWhere Infrastructure
-	Infrastructure bool
-	// Operator indicates if we need to install SiteWhere Operator
-	Operator bool
-	// Template indicates if we need to install SiteWhere templates
-	Template bool
-
-	// Minimal installation only install escential SiteWhere components.
-	Minimal bool
 	// Use verbose mode
 	Verbose bool
 	// Purge data
@@ -52,15 +42,10 @@ type Uninstall struct {
 // NewUninstall constructs a new *Uninstall
 func NewUninstall(cfg *action.Configuration, settings *cli.EnvSettings) *Uninstall {
 	return &Uninstall{
-		cfg:            cfg,
-		settings:       settings,
-		CRD:            true,
-		Template:       true,
-		Operator:       true,
-		Infrastructure: true,
-		Minimal:        false,
-		Verbose:        false,
-		Purge:          false,
+		cfg:      cfg,
+		settings: settings,
+		Verbose:  false,
+		Purge:    false,
 	}
 }
 
@@ -70,7 +55,21 @@ func (i *Uninstall) Run() (*install.SiteWhereInstall, error) {
 	if err = i.cfg.KubeClient.IsReachable(); err != nil {
 		return nil, err
 	}
-	return i.uninstallRelease()
+	result, err := i.uninstallRelease()
+	if err != nil {
+		return nil, err
+	}
+	if i.Purge {
+		clientSet, err := i.cfg.KubernetesClientSet()
+		if err != nil {
+			return nil, err
+		}
+		err = resources.DeleteSiteWhereNamespaceIfExists(clientSet)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (i *Uninstall) uninstallRelease() (*install.SiteWhereInstall, error) {

@@ -62,7 +62,6 @@ func newUninstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Comman
 
 	f := cmd.Flags()
 
-	f.BoolVarP(&client.Minimal, "minimal", "m", false, "Minimal uninstallation.")
 	f.BoolVarP(&client.Purge, "purge", "p", false, "Purge data.")
 
 	bindOutputFlag(cmd, &outFmt)
@@ -80,11 +79,6 @@ func newUninstallWriter(results *install.SiteWhereInstall) *uninstallWriter {
 
 func (i *uninstallWriter) WriteTable(out io.Writer) error {
 	table := uitable.New()
-	table.AddRow("COMPONENT", "STATUS")
-	table.AddRow("Custom Resource Definitions", color.Info.Render("Uninstalled"))
-	table.AddRow("Templates", color.Info.Render("Uninstalled"))
-	table.AddRow("Operator", color.Info.Render("Uninstalled"))
-	table.AddRow("Infrastructure", color.Info.Render("Uninstalled"))
 	table.AddRow(color.Style{color.FgGreen, color.OpBold}.Render("SiteWhere 3.0 Uninstalled"))
 	return output.EncodeTable(out, table)
 }
