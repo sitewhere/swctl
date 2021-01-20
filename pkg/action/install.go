@@ -30,15 +30,9 @@ import (
 
 	"github.com/gofrs/flock"
 	"github.com/pkg/errors"
-	//	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	//	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/sitewhere/swctl/pkg/install"
 	"github.com/sitewhere/swctl/pkg/resources"
-	//	"github.com/sitewhere/swctl/pkg/status"
-	// networkingv1alpha3 "istio.io/api/networking/v1alpha3"
-	// v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	// versionedclient "istio.io/client-go/pkg/clientset/versioned"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -241,6 +235,7 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	installAction.ReleaseName = sitewhereReleaseName
 	installAction.CreateNamespace = true
 	installAction.SkipCRDs = i.SkipCRD
+	installAction.Wait = i.WaitReady
 
 	cp, err := installAction.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", sitewhereRepoName, sitewhereChartName), i.settings)
 
@@ -310,10 +305,6 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	return &install.SiteWhereInstall{
 		Release:   res.Name,
 		Namespace: res.Namespace,
-		// CDRStatuses:            crdStatuses,
-		// TemplatesStatues:       templatesStatues,
-		// OperatorStatuses:       operatorStatuses,
-		// InfrastructureStatuses: infraStatuses,
 	}, nil
 }
 

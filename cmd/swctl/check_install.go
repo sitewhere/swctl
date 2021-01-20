@@ -19,7 +19,6 @@ package main
 import (
 	"io"
 
-	// "github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 
 	"github.com/sitewhere/swctl/pkg/action"
