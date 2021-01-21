@@ -19,11 +19,16 @@ package resources
 import (
 	"testing"
 
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextensionsFake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 )
 
 func TestWaitForPodContainersRunning(t *testing.T) {
@@ -35,7 +40,7 @@ func TestWaitForPodContainersRunning(t *testing.T) {
 		clientset kubernetes.Interface
 		err       error
 	}{
-		// Namespaces exists, should return existing
+		// Pods exists and is ready, should return no error
 		{
 			name:      "pod-ready",
 			podName:   "existing",
@@ -66,6 +71,141 @@ func TestWaitForPodContainersRunning(t *testing.T) {
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
 				err := waitForPodContainersRunning(single.clientset, single.podName, single.namespace)
+				if err != single.err {
+					t.Fatalf("expected err: %s got err: %s", single.err, err)
+				}
+			}
+		}(single))
+	}
+}
+
+func TestWaitForDeploymentAvailable(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		name       string
+		deployName string
+		namespace  string
+		clientset  kubernetes.Interface
+		err        error
+	}{
+		// Deployment exists and is available, should return no error
+		{
+			name:       "deploy-available",
+			deployName: "existing",
+			namespace:  "existing-ns",
+			clientset: fake.NewSimpleClientset(&appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing",
+					Namespace: "existing-ns",
+				},
+				Status: appsv1.DeploymentStatus{
+					ReadyReplicas:     1,
+					AvailableReplicas: 1,
+					Conditions: []appsv1.DeploymentCondition{
+						appsv1.DeploymentCondition{
+							Type: appsv1.DeploymentProgressing,
+						},
+					},
+				},
+			}),
+			err: nil,
+		},
+	}
+	for _, single := range data {
+		t.Run(single.name, func(single struct {
+			name       string
+			deployName string
+			namespace  string
+			clientset  kubernetes.Interface
+			err        error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := WaitForDeploymentAvailable(single.clientset, single.deployName, single.namespace)
+				if err != single.err {
+					t.Fatalf("expected err: %s got err: %s", single.err, err)
+				}
+			}
+		}(single))
+	}
+}
+
+func TestWaitForSecretExists(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		name       string
+		secretName string
+		namespace  string
+		clientset  kubernetes.Interface
+		err        error
+	}{
+		// Secret exists, should return no error
+		{
+			name:       "secret-exists",
+			secretName: "existing",
+			namespace:  "existing-ns",
+			clientset: fake.NewSimpleClientset(&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing",
+					Namespace: "existing-ns",
+				},
+			}),
+			err: nil,
+		},
+	}
+	for _, single := range data {
+		t.Run(single.name, func(single struct {
+			name       string
+			secretName string
+			namespace  string
+			clientset  kubernetes.Interface
+			err        error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := WaitForSecretExists(single.clientset, single.secretName, single.namespace)
+				if err != single.err {
+					t.Fatalf("expected err: %s got err: %s", single.err, err)
+				}
+			}
+		}(single))
+	}
+}
+
+func TestWaitForCRDStablished(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		name      string
+		crdName   string
+		clientset apiextensionsclientset.Interface
+		err       error
+	}{
+		// CRD exists and is stablished, should return no error
+		{
+			name:    "crd-stablished",
+			crdName: "existing",
+			clientset: apiextensionsFake.NewSimpleClientset(&apiextv1beta1.CustomResourceDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "existing",
+				},
+				Status: apiextv1beta1.CustomResourceDefinitionStatus{
+					Conditions: []apiextv1beta1.CustomResourceDefinitionCondition{
+						apiextv1beta1.CustomResourceDefinitionCondition{
+							Type: apiextv1beta1.Established,
+						},
+					},
+				},
+			}),
+			err: nil,
+		},
+	}
+	for _, single := range data {
+		t.Run(single.name, func(single struct {
+			name      string
+			crdName   string
+			clientset apiextensionsclientset.Interface
+			err       error
+		}) func(t *testing.T) {
+			return func(t *testing.T) {
+				err := WaitForCRDStablished(single.clientset, single.crdName)
 				if err != single.err {
 					t.Fatalf("expected err: %s got err: %s", single.err, err)
 				}
