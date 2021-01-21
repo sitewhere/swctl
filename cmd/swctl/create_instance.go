@@ -104,6 +104,6 @@ func (s createInstancePrinter) WriteYAML(out io.Writer) error {
 func (s createInstancePrinter) WriteTable(out io.Writer) error {
 	table := uitable.New()
 	table.AddRow("INSTANCE", "STATUS")
-	table.AddRow(s.instance.InstanceName, color.Info.Render("Installed"))
+	table.AddRow(s.instance.InstanceName, color.Info.Render("Created"))
 	return output.EncodeTable(out, table)
 }
