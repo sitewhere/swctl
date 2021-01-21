@@ -62,6 +62,8 @@ type Install struct {
 	WaitReady bool
 	// Use verbose mode
 	Verbose bool
+	// Minimal if true, deploy minimal infrastucure
+	Minimal bool
 }
 
 // NewInstall constructs a new *Install
@@ -75,6 +77,7 @@ func NewInstall(cfg *action.Configuration, settings *cli.EnvSettings) *Install {
 		SkipInfrastructure: false,
 		WaitReady:          false,
 		Verbose:            false,
+		Minimal:            false,
 	}
 }
 
@@ -258,6 +261,13 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	// Skip infrastructure
 	vals["tags"] = map[string]interface{}{
 		"infrastructure": !i.SkipInfrastructure,
+	}
+
+	if i.Minimal {
+		vals["strimzi"] = map[string]interface{}{
+			"replicas": 1,
+			"isr":      1,
+		}
 	}
 
 	// Check chart dependencies to make sure all are present in /charts

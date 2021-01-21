@@ -67,6 +67,7 @@ func newInstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command 
 	f.BoolVar(&client.SkipTemplate, "skip-templates", false, "Skip Templates installation.")
 	f.BoolVar(&client.SkipOperator, "skip-operator", false, "Skip Operator installation.")
 	f.BoolVar(&client.SkipInfrastructure, "skip-infra", false, "Skip Infrastructure installation.")
+	f.BoolVarP(&client.Minimal, "minimal", "m", client.Minimal, "Install minimal infrastructure.")
 	bindOutputFlag(cmd, &outFmt)
 
 	return cmd
