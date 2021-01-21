@@ -42,6 +42,7 @@ func newDeleteCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(newDeleteInstanceCmd(cfg, out))
+	cmd.AddCommand(newDeleteTenantCmd(cfg, out))
 
 	return cmd
 }
