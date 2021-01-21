@@ -45,16 +45,13 @@ func CreateNamespaceIfNotExists(namespace string, istioInject bool, clientset ku
 	ns, err = clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 
 	if err != nil && errors.IsNotFound(err) {
-		var labels map[string]string
+		var labels map[string]string = map[string]string{
+			"app": namespace,
+		}
 		if istioInject {
-			labels = map[string]string{
-				"app": namespace,
-			}
+			labels["istio-injection"] = "enabled"
 		} else {
-			labels = map[string]string{
-				"app":             namespace,
-				"istio-injection": "enabled",
-			}
+			labels["istio-injection"] = "disabled"
 		}
 		ns = &v1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{

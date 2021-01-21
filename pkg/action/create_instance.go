@@ -115,7 +115,7 @@ func NewCreateInstance(cfg *action.Configuration) *CreateInstance {
 		InstanceName:          "",
 		TenantName:            "default",
 		Namespace:             "",
-		IstioInject:           false,
+		IstioInject:           true,
 		Minimal:               false,
 		Replicas:              1,
 		Tag:                   dockerImageDefaultTag,

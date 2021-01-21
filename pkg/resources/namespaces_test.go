@@ -29,20 +29,35 @@ import (
 )
 
 func TestCreateNamespaceIfNotExists(t *testing.T) {
-
 	t.Parallel()
 	data := []struct {
-		namespace string
-		clientset kubernetes.Interface
-		err       error
+		namespace   string
+		istioInject bool
+		clientset   kubernetes.Interface
+		err         error
 	}{
 		// Namespaces exists, should return existing
 		{
-			namespace: "existing",
+			namespace:   "existing",
+			istioInject: false,
 			clientset: fake.NewSimpleClientset(&v1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "existing",
 					Annotations: map[string]string{},
+				},
+			}),
+		},
+		// Namespaces do not exists, should return existing, with istio labels
+		{
+			namespace:   "non-exist-istio-inject",
+			istioInject: true,
+			clientset: fake.NewSimpleClientset(&v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "existing",
+					Annotations: map[string]string{},
+					Labels: map[string]string{
+						"istio-injection": "enabled",
+					},
 				},
 			}),
 		},
@@ -54,12 +69,13 @@ func TestCreateNamespaceIfNotExists(t *testing.T) {
 	}
 	for _, single := range data {
 		t.Run(single.namespace, func(single struct {
-			namespace string
-			clientset kubernetes.Interface
-			err       error
+			namespace   string
+			istioInject bool
+			clientset   kubernetes.Interface
+			err         error
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
-				result, err := CreateNamespaceIfNotExists(single.namespace, false, single.clientset)
+				result, err := CreateNamespaceIfNotExists(single.namespace, single.istioInject, single.clientset)
 
 				if err != nil {
 					if single.err == nil {
@@ -71,6 +87,11 @@ func TestCreateNamespaceIfNotExists(t *testing.T) {
 				} else {
 					if result.ObjectMeta.Name != single.namespace {
 						t.Fatalf("expected %s namespace, got %s", single.namespace, result.ObjectMeta.Name)
+					}
+					if single.istioInject {
+						if result.ObjectMeta.Labels["istio-injection"] != "enabled" {
+							t.Fatal("expeted label istio-injection=enabled")
+						}
 					}
 				}
 			}
