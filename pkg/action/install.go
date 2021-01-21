@@ -85,7 +85,6 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	err = i.addSiteWhereRepository()
 	if err != nil {
 		return nil, err

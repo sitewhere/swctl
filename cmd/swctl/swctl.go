@@ -27,13 +27,17 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/klog"
 
+	"github.com/sitewhere/swctl/pkg/resources"
+
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 )
 
-var settings = cli.New()
+var settings *cli.EnvSettings
 
 func init() {
+	os.Setenv("HELM_NAMESPACE", resources.SitewhereSystemNamespace())
+	settings = cli.New()
 	log.SetFlags(log.Lshortfile)
 }
 
