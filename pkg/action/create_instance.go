@@ -54,8 +54,8 @@ type CreateInstance struct {
 	TenantName string
 	// Namespace to use
 	Namespace string
-	// IstioInject if true, label namespace for instio inject
-	IstioInject bool
+	// SkipIstioInject if true, do not label namespace for instio inject
+	SkipIstioInject bool
 	// Minimal use minimal profile. Initialize only essential microservices.
 	Minimal bool
 	// Number of replicas
@@ -115,7 +115,7 @@ func NewCreateInstance(cfg *action.Configuration) *CreateInstance {
 		InstanceName:          "",
 		TenantName:            "default",
 		Namespace:             "",
-		IstioInject:           true,
+		SkipIstioInject:       false,
 		Minimal:               false,
 		Replicas:              1,
 		Tag:                   dockerImageDefaultTag,
@@ -179,7 +179,7 @@ func (i *CreateInstance) createInstanceResources(profile profile.SiteWhereProfil
 	if err != nil {
 		return nil, err
 	}
-	_, err = resources.CreateNamespaceIfNotExists(i.Namespace, i.IstioInject, clientset)
+	_, err = resources.CreateNamespaceIfNotExists(i.Namespace, !i.SkipIstioInject, clientset)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return nil, err
