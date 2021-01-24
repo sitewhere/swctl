@@ -830,6 +830,70 @@ func (i *CreateInstance) AddIstioVirtualService() error {
 			},
 			Http: []*networkingv1alpha3.HTTPRoute{
 				&networkingv1alpha3.HTTPRoute{
+					Name: "swagger",
+					Match: []*networkingv1alpha3.HTTPMatchRequest{
+						&networkingv1alpha3.HTTPMatchRequest{
+							Uri: &networkingv1alpha3.StringMatch{
+								MatchType: &networkingv1alpha3.StringMatch_Prefix{
+									Prefix: fmt.Sprintf("/%s/swagger", i.InstanceName),
+								},
+							},
+						},
+						&networkingv1alpha3.HTTPMatchRequest{
+							Uri: &networkingv1alpha3.StringMatch{
+								MatchType: &networkingv1alpha3.StringMatch_Prefix{
+									Prefix: fmt.Sprintf("/%s/swagger/", i.InstanceName),
+								},
+							},
+						},
+					},
+					Rewrite: &networkingv1alpha3.HTTPRewrite{
+						Uri: "/swagger",
+					},
+					Route: []*networkingv1alpha3.HTTPRouteDestination{
+						&networkingv1alpha3.HTTPRouteDestination{
+							Destination: &networkingv1alpha3.Destination{
+								Host: vsRouteHost,
+								Port: &networkingv1alpha3.PortSelector{
+									Number: 8080,
+								},
+							},
+						},
+					},
+				},
+				&networkingv1alpha3.HTTPRoute{
+					Name: "openapi",
+					Match: []*networkingv1alpha3.HTTPMatchRequest{
+						&networkingv1alpha3.HTTPMatchRequest{
+							Uri: &networkingv1alpha3.StringMatch{
+								MatchType: &networkingv1alpha3.StringMatch_Prefix{
+									Prefix: fmt.Sprintf("/%s/openapi", i.InstanceName),
+								},
+							},
+						},
+						&networkingv1alpha3.HTTPMatchRequest{
+							Uri: &networkingv1alpha3.StringMatch{
+								MatchType: &networkingv1alpha3.StringMatch_Prefix{
+									Prefix: fmt.Sprintf("/%s/openapi/", i.InstanceName),
+								},
+							},
+						},
+					},
+					Rewrite: &networkingv1alpha3.HTTPRewrite{
+						Uri: "/openapi",
+					},
+					Route: []*networkingv1alpha3.HTTPRouteDestination{
+						&networkingv1alpha3.HTTPRouteDestination{
+							Destination: &networkingv1alpha3.Destination{
+								Host: vsRouteHost,
+								Port: &networkingv1alpha3.PortSelector{
+									Number: 8080,
+								},
+							},
+						},
+					},
+				},
+				&networkingv1alpha3.HTTPRoute{
 					Name: "instance-rest",
 					Match: []*networkingv1alpha3.HTTPMatchRequest{
 						&networkingv1alpha3.HTTPMatchRequest{
@@ -839,6 +903,9 @@ func (i *CreateInstance) AddIstioVirtualService() error {
 								},
 							},
 						},
+					},
+					Rewrite: &networkingv1alpha3.HTTPRewrite{
+						Uri: "/sitewhere",
 					},
 					Route: []*networkingv1alpha3.HTTPRouteDestination{
 						&networkingv1alpha3.HTTPRouteDestination{
