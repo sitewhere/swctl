@@ -25,8 +25,6 @@ import (
 	"github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	rbacV1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -34,13 +32,8 @@ import (
 
 	"github.com/sitewhere/swctl/pkg/install/profile"
 	"github.com/sitewhere/swctl/pkg/instance"
-	"github.com/sitewhere/swctl/pkg/resources"
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
-
-	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
-	v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 
 	"helm.sh/helm/v3/pkg/action"
 )
@@ -102,10 +95,6 @@ const defaultDatasetTemplate = "default"
 const (
 	// Client Secret key
 	clientSecretKey = "client-secret"
-
-	// sitewhereGatewayName is the FQDN of sitewhere gateway
-	//	sitewhereGatewayName = "sitewhere-gateway.sitewhere-system.svc.cluster.local"
-	sitewhereGatewayName = "sitewhere-system/sitewhere-gateway"
 )
 
 // NewCreateInstance constructs a new *Install
@@ -175,17 +164,6 @@ func (i *CreateInstance) ExtractInstanceName(args []string) (string, error) {
 func (i *CreateInstance) createInstanceResources(profile profile.SiteWhereProfile) (*instanceResourcesResult, error) {
 	var err error
 
-	clientset, err := i.cfg.KubernetesClientSet()
-	if err != nil {
-		return nil, err
-	}
-	_, err = resources.CreateNamespaceIfNotExists(i.Namespace, !i.SkipIstioInject, clientset)
-	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return nil, err
-		}
-	}
-
 	client, err := ControllerClient(i.cfg)
 	if err != nil {
 		return nil, err
@@ -202,119 +180,9 @@ func (i *CreateInstance) createInstanceResources(profile profile.SiteWhereProfil
 		}
 	}
 
-	err = i.AddIstioVirtualService()
-	if err != nil {
-		return nil, err
-	}
-
 	return &instanceResourcesResult{
 		InstanceName: i.InstanceName,
 	}, nil
-}
-
-func (i *CreateInstance) buildInstanceServiceAccount() *v1.ServiceAccount {
-	saName := fmt.Sprintf("sitewhere-instance-service-account-%s", i.Namespace)
-	return &v1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: saName,
-			Labels: map[string]string{
-				"app": i.InstanceName,
-			},
-		},
-	}
-}
-
-func (i *CreateInstance) buildInstanceClusterRole() *rbacV1.ClusterRole {
-	roleName := fmt.Sprintf("sitewhere-instance-clusterrole-%s", i.InstanceName)
-	return &rbacV1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: roleName,
-			Labels: map[string]string{
-				"app": i.InstanceName,
-			},
-		},
-		Rules: []rbacV1.PolicyRule{
-			{
-				APIGroups: []string{
-					"sitewhere.io",
-				},
-				Resources: []string{
-					"instances",
-					"instances/status",
-					"microservices",
-					"tenants",
-					"tenantengines",
-					"tenantengines/status",
-				},
-				Verbs: []string{
-					"*",
-				},
-			}, {
-				APIGroups: []string{
-					"templates.sitewhere.io",
-				},
-				Resources: []string{
-					"instanceconfigurations",
-					"instancedatasets",
-					"tenantconfigurations",
-					"tenantengineconfigurations",
-					"tenantdatasets",
-					"tenantenginedatasets",
-				},
-				Verbs: []string{
-					"*",
-				},
-			}, {
-				APIGroups: []string{
-					"scripting.sitewhere.io",
-				},
-				Resources: []string{
-					"scriptcategories",
-					"scripttemplates",
-					"scripts",
-					"scriptversions",
-				},
-				Verbs: []string{
-					"*",
-				},
-			}, {
-				APIGroups: []string{
-					"apiextensions.k8s.io",
-				},
-				Resources: []string{
-					"customresourcedefinitions",
-				},
-				Verbs: []string{
-					"*",
-				},
-			},
-		},
-	}
-}
-
-func (i *CreateInstance) buildInstanceClusterRoleBinding(serviceAccount *v1.ServiceAccount,
-	clusterRole *rbacV1.ClusterRole) *rbacV1.ClusterRoleBinding {
-	roleBindingName := fmt.Sprintf("sitewhere-instance-clusterrole-binding-%s", i.InstanceName)
-	return &rbacV1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: roleBindingName,
-			Labels: map[string]string{
-				"app": i.InstanceName,
-			},
-		},
-		Subjects: []rbacV1.Subject{
-			{
-				Kind:      "ServiceAccount",
-				Namespace: i.Namespace,
-				Name:      serviceAccount.ObjectMeta.Name,
-			},
-		},
-		RoleRef: rbacV1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     clusterRole.ObjectMeta.Name,
-		},
-	}
 }
 
 func (i *CreateInstance) buildCRSiteWhereInstace() *sitewhereiov1alpha4.SiteWhereInstance {
@@ -799,130 +667,4 @@ func renderScheduleManagementMicroservice(replicas int32, tag string, registry s
 		Level:  "info",
 	})
 	return result
-}
-
-// AddIstioVirtualService install Istio Virtual Service
-func (i *CreateInstance) AddIstioVirtualService() error {
-	restconfig, err := i.cfg.RESTClientGetter.ToRESTConfig()
-	if err != nil {
-		return err
-	}
-	ic, err := versionedclient.NewForConfig(restconfig)
-	if err != nil {
-		return err
-	}
-
-	var vsName = fmt.Sprintf("%s-vs", i.InstanceName)
-	var vsRouteHost = fmt.Sprintf("instance-management.%s.svc.cluster.local", i.Namespace)
-	var prefixValue = fmt.Sprintf("/%s", i.InstanceName)
-
-	var vs *v1alpha3.VirtualService = &v1alpha3.VirtualService{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: i.Namespace,
-			Name:      vsName,
-		},
-		Spec: networkingv1alpha3.VirtualService{
-			Gateways: []string{
-				sitewhereGatewayName,
-			},
-			Hosts: []string{
-				"*",
-			},
-			Http: []*networkingv1alpha3.HTTPRoute{
-				&networkingv1alpha3.HTTPRoute{
-					Name: "swagger",
-					Match: []*networkingv1alpha3.HTTPMatchRequest{
-						&networkingv1alpha3.HTTPMatchRequest{
-							Uri: &networkingv1alpha3.StringMatch{
-								MatchType: &networkingv1alpha3.StringMatch_Prefix{
-									Prefix: fmt.Sprintf("/%s/swagger", i.InstanceName),
-								},
-							},
-						},
-						&networkingv1alpha3.HTTPMatchRequest{
-							Uri: &networkingv1alpha3.StringMatch{
-								MatchType: &networkingv1alpha3.StringMatch_Prefix{
-									Prefix: fmt.Sprintf("/%s/swagger/", i.InstanceName),
-								},
-							},
-						},
-					},
-					Rewrite: &networkingv1alpha3.HTTPRewrite{
-						Uri: "/swagger",
-					},
-					Route: []*networkingv1alpha3.HTTPRouteDestination{
-						&networkingv1alpha3.HTTPRouteDestination{
-							Destination: &networkingv1alpha3.Destination{
-								Host: vsRouteHost,
-								Port: &networkingv1alpha3.PortSelector{
-									Number: 8080,
-								},
-							},
-						},
-					},
-				},
-				&networkingv1alpha3.HTTPRoute{
-					Name: "openapi",
-					Match: []*networkingv1alpha3.HTTPMatchRequest{
-						&networkingv1alpha3.HTTPMatchRequest{
-							Uri: &networkingv1alpha3.StringMatch{
-								MatchType: &networkingv1alpha3.StringMatch_Prefix{
-									Prefix: fmt.Sprintf("/%s/openapi", i.InstanceName),
-								},
-							},
-						},
-						&networkingv1alpha3.HTTPMatchRequest{
-							Uri: &networkingv1alpha3.StringMatch{
-								MatchType: &networkingv1alpha3.StringMatch_Prefix{
-									Prefix: fmt.Sprintf("/%s/openapi/", i.InstanceName),
-								},
-							},
-						},
-					},
-					Rewrite: &networkingv1alpha3.HTTPRewrite{
-						Uri: "/openapi",
-					},
-					Route: []*networkingv1alpha3.HTTPRouteDestination{
-						&networkingv1alpha3.HTTPRouteDestination{
-							Destination: &networkingv1alpha3.Destination{
-								Host: vsRouteHost,
-								Port: &networkingv1alpha3.PortSelector{
-									Number: 8080,
-								},
-							},
-						},
-					},
-				},
-				&networkingv1alpha3.HTTPRoute{
-					Name: "instance-rest",
-					Match: []*networkingv1alpha3.HTTPMatchRequest{
-						&networkingv1alpha3.HTTPMatchRequest{
-							Uri: &networkingv1alpha3.StringMatch{
-								MatchType: &networkingv1alpha3.StringMatch_Prefix{
-									Prefix: prefixValue,
-								},
-							},
-						},
-					},
-					Rewrite: &networkingv1alpha3.HTTPRewrite{
-						Uri: "/sitewhere",
-					},
-					Route: []*networkingv1alpha3.HTTPRouteDestination{
-						&networkingv1alpha3.HTTPRouteDestination{
-							Destination: &networkingv1alpha3.Destination{
-								Host: vsRouteHost,
-								Port: &networkingv1alpha3.PortSelector{
-									Number: 8080,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	_, err = ic.NetworkingV1alpha3().VirtualServices(i.Namespace).Create(context.TODO(), vs, metav1.CreateOptions{})
-
-	return nil
 }
