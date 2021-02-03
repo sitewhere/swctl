@@ -262,7 +262,27 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	vals["tags"] = map[string]interface{}{
 		"infrastructure": !i.SkipInfrastructure,
 	}
-
+	vals["postgresql"] = map[string]interface{}{
+		"enabled": !i.SkipInfrastructure,
+	}
+	vals["influxdb"] = map[string]interface{}{
+		"enabled": !i.SkipInfrastructure,
+	}
+	vals["redis"] = map[string]interface{}{
+		"enabled": !i.SkipInfrastructure,
+	}
+	vals["nifi"] = map[string]interface{}{
+		"enabled": !i.SkipInfrastructure,
+	}
+	vals["mosquitto"] = map[string]interface{}{
+		"enabled": !i.SkipInfrastructure,
+	}
+	vals["strimzi"] = map[string]interface{}{
+		"enabled": !i.SkipInfrastructure,
+	}
+	vals["keycloak"] = map[string]interface{}{
+		"enabled": !i.SkipInfrastructure,
+	}
 	if i.Minimal {
 		vals["strimzi"] = map[string]interface{}{
 			"replicas": 1,
