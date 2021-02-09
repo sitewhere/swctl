@@ -68,6 +68,8 @@ func newInstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command 
 	f.BoolVar(&client.SkipOperator, "skip-operator", false, "Skip Operator installation.")
 	f.BoolVar(&client.SkipInfrastructure, "skip-infra", false, "Skip Infrastructure installation.")
 	f.BoolVarP(&client.Minimal, "minimal", "m", client.Minimal, "Install minimal infrastructure.")
+	f.StringVarP(&client.StorageClass, "storage-class", "s", "", "Storage Class of infrastructure components.")
+
 	bindOutputFlag(cmd, &outFmt)
 
 	return cmd

@@ -19,7 +19,6 @@ package action
 import (
 	"context"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
@@ -27,6 +26,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/gofrs/flock"
 	"github.com/pkg/errors"
@@ -64,6 +65,8 @@ type Install struct {
 	Verbose bool
 	// Minimal if true, deploy minimal infrastucure
 	Minimal bool
+	// StorageClass is the name of the storage class for the infrastructure
+	StorageClass string
 }
 
 // NewInstall constructs a new *Install
@@ -78,6 +81,7 @@ func NewInstall(cfg *action.Configuration, settings *cli.EnvSettings) *Install {
 		WaitReady:          false,
 		Verbose:            false,
 		Minimal:            false,
+		StorageClass:       "",
 	}
 }
 
@@ -287,6 +291,63 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 		vals["strimzi"] = map[string]interface{}{
 			"replicas": 1,
 			"isr":      1,
+		}
+	}
+
+	// set storage class
+	if i.StorageClass != "" {
+		// InfluxDB storage class
+		vals["influxdb"] = map[string]interface{}{
+			"persistence": map[string]interface{}{
+				"storageClass": i.StorageClass,
+			},
+		}
+		// Redis
+		vals["redis"] = map[string]interface{}{
+			"global": map[string]interface{}{
+				"storageClass": i.StorageClass,
+			},
+			"master": map[string]interface{}{
+				"persistence": map[string]interface{}{
+					"storageClass": i.StorageClass,
+				},
+			},
+			"slave": map[string]interface{}{
+				"persistence": map[string]interface{}{
+					"storageClass": i.StorageClass,
+				},
+			},
+		}
+		// Nifi
+		vals["nifi"] = map[string]interface{}{
+			"persistence": map[string]interface{}{
+				"storageClass": i.StorageClass,
+			},
+			"zookeeper": map[string]interface{}{
+				"global": map[string]interface{}{
+					"storageClass": i.StorageClass,
+				},
+				"persistence": map[string]interface{}{
+					"storageClass": i.StorageClass,
+				},
+			},
+		}
+		// PostgreSQL
+		vals["postgresql"] = map[string]interface{}{
+			"global": map[string]interface{}{
+				"storageClass": i.StorageClass,
+			},
+			"persistence": map[string]interface{}{
+				"storageClass": i.StorageClass,
+			},
+		}
+		// Keycloak
+		vals["keycloak"] = map[string]interface{}{
+			"postgresql": map[string]interface{}{
+				"persistence": map[string]interface{}{
+					"storageClass": i.StorageClass,
+				},
+			},
 		}
 	}
 
