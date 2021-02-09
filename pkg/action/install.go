@@ -349,6 +349,13 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 				},
 			},
 		}
+		// Strimzi
+		vals["strimzi"] = map[string]interface{}{
+			"storage": map[string]interface{}{
+				"type":         "persistent-claim",
+				"storageClass": i.StorageClass,
+			},
+		}
 	}
 
 	// Check chart dependencies to make sure all are present in /charts
