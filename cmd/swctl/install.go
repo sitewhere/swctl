@@ -69,6 +69,7 @@ func newInstallCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command 
 	f.BoolVar(&client.SkipInfrastructure, "skip-infra", false, "Skip Infrastructure installation.")
 	f.BoolVarP(&client.Minimal, "minimal", "m", client.Minimal, "Install minimal infrastructure.")
 	f.StringVarP(&client.StorageClass, "storage-class", "s", "", "Storage Class of infrastructure components.")
+	f.StringVar(&client.KafkaPVCStorageSize, "kafka-pvc-size", "", "Kafka PVC Storage Size.")
 
 	bindOutputFlag(cmd, &outFmt)
 
