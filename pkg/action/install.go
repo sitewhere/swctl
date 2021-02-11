@@ -67,21 +67,24 @@ type Install struct {
 	Minimal bool
 	// StorageClass is the name of the storage class for the infrastructure
 	StorageClass string
+	// KafkaPVCStorageSize is the size of Kafka PVC Storage Size
+	KafkaPVCStorageSize string
 }
 
 // NewInstall constructs a new *Install
 func NewInstall(cfg *action.Configuration, settings *cli.EnvSettings) *Install {
 	return &Install{
-		cfg:                cfg,
-		settings:           settings,
-		SkipCRD:            false,
-		SkipTemplate:       false,
-		SkipOperator:       false,
-		SkipInfrastructure: false,
-		WaitReady:          false,
-		Verbose:            false,
-		Minimal:            false,
-		StorageClass:       "",
+		cfg:                 cfg,
+		settings:            settings,
+		SkipCRD:             false,
+		SkipTemplate:        false,
+		SkipOperator:        false,
+		SkipInfrastructure:  false,
+		WaitReady:           false,
+		Verbose:             false,
+		Minimal:             false,
+		StorageClass:        "",
+		KafkaPVCStorageSize: "",
 	}
 }
 
@@ -354,6 +357,15 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 			"storage": map[string]interface{}{
 				"type":         "persistent-claim",
 				"storageClass": i.StorageClass,
+			},
+		}
+	}
+
+	// KafkaPVCStorageSize
+	if i.KafkaPVCStorageSize != "" {
+		vals["strimzi"] = map[string]interface{}{
+			"storage": map[string]interface{}{
+				"size": i.KafkaPVCStorageSize,
 			},
 		}
 	}
