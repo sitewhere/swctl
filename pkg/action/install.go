@@ -45,11 +45,16 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 )
 
+const defaultHelmChartVersion string = "0.1.10"
+
 // Install is the action for installing SiteWhere
 type Install struct {
 	cfg *action.Configuration
 
 	settings *cli.EnvSettings
+
+	// HelmChartVersion is the version of SiteWhere Infrastructure Helm Chart
+	HelmChartVersion string
 
 	// SkipCRD indicates if we need to install SiteWhere Custom Resource Definitions
 	SkipCRD bool
@@ -76,6 +81,7 @@ func NewInstall(cfg *action.Configuration, settings *cli.EnvSettings) *Install {
 	return &Install{
 		cfg:                 cfg,
 		settings:            settings,
+		HelmChartVersion:    defaultHelmChartVersion,
 		SkipCRD:             false,
 		SkipTemplate:        false,
 		SkipOperator:        false,
@@ -245,6 +251,7 @@ func (i *Install) installRelease() (*install.SiteWhereInstall, error) {
 	installAction.CreateNamespace = true
 	installAction.SkipCRDs = i.SkipCRD
 	installAction.Wait = i.WaitReady
+	installAction.Version = i.HelmChartVersion
 
 	cp, err := installAction.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", sitewhereRepoName, sitewhereChartName), i.settings)
 
