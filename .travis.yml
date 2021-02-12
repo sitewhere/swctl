@@ -18,7 +18,7 @@ script:
   - make build
   - make test-coverage
   # Only build binaries from the latest Go release.
-  - if [ "${LATEST}" = "true" ]; then make build-cross; fi
+  - if [ -n "$TRAVIS_TAG" ]; then make build-cross; fi
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
