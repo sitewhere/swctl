@@ -17,6 +17,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -56,6 +57,12 @@ func TestFromTemplate(t *testing.T) {
 				},
 			},
 			err: nil,
+		},
+		{
+			name:            "bad-template",
+			templateContent: `microservices: {{ }`,
+			placeHolder:     &PlaceHolder{},
+			err:             fmt.Errorf("template: :1: unexpected \"}\" in command"),
 		},
 	}
 
