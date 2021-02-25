@@ -32,6 +32,7 @@ import (
 	"github.com/gofrs/flock"
 	"github.com/pkg/errors"
 
+	"github.com/sitewhere/swctl/pkg/config"
 	"github.com/sitewhere/swctl/pkg/install"
 	"github.com/sitewhere/swctl/pkg/resources"
 
@@ -97,6 +98,12 @@ func NewInstall(cfg *action.Configuration, settings *cli.EnvSettings) *Install {
 // Run executes the install command, returning the result of the installation
 func (i *Install) Run() (*install.SiteWhereInstall, error) {
 	var err error
+	if !i.ConfigurationExists() {
+		err = i.CreateConfiguration()
+		if err != nil {
+			return nil, err
+		}
+	}
 	err = i.CheckInstallPrerequisites()
 	if err != nil {
 		return nil, err
@@ -110,6 +117,18 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 		return nil, err
 	}
 	return i.installRelease()
+}
+
+// ConfigurationExists check for swctl configuration file
+func (i *Install) ConfigurationExists() bool {
+	_, err := config.LoadConfigurationTemplate(&config.PlaceHolder{})
+	return err != config.ErrNotFound
+}
+
+// CreateConfiguration Loads the default configuration
+// and tries to save it.
+func (i *Install) CreateConfiguration() error {
+	return config.CreateDefaultConfiguration()
 }
 
 // CheckInstallPrerequisites checks for SiteWhere Install Prerequisites
