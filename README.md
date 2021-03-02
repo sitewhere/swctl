@@ -64,7 +64,6 @@ swctl install
 
 This comamnd will do the following for you:
 
-- Create `sitewhere-system` Namespace.
 - Install SiteWhere Custom Resource Definitions.
 - Install SiteWhere Templates.
 - Install SiteWhere Operator.

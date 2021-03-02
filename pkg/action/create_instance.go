@@ -44,8 +44,6 @@ type CreateInstance struct {
 	TenantName string
 	// Namespace to use
 	Namespace string
-	// SkipIstioInject if true, do not label namespace for instio inject
-	SkipIstioInject bool
 	// Minimal use minimal profile. Initialize only essential microservices.
 	Minimal bool
 	// Number of replicas
@@ -96,7 +94,6 @@ func NewCreateInstance(cfg *action.Configuration) *CreateInstance {
 		InstanceName:          "",
 		TenantName:            "default",
 		Namespace:             "",
-		SkipIstioInject:       false,
 		Minimal:               false,
 		Replicas:              1,
 		Tag:                   dockerImageDefaultTag,
