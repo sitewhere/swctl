@@ -161,7 +161,7 @@ func (i *CreateInstance) createInstanceResources(profile profile.SiteWhereProfil
 		return nil, err
 	}
 
-	swInstanceCR, err := i.buildCRSiteWhereInstace()
+	swInstanceCR, err := i.buildCRSiteWhereInstace(profile)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (i *CreateInstance) createInstanceResources(profile profile.SiteWhereProfil
 	}, nil
 }
 
-func (i *CreateInstance) buildCRSiteWhereInstace() (*sitewhereiov1alpha4.SiteWhereInstance, error) {
+func (i *CreateInstance) buildCRSiteWhereInstace(profile profile.SiteWhereProfile) (*sitewhereiov1alpha4.SiteWhereInstance, error) {
 	var placeHolder *config.PlaceHolder = &config.PlaceHolder{
 		InstanceName: i.InstanceName,
 		Replicas:     i.Replicas,
@@ -187,7 +187,7 @@ func (i *CreateInstance) buildCRSiteWhereInstace() (*sitewhereiov1alpha4.SiteWhe
 		Registry:     i.Registry,
 		Repository:   "sitewhere",
 	}
-	conf, err := config.LoadConfigurationOrDefault(placeHolder)
+	conf, err := config.LoadConfigurationOrDefault(placeHolder, profile)
 	if err != nil {
 		return nil, err
 	}

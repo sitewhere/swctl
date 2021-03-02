@@ -39,3 +39,23 @@ func CreateDefaultConfiguration() error {
 	}
 	return err
 }
+
+// CreateDefaultConfiguration saves the default configuration to the config file
+func CreateMinimalConfiguration() error {
+	var err error
+	configHome := GetConfigHome()
+	err = os.Mkdir(configHome, 0755)
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+	minimalConfigPath := GetMinimalConfigPath()
+	f, err := os.OpenFile(minimalConfigPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write([]byte(minimalTemplate))
+	if err1 := f.Close(); err == nil {
+		err = err1
+	}
+	return err
+}
