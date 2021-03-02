@@ -19,6 +19,7 @@ package action
 import (
 	"context"
 	"fmt"
+	"github.com/sitewhere/swctl/pkg/install/profile"
 	"io/ioutil"
 	"log"
 	"os"
@@ -121,13 +122,17 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 
 // ConfigurationExists check for swctl configuration file
 func (i *Install) ConfigurationExists() bool {
-	_, err := config.LoadConfigurationTemplate(&config.PlaceHolder{})
+	_, err := config.LoadConfigurationTemplate(&config.PlaceHolder{}, profile.Default)
 	return err != config.ErrNotFound
 }
 
-// CreateConfiguration Loads the default configuration
+// CreateConfiguration Loads the default and minimal configuration
 // and tries to save it.
 func (i *Install) CreateConfiguration() error {
+	var err error
+	if err = config.CreateMinimalConfiguration(); err != nil {
+		return err
+	}
 	return config.CreateDefaultConfiguration()
 }
 
