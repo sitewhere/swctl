@@ -17,8 +17,9 @@
 package main
 
 import (
-	"github.com/gosuri/uitable"
 	"io"
+
+	"github.com/gosuri/uitable"
 
 	"github.com/gookit/color"
 	"github.com/spf13/cobra"
@@ -79,7 +80,6 @@ func addCreateInstanceFlags(cmd *cobra.Command, f *pflag.FlagSet, client *action
 	f.StringVarP(&client.Tag, "tag", "t", client.Tag, "Docker image tag.")
 	f.StringVar(&client.Registry, "registry", client.Registry, "Docker image registry.")
 	f.BoolVarP(&client.Debug, "debug", "d", client.Debug, "Debug mode.")
-	f.BoolVar(&client.SkipIstioInject, "skip-istio-inject", client.SkipIstioInject, "Skip Istio Inject namespace label.")
 	f.Int32VarP(&client.Replicas, "replicas", "r", client.Replicas, "Number of replicas")
 	f.StringVarP(&client.ConfigurationTemplate, "config-template", "c", client.ConfigurationTemplate, "Configuration template.")
 	f.StringVarP(&client.DatasetTemplate, "dateset-template", "x", client.DatasetTemplate, "Dataset template.")
