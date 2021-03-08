@@ -42,12 +42,16 @@ func newInstancesCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Comman
 	var outFmt output.Format
 
 	cmd := &cobra.Command{
-		Use:               "instances",
+		Use:               "instances [NAME]",
 		Short:             "show SiteWhere instances",
 		Long:              instancesHelp,
-		Args:              require.NoArgs,
+		Args:              require.MaximumNArgs(1),
 		ValidArgsFunction: noCompletions,
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			instanceName, err := client.ExtractInstanceNameArg(args)
+			client.InstanceName = instanceName
+
 			results, err := client.Run()
 			if err != nil {
 				return err
@@ -62,11 +66,15 @@ func newInstancesCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Comman
 type instancesWriter struct {
 	// Instances found
 	Instances []sitewhereiov1alpha4.SiteWhereInstance
+
+	//Microservices found
+	SiteWhereMicroservice []sitewhereiov1alpha4.SiteWhereMicroservice
 }
 
 func newInstancesWriter(result *instance.ListSiteWhereInstance) *instancesWriter {
 	return &instancesWriter{
-		Instances: result.Instances,
+		Instances:             result.Instances,
+		SiteWhereMicroservice: result.SiteWhereMicroservice,
 	}
 }
 
@@ -78,7 +86,33 @@ func (i *instancesWriter) WriteTable(out io.Writer) error {
 		umStatus := renderState(item.Status.UserManagementBootstrapState)
 		table.AddRow(item.Name, item.Name, item.Spec.ConfigurationTemplate, item.Spec.DatasetTemplate, tmState, umStatus)
 	}
-	return output.EncodeTable(out, table)
+
+	table.AddRow("", "", "", "", "")
+	output.EncodeTable(out, table)
+
+	if len(i.Instances) == 1 && len(i.SiteWhereMicroservice) > 0 {
+		i.WriteMicroserviceInfo(out)
+		i.WriteInstanceDetailInfo(out, i.Instances[0])
+	}
+	return nil
+}
+
+func (i *instancesWriter) WriteMicroserviceInfo(out io.Writer) {
+	microserviceTable := uitable.New()
+	microserviceTable.AddRow("MICROSERVICE", "NAMESPACE", "DEPLOYMENT")
+	for _, item := range i.SiteWhereMicroservice {
+		microserviceTable.AddRow(item.Spec.Name, item.ObjectMeta.Namespace, item.Status.Deployment)
+	}
+	microserviceTable.AddRow("", "", "")
+	output.EncodeTable(out, microserviceTable)
+	output.EncodeYAML(out, i.Instances[0].Spec.DockerSpec)
+	output.EncodeYAML(out, i.Instances[0].Spec.Configuration)
+
+}
+
+func (i *instancesWriter) WriteInstanceDetailInfo(out io.Writer, instance sitewhereiov1alpha4.SiteWhereInstance) {
+	output.EncodeYAML(out, instance.Spec.DockerSpec)
+	output.EncodeYAML(out, instance.Spec.Configuration)
 }
 
 func (i *instancesWriter) WriteJSON(out io.Writer) error {
