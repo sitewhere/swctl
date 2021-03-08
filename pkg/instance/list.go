@@ -24,4 +24,6 @@ import (
 type ListSiteWhereInstance struct {
 	// Instances found
 	Instances []sitewhereiov1alpha4.SiteWhereInstance
+
+	SiteWhereMicroservice []sitewhereiov1alpha4.SiteWhereMicroservice
 }
