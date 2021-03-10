@@ -33,7 +33,6 @@ func newRootCmd(actionConfig *action.Configuration, out io.Writer, args []string
 		Short:        "SiteWhere Control CLI.",
 		Long:         globalUsage,
 		SilenceUsage: true,
-		// This breaks completion for 'helm help <TAB>'
 		// The Cobra release following 1.0 will fix this
 		//ValidArgsFunction: noCompletions, // Disable file completion
 	}
@@ -51,6 +50,7 @@ func newRootCmd(actionConfig *action.Configuration, out io.Writer, args []string
 		newDeleteCmd(actionConfig, out),
 		newInstancesCmd(actionConfig, out),
 		newUninstallCmd(actionConfig, out),
+		newLogsCmd(actionConfig, out),
 		newVersionCmd(out))
 
 	return cmd, nil
