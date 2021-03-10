@@ -18,11 +18,13 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/pkg/errors"
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctlcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -48,13 +50,59 @@ func NewInstances(cfg *action.Configuration) *Instances {
 
 // Run executes the install command, returning the result of the installation
 func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
-
-	instanceList := instance.ListSiteWhereInstance{}
-	if i.InstanceName != "" {
-		i.instanceDetail(&instanceList)
+	var err error
+	// check for kubernetes cluster
+	if err = i.cfg.KubeClient.IsReachable(); err != nil {
+		return nil, err
 	}
-	i.instances(&instanceList)
-	return &instanceList, nil
+	client, err := ControllerClient(i.cfg)
+	if err != nil {
+		return nil, err
+	}
+	ctx := context.TODO()
+	if i.InstanceName != "" {
+		return i.singelInstanceDetail(ctx, client)
+	}
+	return i.instancesDetails(ctx, client)
+}
+
+func (i *Instances) instancesDetails(ctx context.Context, client ctlcli.Client) (*instance.ListSiteWhereInstance, error) {
+	var err error
+
+	var swInstancesList sitewhereiov1alpha4.SiteWhereInstanceList
+	err = client.List(ctx, &swInstancesList)
+	if err != nil {
+		return nil, err
+	}
+	return &instance.ListSiteWhereInstance{
+		Instances: swInstancesList.Items,
+	}, nil
+}
+
+func (i *Instances) singelInstanceDetail(ctx context.Context, client ctlcli.Client) (*instance.ListSiteWhereInstance, error) {
+	var err error
+
+	var swInstanceCR sitewhereiov1alpha4.SiteWhereInstance
+	err = client.Get(ctx, ctlcli.ObjectKey{Name: i.InstanceName}, &swInstanceCR)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("sitewhere instance '%s' not found", i.InstanceName)
+		}
+		return nil, err
+	}
+
+	var swMicroservoceList sitewhereiov1alpha4.SiteWhereMicroserviceList
+	err = client.List(ctx, &swMicroservoceList, ctlcli.InNamespace(i.InstanceName))
+	if err != nil {
+		return nil, err
+	}
+
+	return &instance.ListSiteWhereInstance{
+		Instances: []sitewhereiov1alpha4.SiteWhereInstance{
+			swInstanceCR,
+		},
+		SiteWhereMicroservice: swMicroservoceList.Items,
+	}, nil
 }
 
 // ExtractInstanceNameArg returns the name of the instance that should be used.
@@ -65,50 +113,4 @@ func (i *Instances) ExtractInstanceNameArg(args []string) (string, error) {
 		return args[0], nil
 	}
 	return "", nil
-}
-
-func (i *Instances) instances(instanceList *instance.ListSiteWhereInstance) error {
-	var client, err = ControllerClient(i.cfg)
-	if err != nil {
-		return err
-	}
-
-	ctx := context.TODO()
-	var swInstancesList sitewhereiov1alpha4.SiteWhereInstanceList
-
-	if i.InstanceName == "" {
-		if err := client.List(ctx, &swInstancesList); err != nil {
-			if !apierrors.IsNotFound(err) {
-				return err
-			}
-		}
-		instanceList.Instances = swInstancesList.Items
-	} else {
-		var swInstanceCR sitewhereiov1alpha4.SiteWhereInstance
-		err = client.Get(ctx, ctlcli.ObjectKey{Name: i.InstanceName}, &swInstanceCR)
-		if err != nil {
-			return err
-		}
-		instanceList.Instances = append(instanceList.Instances, swInstanceCR)
-	}
-	return nil
-}
-
-func (i *Instances) instanceDetail(instanceList *instance.ListSiteWhereInstance) error {
-
-	var client, err = ControllerClient(i.cfg)
-	if err != nil {
-		return err
-	}
-
-	ctx := context.TODO()
-
-	if err := i.cfg.KubeClient.IsReachable(); err != nil {
-		return err
-	}
-
-	var swMicroservoceList sitewhereiov1alpha4.SiteWhereMicroserviceList
-	err = client.List(ctx, &swMicroservoceList, ctlcli.InNamespace(i.InstanceName))
-	instanceList.SiteWhereMicroservice = swMicroservoceList.Items
-	return nil
 }

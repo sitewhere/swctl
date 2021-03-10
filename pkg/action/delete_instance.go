@@ -26,8 +26,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
+	_ "k8s.io/client-go/plugin/pkg/client/auth"     // Auth
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // GPC Auth
-	_ "k8s.io/client-go/plugin/pkg/client/auth" // Auth
 
 	"github.com/sitewhere/swctl/pkg/instance"
 	"github.com/sitewhere/swctl/pkg/resources"
@@ -70,7 +70,6 @@ func (i *DeleteInstance) Run() (*instance.DeleteSiteWhereInstance, error) {
 		if apierrors.IsNotFound(err) {
 			return nil, fmt.Errorf("sitewhere instance '%s' not found", i.InstanceName)
 		}
-
 		return nil, err
 	}
 	if err := client.Delete(ctx, &swInstance); err != nil {

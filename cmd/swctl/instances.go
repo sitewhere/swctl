@@ -17,6 +17,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/gookit/color"
@@ -42,13 +43,17 @@ func newInstancesCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Comman
 	var outFmt output.Format
 
 	cmd := &cobra.Command{
-		Use:               "instances [NAME]",
-		Short:             "show SiteWhere instances",
-		Long:              instancesHelp,
-		Args:              require.MaximumNArgs(1),
-		ValidArgsFunction: noCompletions,
+		Use:   "instances [NAME]",
+		Short: "show SiteWhere instances",
+		Long:  instancesHelp,
+		Args:  require.MaximumNArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			return compListInstances(toComplete, cfg)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			instanceName, err := client.ExtractInstanceNameArg(args)
 			client.InstanceName = instanceName
 
@@ -134,4 +139,22 @@ func renderState(state sitewhereiov1alpha4.BootstrapState) string {
 	default:
 		return ""
 	}
+}
+
+// Provide dynamic auto-completion for sitewhere instances names
+func compListInstances(toComplete string, cfg *helmAction.Configuration) ([]string, cobra.ShellCompDirective) {
+	cobra.CompDebugln(fmt.Sprintf("compListInstances with toComplete %s", toComplete), settings.Debug)
+	client := action.NewInstances(cfg)
+	instances, err := client.Run()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+
+	var choices []string
+	for _, instance := range instances.Instances {
+		choices = append(choices,
+			fmt.Sprintf("%s", instance.GetName()))
+	}
+
+	return choices, cobra.ShellCompDirectiveNoFileComp
 }
