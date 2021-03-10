@@ -18,15 +18,16 @@ package action
 
 import (
 	"context"
-	"github.com/pkg/errors"
-
-	ctlcli "sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 
+	"github.com/pkg/errors"
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
-	"github.com/sitewhere/swctl/pkg/instance"
-	"helm.sh/helm/v3/pkg/action"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	ctlcli "sigs.k8s.io/controller-runtime/pkg/client"
+
+	"helm.sh/helm/v3/pkg/action"
+
+	"github.com/sitewhere/swctl/pkg/instance"
 )
 
 // Instances is the action for listing SiteWhere instances
@@ -45,7 +46,18 @@ func NewInstances(cfg *action.Configuration) *Instances {
 	}
 }
 
-// ExtractInstanceName returns the name of the instance that should be used.
+// Run executes the install command, returning the result of the installation
+func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
+
+	instanceList := instance.ListSiteWhereInstance{}
+	if i.InstanceName != "" {
+		i.instanceDetail(&instanceList)
+	}
+	i.instances(&instanceList)
+	return &instanceList, nil
+}
+
+// ExtractInstanceNameArg returns the name of the instance that should be used.
 func (i *Instances) ExtractInstanceNameArg(args []string) (string, error) {
 	if len(args) > 1 {
 		return args[0], errors.Errorf("expected at most one arguments, unexpected arguments: %v", strings.Join(args[1:], ", "))
@@ -55,7 +67,7 @@ func (i *Instances) ExtractInstanceNameArg(args []string) (string, error) {
 	return "", nil
 }
 
-func (i *Instances) Instances(instanceList *instance.ListSiteWhereInstance) error {
+func (i *Instances) instances(instanceList *instance.ListSiteWhereInstance) error {
 	var client, err = ControllerClient(i.cfg)
 	if err != nil {
 		return err
@@ -82,7 +94,7 @@ func (i *Instances) Instances(instanceList *instance.ListSiteWhereInstance) erro
 	return nil
 }
 
-func (i *Instances) InstanceDetail(instanceList *instance.ListSiteWhereInstance) error {
+func (i *Instances) instanceDetail(instanceList *instance.ListSiteWhereInstance) error {
 
 	var client, err = ControllerClient(i.cfg)
 	if err != nil {
@@ -99,15 +111,4 @@ func (i *Instances) InstanceDetail(instanceList *instance.ListSiteWhereInstance)
 	err = client.List(ctx, &swMicroservoceList, ctlcli.InNamespace(i.InstanceName))
 	instanceList.SiteWhereMicroservice = swMicroservoceList.Items
 	return nil
-}
-
-// Run executes the install command, returning the result of the installation
-func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
-
-	instanceList := instance.ListSiteWhereInstance{}
-	if i.InstanceName != "" {
-		i.InstanceDetail(&instanceList)
-	}
-	i.Instances(&instanceList)
-	return &instanceList, nil
 }
