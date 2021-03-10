@@ -51,6 +51,7 @@ func newRootCmd(actionConfig *action.Configuration, out io.Writer, args []string
 		newInstancesCmd(actionConfig, out),
 		newUninstallCmd(actionConfig, out),
 		newLogsCmd(actionConfig, out),
+		newLogLevelCmd(actionConfig, out),
 		newVersionCmd(out))
 
 	return cmd, nil
