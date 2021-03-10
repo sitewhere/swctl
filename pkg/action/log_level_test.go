@@ -22,7 +22,16 @@ import (
 
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
 	"github.com/sitewhere/swctl/pkg/logs"
+
+	"helm.sh/helm/v3/pkg/action"
 )
+
+func TestNewLogLeves(t *testing.T) {
+	var newLogLevels = NewLogLevel(&action.Configuration{})
+	if newLogLevels == nil {
+		t.Fatalf("should have returned an action")
+	}
+}
 
 func TestGenerateLoggingOverrides(t *testing.T) {
 	t.Parallel()
@@ -51,6 +60,33 @@ func TestGenerateLoggingOverrides(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "sigle",
+			action: &LogLevel{
+				Level:  logs.DebugLevel,
+				Logger: []string{"somothing.com"},
+			},
+			input: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
+				{
+					Logger: "somothing.com",
+					Level:  "info",
+				},
+				{
+					Logger: "notchanged.com",
+					Level:  "info",
+				},
+			},
+			expected: []sitewhereiov1alpha4.MicroserviceLoggingEntry{
+				{
+					Logger: "somothing.com",
+					Level:  "debug",
+				},
+				{
+					Logger: "notchanged.com",
+					Level:  "info",
+				},
+			},
+		},
 	}
 	for _, single := range data {
 		t.Run(single.name, func(single struct {
@@ -62,7 +98,6 @@ func TestGenerateLoggingOverrides(t *testing.T) {
 		}) func(t *testing.T) {
 			return func(t *testing.T) {
 				result, err := single.action.generateLoggingOverrides(single.input)
-
 				if err != nil {
 					if single.err == nil {
 						t.Fatalf(err.Error())
