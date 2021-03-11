@@ -18,6 +18,7 @@ package main
 
 import (
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -42,10 +43,14 @@ func newLogLevelCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command
 		Long:    logsHelp,
 		Args:    require.ExactArgs(3),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			if len(args) != 0 {
-				return nil, cobra.ShellCompDirectiveNoFileComp
+			if len(args) == 0 {
+				return compListInstances(toComplete, cfg)
+			} else if len(args) == 1 {
+				return compListMicroservices(toComplete, args[0], cfg)
+			} else if len(args) == 2 {
+				return logsLevelsCompletion(toComplete)
 			}
-			return compListInstances(toComplete, cfg)
+			return nil, cobra.ShellCompDirectiveNoFileComp
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client.InstanceName = args[0]
@@ -62,4 +67,18 @@ func newLogLevelCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command
 	f.StringArrayVar(&client.Logger, "logger", []string{}, "set loggers to change")
 
 	return cmd
+}
+
+// Provide dynamic auto-completion for log leves
+func logsLevelsCompletion(toComplete string) ([]string, cobra.ShellCompDirective) {
+	var levels = logs.LevelListString()
+	var choices []string
+	var lowerToComplete = strings.ToLower(toComplete)
+	for _, level := range levels {
+		var lowerLevel = strings.ToLower(level)
+		if strings.HasPrefix(lowerLevel, lowerToComplete) {
+			choices = append(choices, lowerLevel)
+		}
+	}
+	return choices, cobra.ShellCompDirectiveNoFileComp
 }

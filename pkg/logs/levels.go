@@ -41,6 +41,23 @@ const (
 	OffLevel Level = "off"
 )
 
+var levels []Level = []Level{
+	DebugLevel,
+	InfoLevel,
+	WarnLevel,
+	ErrorLevel,
+	FatalLevel,
+}
+
+var levelString []string = []string{
+	"debug",
+	"info",
+	"warn",
+	"error",
+	"fatal",
+	"off",
+}
+
 // Parse parse a string to a Level
 func Parse(level string) (Level, error) {
 	switch strings.ToLower(level) {
@@ -76,4 +93,14 @@ func (l Level) String() string {
 		return "off"
 	}
 	return ""
+}
+
+// LevelList returns the list of logs levels
+func LevelList() []Level {
+	return levels
+}
+
+// LevelListString returns the list of logs levels
+func LevelListString() []string {
+	return levelString
 }
