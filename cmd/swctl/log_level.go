@@ -36,12 +36,17 @@ func newLogLevelCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command
 	client := action.NewLogLevel(cfg)
 
 	cmd := &cobra.Command{
-		Use:               "log-level INSTANCE MS LEVEL [OPTIONS]",
-		Short:             "change the log levels of a SiteWhere Microservice",
-		Aliases:           []string{"ll"},
-		Long:              logsHelp,
-		Args:              require.ExactArgs(3),
-		ValidArgsFunction: noCompletions,
+		Use:     "log-level INSTANCE MS LEVEL [OPTIONS]",
+		Short:   "change the log levels of a SiteWhere Microservice",
+		Aliases: []string{"ll"},
+		Long:    logsHelp,
+		Args:    require.ExactArgs(3),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			return compListInstances(toComplete, cfg)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client.InstanceName = args[0]
 			client.MicroserviceName = args[1]

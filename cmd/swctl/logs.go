@@ -35,11 +35,16 @@ func newLogsCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewLogs(cfg)
 
 	cmd := &cobra.Command{
-		Use:               "logs [OPTIONS] INSTANCE MS",
-		Short:             "show the logs of a SiteWhere Microservice",
-		Long:              logsHelp,
-		Args:              require.ExactArgs(2),
-		ValidArgsFunction: noCompletions,
+		Use:   "logs [OPTIONS] INSTANCE MS",
+		Short: "show the logs of a SiteWhere Microservice",
+		Long:  logsHelp,
+		Args:  require.ExactArgs(2),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			return compListInstances(toComplete, cfg)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client.InstanceName = args[0]
 			client.MicroserviceName = args[1]
