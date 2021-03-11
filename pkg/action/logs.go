@@ -79,7 +79,7 @@ func (i *Logs) Run() error {
 	err = controllerClient.Get(ctx, ctlcli.ObjectKey{Name: i.InstanceName}, &swInstanceCR)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return fmt.Errorf("the Instance %s does not exists", i.InstanceName)
+			return fmt.Errorf("sitewhere instance '%s' not found", i.InstanceName)
 		}
 		return err
 	}

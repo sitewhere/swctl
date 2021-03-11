@@ -11,10 +11,10 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/sitewhere/sitewhere-k8s-operator v0.0.0-20210106161827-3e9bb9c34903
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	google.golang.org/grpc v1.28.1 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.0
 	k8s.io/api v0.20.1
 	k8s.io/apiextensions-apiserver v0.20.1

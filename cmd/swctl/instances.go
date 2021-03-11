@@ -17,7 +17,9 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/gookit/color"
 	"github.com/gosuri/uitable"
@@ -42,13 +44,17 @@ func newInstancesCmd(cfg *helmAction.Configuration, out io.Writer) *cobra.Comman
 	var outFmt output.Format
 
 	cmd := &cobra.Command{
-		Use:               "instances [NAME]",
-		Short:             "show SiteWhere instances",
-		Long:              instancesHelp,
-		Args:              require.MaximumNArgs(1),
-		ValidArgsFunction: noCompletions,
+		Use:   "instances [NAME]",
+		Short: "show SiteWhere instances",
+		Long:  instancesHelp,
+		Args:  require.MaximumNArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			return compListInstances(toComplete, cfg)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			instanceName, err := client.ExtractInstanceNameArg(args)
 			client.InstanceName = instanceName
 
@@ -68,13 +74,13 @@ type instancesWriter struct {
 	Instances []sitewhereiov1alpha4.SiteWhereInstance
 
 	//Microservices found
-	SiteWhereMicroservice []sitewhereiov1alpha4.SiteWhereMicroservice
+	Microservices []sitewhereiov1alpha4.SiteWhereMicroservice
 }
 
 func newInstancesWriter(result *instance.ListSiteWhereInstance) *instancesWriter {
 	return &instancesWriter{
-		Instances:             result.Instances,
-		SiteWhereMicroservice: result.SiteWhereMicroservice,
+		Instances:     result.Instances,
+		Microservices: result.Microservices,
 	}
 }
 
@@ -90,7 +96,7 @@ func (i *instancesWriter) WriteTable(out io.Writer) error {
 	table.AddRow("", "", "", "", "")
 	output.EncodeTable(out, table)
 
-	if len(i.Instances) == 1 && len(i.SiteWhereMicroservice) > 0 {
+	if len(i.Instances) == 1 && len(i.Microservices) > 0 {
 		i.WriteMicroserviceInfo(out)
 		i.WriteInstanceDetailInfo(out, i.Instances[0])
 	}
@@ -100,7 +106,7 @@ func (i *instancesWriter) WriteTable(out io.Writer) error {
 func (i *instancesWriter) WriteMicroserviceInfo(out io.Writer) {
 	microserviceTable := uitable.New()
 	microserviceTable.AddRow("MICROSERVICE", "NAMESPACE", "DEPLOYMENT")
-	for _, item := range i.SiteWhereMicroservice {
+	for _, item := range i.Microservices {
 		microserviceTable.AddRow(item.Spec.Name, item.ObjectMeta.Namespace, item.Status.Deployment)
 	}
 	microserviceTable.AddRow("", "", "")
@@ -134,4 +140,40 @@ func renderState(state sitewhereiov1alpha4.BootstrapState) string {
 	default:
 		return ""
 	}
+}
+
+// Provide dynamic auto-completion for sitewhere instances names
+func compListInstances(toComplete string, cfg *helmAction.Configuration) ([]string, cobra.ShellCompDirective) {
+	cobra.CompDebugln(fmt.Sprintf("compListInstances with toComplete %s", toComplete), settings.Debug)
+	client := action.NewInstances(cfg)
+	instances, err := client.Run()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+	var choices []string
+	for _, instance := range instances.Instances {
+		choices = append(choices,
+			fmt.Sprintf("%s", instance.GetName()))
+	}
+	return choices, cobra.ShellCompDirectiveNoFileComp
+}
+
+// Provide dynamic auto-completion for sitewhere microservices names
+func compListMicroservices(toComplete string, instance string, cfg *helmAction.Configuration) ([]string, cobra.ShellCompDirective) {
+	cobra.CompDebugln(fmt.Sprintf("compListMicroservices with toComplete %s for instnace %s", toComplete, instance), settings.Debug)
+	client := action.NewListMicroservices(cfg)
+	client.InstanceName = instance
+	result, err := client.Run()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+	var choices []string
+	var lowerToComplete = strings.ToLower(toComplete)
+	for _, ms := range result.Microservices {
+		if strings.HasPrefix(strings.ToLower(ms.GetName()), lowerToComplete) {
+			choices = append(choices,
+				fmt.Sprintf("%s", ms.GetName()))
+		}
+	}
+	return choices, cobra.ShellCompDirectiveNoFileComp
 }

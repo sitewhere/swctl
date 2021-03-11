@@ -19,37 +19,40 @@ package action
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/pkg/errors"
 	sitewhereiov1alpha4 "github.com/sitewhere/sitewhere-k8s-operator/apis/sitewhere.io/v1alpha4"
-	ctlcli "sigs.k8s.io/controller-runtime/pkg/client"
-
 	"helm.sh/helm/v3/pkg/action"
-
-	"github.com/sitewhere/swctl/pkg/instance"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	ctlcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Instances is the action for listing SiteWhere instances
-type Instances struct {
+// ListMicroservices is the action for listing SiteWhere Microservices
+type ListMicroservices struct {
 	cfg *action.Configuration
 
 	// Name of the instance
 	InstanceName string
 }
 
-// NewInstances constructs a new *Instances
-func NewInstances(cfg *action.Configuration) *Instances {
-	return &Instances{
+// ListMicroservicesResult is result the action for listing SiteWhere Microservices
+type ListMicroservicesResult struct {
+	// Name of the instance
+	Name string `json:"name"`
+
+	// Microservices are the microservices of a instance
+	Microservices []sitewhereiov1alpha4.SiteWhereMicroservice `json:"microservices"`
+}
+
+// NewListMicroservices constructs a new *ListMicroservices
+func NewListMicroservices(cfg *action.Configuration) *ListMicroservices {
+	return &ListMicroservices{
 		cfg:          cfg,
 		InstanceName: "",
 	}
 }
 
 // Run executes the install command, returning the result of the installation
-func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
+func (i *ListMicroservices) Run() (*ListMicroservicesResult, error) {
 	var err error
 	// check for kubernetes cluster
 	if err = i.cfg.KubeClient.IsReachable(); err != nil {
@@ -60,27 +63,6 @@ func (i *Instances) Run() (*instance.ListSiteWhereInstance, error) {
 		return nil, err
 	}
 	ctx := context.TODO()
-	if i.InstanceName != "" {
-		return i.singelInstanceDetail(ctx, client)
-	}
-	return i.instancesDetails(ctx, client)
-}
-
-func (i *Instances) instancesDetails(ctx context.Context, client ctlcli.Client) (*instance.ListSiteWhereInstance, error) {
-	var err error
-
-	var swInstancesList sitewhereiov1alpha4.SiteWhereInstanceList
-	err = client.List(ctx, &swInstancesList)
-	if err != nil {
-		return nil, err
-	}
-	return &instance.ListSiteWhereInstance{
-		Instances: swInstancesList.Items,
-	}, nil
-}
-
-func (i *Instances) singelInstanceDetail(ctx context.Context, client ctlcli.Client) (*instance.ListSiteWhereInstance, error) {
-	var err error
 
 	var swInstanceCR sitewhereiov1alpha4.SiteWhereInstance
 	err = client.Get(ctx, ctlcli.ObjectKey{Name: i.InstanceName}, &swInstanceCR)
@@ -97,20 +79,8 @@ func (i *Instances) singelInstanceDetail(ctx context.Context, client ctlcli.Clie
 		return nil, err
 	}
 
-	return &instance.ListSiteWhereInstance{
-		Instances: []sitewhereiov1alpha4.SiteWhereInstance{
-			swInstanceCR,
-		},
+	return &ListMicroservicesResult{
+		Name:          i.InstanceName,
 		Microservices: swMicroservoceList.Items,
 	}, nil
-}
-
-// ExtractInstanceNameArg returns the name of the instance that should be used.
-func (i *Instances) ExtractInstanceNameArg(args []string) (string, error) {
-	if len(args) > 1 {
-		return args[0], errors.Errorf("expected at most one arguments, unexpected arguments: %v", strings.Join(args[1:], ", "))
-	} else if len(args) == 1 {
-		return args[0], nil
-	}
-	return "", nil
 }
