@@ -17,21 +17,23 @@
 package config
 
 import (
-	"github.com/sitewhere/swctl/pkg/install/profile"
 	"io/ioutil"
 	"os"
+
+	"github.com/sitewhere/swctl/pkg/install/profile"
 )
 
 // LoadConfigurationTemplate loads the configuration template from
 // ~/swctl/deafult.yaml file. If the files does not exist
 // it returns the error ErrNotFound
 func LoadConfigurationTemplate(placeHolder *PlaceHolder, prof profile.SiteWhereProfile) (string, error) {
-
 	var configPath string
-
-	if prof == profile.Minimal {
+	switch prof {
+	case profile.Minimal:
 		configPath = GetMinimalConfigPath()
-	} else {
+	case profile.Debug:
+		configPath = GetDebugConfigPath()
+	default:
 		configPath = GetConfigPath()
 	}
 	f, err := os.Open(configPath)
