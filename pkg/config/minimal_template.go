@@ -144,8 +144,6 @@ const minimalTemplate string = `microservices:
       level: info
     - logger: com.sitewhere.asset
       level: info
-    - logger: com.sitewhere.asset
-      level: info
   configuration: null
 - functionalarea: command-delivery
   name: Command Delivery
@@ -271,8 +269,6 @@ const minimalTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.commands
       level: info
@@ -402,8 +398,6 @@ const minimalTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.device
       level: info
   configuration: null
@@ -531,8 +525,6 @@ const minimalTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.event
       level: info
@@ -662,8 +654,6 @@ const minimalTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.sources
       level: info
   configuration: null
@@ -791,8 +781,6 @@ const minimalTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.inbound
       level: info
@@ -935,8 +923,6 @@ const minimalTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.instance
       level: info
@@ -1201,8 +1187,6 @@ const minimalTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.connectors
       level: info

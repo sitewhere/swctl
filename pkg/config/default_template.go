@@ -144,8 +144,6 @@ const defaultTemplate string = `microservices:
       level: info
     - logger: com.sitewhere.asset
       level: info
-    - logger: com.sitewhere.asset
-      level: info
   configuration: null
 - functionalarea: batch-operations
   name: Batch Operations
@@ -271,8 +269,6 @@ const defaultTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.batch
       level: info
@@ -402,8 +398,6 @@ const defaultTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.commands
       level: info
   configuration: null
@@ -531,8 +525,6 @@ const defaultTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.device
       level: info
@@ -662,8 +654,6 @@ const defaultTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.registration
       level: info
   configuration: null
@@ -791,8 +781,6 @@ const defaultTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.devicestate
       level: info
@@ -922,8 +910,6 @@ const defaultTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.event
       level: info
   configuration: null
@@ -1052,8 +1038,6 @@ const defaultTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.sources
       level: info
   configuration: null
@@ -1181,8 +1165,6 @@ const defaultTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.inbound
       level: info
@@ -1325,8 +1307,6 @@ const defaultTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.instance
       level: info
@@ -1592,8 +1572,6 @@ const defaultTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.labels
       level: info
   configuration: null
@@ -1722,8 +1700,6 @@ const defaultTemplate string = `microservices:
       level: info
     - logger: org.redisson
       level: info
-    - logger: com.sitewhere.asset
-      level: info
     - logger: com.sitewhere.connectors
       level: info
   configuration: null
@@ -1851,8 +1827,6 @@ const defaultTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.schedule
       level: info

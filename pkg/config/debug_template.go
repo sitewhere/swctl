@@ -42,6 +42,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -125,6 +135,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1106
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8006
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -141,8 +169,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.asset
       level: info
@@ -172,6 +198,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -255,6 +291,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1111
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8011
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -271,8 +325,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.batch
       level: info
@@ -302,6 +354,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -385,6 +447,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1112
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8012
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -401,8 +481,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.commands
       level: info
@@ -432,6 +510,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -515,6 +603,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1104
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8004
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -531,8 +637,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.device
       level: info
@@ -562,6 +666,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -645,6 +759,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1113
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8013
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -661,8 +793,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.registration
       level: info
@@ -692,6 +822,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -775,6 +915,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1114
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8014
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -791,8 +949,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.devicestate
       level: info
@@ -822,6 +978,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -905,6 +1071,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1105
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8005
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -921,8 +1105,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.event
       level: info
@@ -952,6 +1134,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -1035,6 +1227,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1108
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8008
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -1051,8 +1261,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.sources
       level: info
@@ -1082,6 +1290,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -1165,6 +1383,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1107
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8007
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -1181,8 +1417,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.inbound
       level: info
@@ -1215,6 +1449,16 @@ const debugTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 8080
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -1309,6 +1553,24 @@ const debugTemplate string = `microservices:
         intval: 8080
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1101
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8001
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -1325,8 +1587,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.instance
       level: info
@@ -1492,6 +1752,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -1575,6 +1845,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1109
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8009
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -1591,8 +1879,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.labels
       level: info
@@ -1622,6 +1908,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -1705,6 +2001,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1116
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8016
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -1721,8 +2035,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.connectors
       level: info
@@ -1752,6 +2064,16 @@ const debugTemplate string = `microservices:
       containerport: 9090
       protocol: TCP
       hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
+      protocol: TCP
+      hostip: ""
     env:
     - name: sitewhere.config.k8s.name
       value: ""
@@ -1835,6 +2157,24 @@ const debugTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1118
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8018
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
     enabled: true
@@ -1851,8 +2191,6 @@ const debugTemplate string = `microservices:
     - logger: com.sitewhere.microservice.kafka
       level: info
     - logger: org.redisson
-      level: info
-    - logger: com.sitewhere.asset
       level: info
     - logger: com.sitewhere.schedule
       level: info
