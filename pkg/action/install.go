@@ -19,7 +19,6 @@ package action
 import (
 	"context"
 	"fmt"
-	"github.com/sitewhere/swctl/pkg/install/profile"
 	"io/ioutil"
 	"log"
 	"os"
@@ -27,6 +26,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/sitewhere/swctl/pkg/install/profile"
 
 	"gopkg.in/yaml.v2"
 
@@ -47,7 +48,7 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 )
 
-const defaultHelmChartVersion string = "0.1.10"
+const defaultHelmChartVersion string = "0.1.12"
 
 // Install is the action for installing SiteWhere
 type Install struct {
