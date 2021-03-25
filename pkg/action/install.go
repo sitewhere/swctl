@@ -48,7 +48,7 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 )
 
-const defaultHelmChartVersion string = "0.1.12"
+const defaultHelmChartVersion string = "0.1.13"
 
 // Install is the action for installing SiteWhere
 type Install struct {
