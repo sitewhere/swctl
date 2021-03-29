@@ -29,7 +29,7 @@ var (
 	//
 	// Increment major number for new feature additions and behavioral changes.
 	// Increment minor number for bug fixes and performance enhancements.
-	version = "v0.9"
+	version = "v0.10"
 	// metadata is extra build time data
 	metadata = ""
 	// gitCommit is the git sha1
