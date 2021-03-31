@@ -57,6 +57,11 @@ func GetMinimalConfigPath() string {
 	return filepath.FromSlash(GetConfigHome() + "/minimal.yaml")
 }
 
+// GetDebugConfigPath returns the path for Debug SiteWhere Control CLI configuration path.
+func GetDebugConfigPath() string {
+	return filepath.FromSlash(GetConfigHome() + "/debug.yaml")
+}
+
 // GetConfigHome returns the home directory for the configuration
 func GetConfigHome() string {
 	home, _ := homedir.Dir()

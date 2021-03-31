@@ -119,7 +119,9 @@ func (i *CreateInstance) Run() (*instance.CreateSiteWhereInstance, error) {
 	if i.ConfigurationTemplate == "" {
 		i.ConfigurationTemplate = defaultConfigurationTemplate
 	}
-	if i.Minimal {
+	if i.Debug {
+		prof = profile.Debug
+	} else if i.Minimal {
 		prof = profile.Minimal
 		i.ConfigurationTemplate = "minimal"
 	}

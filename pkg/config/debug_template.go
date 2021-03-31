@@ -16,7 +16,7 @@
 
 package config
 
-const defaultTemplate string = `microservices:
+const debugTemplate string = `microservices:
 - functionalarea: asset-management
   name: Asset Management
   description: Provides APIs for managing assets associated with device assignments
@@ -29,7 +29,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -40,6 +40,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -125,9 +135,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1106
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8006
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8006
     jmxport: 1106
   logging:
@@ -157,7 +185,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -168,6 +196,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -253,9 +291,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1111
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8011
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8011
     jmxport: 1111
   logging:
@@ -285,7 +341,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -296,6 +352,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -381,9 +447,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1112
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8012
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8012
     jmxport: 1112
   logging:
@@ -413,7 +497,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -424,6 +508,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -509,9 +603,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1104
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8004
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8004
     jmxport: 1104
   logging:
@@ -541,7 +653,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -552,6 +664,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -637,9 +759,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1113
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8013
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8013
     jmxport: 1113
   logging:
@@ -669,7 +809,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -680,6 +820,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -765,9 +915,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1114
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8014
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8014
     jmxport: 1114
   logging:
@@ -797,7 +965,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -808,6 +976,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -893,9 +1071,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1105
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8005
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8005
     jmxport: 1105
   logging:
@@ -925,7 +1121,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -936,6 +1132,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -1021,9 +1227,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1108
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8008
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8008
     jmxport: 1108
   logging:
@@ -1053,7 +1277,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -1064,6 +1288,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -1149,9 +1383,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1107
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8007
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8007
     jmxport: 1107
   logging:
@@ -1181,7 +1433,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -1197,6 +1449,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 8080
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -1291,9 +1553,27 @@ const defaultTemplate string = `microservices:
         intval: 8080
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1101
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8001
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8001
     jmxport: 1101
   logging:
@@ -1459,7 +1739,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -1470,6 +1750,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -1555,9 +1845,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1109
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8009
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8009
     jmxport: 1109
   logging:
@@ -1587,7 +1895,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -1598,6 +1906,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -1683,9 +2001,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1116
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8016
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8016
     jmxport: 1116
   logging:
@@ -1715,7 +2051,7 @@ const defaultTemplate string = `microservices:
     dockerspec:
       registry: {{ .Registry }}
       repository: {{ .Repository }}
-      tag: "{{ .Tag }}"
+      tag: "debug-{{ .Tag }}"
     imagepullpolicy: IfNotPresent
     ports:
     - name: ""
@@ -1726,6 +2062,16 @@ const defaultTemplate string = `microservices:
     - name: ""
       hostport: 0
       containerport: 9090
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jmx"
+      hostport: 0
+      containerport: 1100
+      protocol: TCP
+      hostip: ""
+    - name: "tcp-jwdp"
+      hostport: 0
+      containerport: 8000
       protocol: TCP
       hostip: ""
     env:
@@ -1811,9 +2157,27 @@ const defaultTemplate string = `microservices:
         intval: 9090
         strval: ""
       nodeport: 0
+    - name: tcp-jmx
+      protocol: TCP
+      appprotocol: null
+      port: 1118
+      targetport:
+        type: 0
+        intval: 1100
+        strval: ""
+      nodeport: 0
+    - name: tcp-jwdp
+      protocol: TCP
+      appprotocol: null
+      port: 8018
+      targetport:
+        type: 0
+        intval: 8000
+        strval: ""
+      nodeport: 0
     type: ClusterIP
   debug:
-    enabled: false
+    enabled: true
     jdwpport: 8018
     jmxport: 1118
   logging:

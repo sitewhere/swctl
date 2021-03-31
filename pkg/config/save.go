@@ -22,38 +22,32 @@ import (
 
 // CreateDefaultConfiguration saves the default configuration to the config file
 func CreateDefaultConfiguration() error {
+	return createConfiguration(GetConfigPath(), defaultTemplate)
+}
+
+// CreateMinimalConfiguration saves the minimal configuration to the config file
+func CreateMinimalConfiguration() error {
+	return createConfiguration(GetMinimalConfigPath(), minimalTemplate)
+}
+
+// CreateDebugConfiguration saves the debug configuration to the config file
+func CreateDebugConfiguration() error {
+	return createConfiguration(GetDebugConfigPath(), debugTemplate)
+}
+
+// createConfiguration saves the default configuration to the config file
+func createConfiguration(configPath string, templete string) error {
 	var err error
 	configHome := GetConfigHome()
 	err = os.Mkdir(configHome, 0755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
-	configPath := GetConfigPath()
 	f, err := os.OpenFile(configPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}
-	_, err = f.Write([]byte(defaultTemplate))
-	if err1 := f.Close(); err == nil {
-		err = err1
-	}
-	return err
-}
-
-// CreateDefaultConfiguration saves the default configuration to the config file
-func CreateMinimalConfiguration() error {
-	var err error
-	configHome := GetConfigHome()
-	err = os.Mkdir(configHome, 0755)
-	if err != nil && !os.IsExist(err) {
-		return err
-	}
-	minimalConfigPath := GetMinimalConfigPath()
-	f, err := os.OpenFile(minimalConfigPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write([]byte(minimalTemplate))
+	_, err = f.Write([]byte(templete))
 	if err1 := f.Close(); err == nil {
 		err = err1
 	}

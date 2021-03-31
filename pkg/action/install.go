@@ -126,8 +126,13 @@ func (i *Install) Run() (*install.SiteWhereInstall, error) {
 
 // ConfigurationExists check for swctl configuration file
 func (i *Install) ConfigurationExists() bool {
-	_, err := config.LoadConfigurationTemplate(&config.PlaceHolder{}, profile.Default)
-	return err != config.ErrNotFound
+	for _, p := range profile.All {
+		_, err := config.LoadConfigurationTemplate(&config.PlaceHolder{}, p)
+		if err == config.ErrNotFound {
+			return false
+		}
+	}
+	return true
 }
 
 // CreateConfiguration Loads the default and minimal configuration
@@ -135,6 +140,9 @@ func (i *Install) ConfigurationExists() bool {
 func (i *Install) CreateConfiguration() error {
 	var err error
 	if err = config.CreateMinimalConfiguration(); err != nil {
+		return err
+	}
+	if err = config.CreateDebugConfiguration(); err != nil {
 		return err
 	}
 	return config.CreateDefaultConfiguration()

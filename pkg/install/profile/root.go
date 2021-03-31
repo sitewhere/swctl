@@ -25,4 +25,12 @@ const (
 	Default SiteWhereProfile = "Default"
 	// Minimal profile, use a reduce set of microservices
 	Minimal SiteWhereProfile = "Minimal"
+	// Debug profile, use all microservices in debug mode
+	Debug SiteWhereProfile = "Debug"
 )
+
+var All []SiteWhereProfile = []SiteWhereProfile{
+	Default,
+	Minimal,
+	Debug,
+}
